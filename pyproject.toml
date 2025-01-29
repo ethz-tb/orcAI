@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orcai"
+version = "0.1.0"
+authors = [
+    { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
+]
+description = "A package for training, testing, and analyzing spectrograms."
+keywords = ["one", "two"]
+readme = "README.md"
+requires-python = ">=3.11"
+license = "CC-BY-SA-4.0"
+dependencies = [
+    "zarr",
+    "pandas",
+    "tensorflow",
+    "tensorflow.keras",
+    "librosa",
+    "Ipython",
+    "psutil"
+]
+
+[project.urls]
+Repository = "https://github.com/me/spam.git"
