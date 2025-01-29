@@ -1,0 +1,6 @@
+{
+    "fraction_removal": 0.99,
+    "n_train": 1000,
+    "n_val": 100,
+    "n_test": 100
+}

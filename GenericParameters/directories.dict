@@ -1,0 +1,13 @@
+{
+    "euler": {
+        "root_dir_acoustics": "/nfs/nas22/fs2201/usys_ibz_tb_data/TB-data/Cherine_Baumgartner/Acoustics/",
+        "root_dir_spectrograms": "/cluster/scratch/sbonhoef/spectrograms/",
+        "root_dir_tvtdata": "/cluster/scratch/sbonhoef/tvtdata/"
+    },
+    "laptop": {
+        "root_dir_acoustics": "/Volumes/OrcAI-Disk/Acoustics/",
+        "root_dir_spectrograms": "/Users/sb/AI_data/spectrograms/",
+        "root_dir_tvtdata": "/Users/sb/AI_data/tvtdata/"
+    }
+}
+
