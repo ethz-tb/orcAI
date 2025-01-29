@@ -53,7 +53,6 @@ print("  - reading in channels_and_labels.csv")
 channels_and_labels = pd.read_csv(
     project_dir + "GenericParameters/channels_and_labels.csv"
 )
-print(channels_and_labels.to_string())
 
 
 # %%
