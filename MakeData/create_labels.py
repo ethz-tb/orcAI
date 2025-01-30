@@ -149,11 +149,12 @@ annot_files = [x.replace(".txt", "") for x in all_annot_files]  # remove extensi
 wav_files = [x.replace(".wav", "") for x in all_wav_files]  # remove extension .wav
 files_wo_annot = list(set(wav_files) - set(annot_files))
 
+
 print(f"Printing bash script for create spectrograms: all_specs_{computer}.sh")
 with open(project_dir + "all_specs_" + computer + ".sh", "w") as file:
     if computer == "euler":
         file.write(
-            "#!/bin/bash\nmodule load stack/2024-06 python/3.11.6 py-pip\nsource myenv/bin/activate"
+            "#!/bin/bash\nmodule load stack/2024-06 python/3.11.6 py-pip\nsource myenv/bin/activate\n"
         )
         sbatch_start = 'sbatch --mem-per-cpu=16G --time=20 --wrap="'
         sbatch_end = '"'

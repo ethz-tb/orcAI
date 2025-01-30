@@ -8,10 +8,9 @@ import tensorflow as tf
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 
 # import local
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import auxiliary as aux
 import load
 
@@ -44,6 +43,10 @@ dicts = {
 for key, value in dicts.items():
     print("  - reading", key)
     globals()[key] = aux.read_dict(value, True)
+
+
+print("Project directory:", project_dir)
+os.chdir(project_dir)
 
 
 # %%
@@ -134,18 +137,17 @@ scratch_dir = ensure_trailing_slash(directories_dict[computer]["root_dir_tvtdata
 
 # %%
 # save data sets to local  disk
-print("Saving train, val and test datasets to disk:", scratch_dir)
+print("Saving test, val and train datasets to disk:", scratch_dir)
+start_time = time.time()
+load.save_dataset(scratch_dir + "test_dataset", test_dataset)
+print(f"  - time to save test_dataset: {time.time() - start_time:.2f} seconds")
+start_time = time.time()
+load.save_dataset(scratch_dir + "val_dataset", val_dataset)
+print(f"  - time to save val_dataset: {time.time() - start_time:.2f} seconds")
 start_time = time.time()
 load.save_dataset(scratch_dir + "train_dataset", train_dataset)
 print(f"  - time to save train_dataset: {time.time() - start_time:.2f} seconds")
 
-start_time = time.time()
-load.save_dataset(scratch_dir + "val_dataset", val_dataset)
-print(f"  - time to save val_dataset: {time.time() - start_time:.2f} seconds")
-
-start_time = time.time()
-load.save_dataset(scratch_dir + "test_dataset", test_dataset)
-print(f"  - time to save test_dataset: {time.time() - start_time:.2f} seconds")
 
 # %%
 # get size of tvt directory
@@ -167,3 +169,4 @@ for f in dataset_names:
     print(f"     - size of {f}: {size_in_gb:.2f} GB")
 
 # %%
+print("PROGRAM COMPLETED")
