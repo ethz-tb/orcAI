@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 # import local
-import auxilliary as aux
+import auxiliary as aux
 import annotation as ann
 
 

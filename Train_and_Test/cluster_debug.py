@@ -17,7 +17,7 @@ import keras_tuner as kt
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # import local
-import auxilliary as aux
+import auxiliary as aux
 import model as mod
 import load
 
