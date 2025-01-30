@@ -20,7 +20,8 @@ dependencies = [
     "tensorflow.keras",
     "librosa",
     "Ipython",
-    "psutil"
+    "psutil",
+    "matplotlib"
 ]
 
 [project.urls]
