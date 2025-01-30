@@ -708,7 +708,7 @@ def test_model_commandline_parse():
     return (computer, data_dir, model_name, project_dir)
 
 
-def extract_snippets_commandline_parse():
+def create_snippets_commandline_parse():
     """parse command line arguments"""
     import argparse
 
@@ -784,7 +784,7 @@ def create_spectrogram_commandline_parse():
     parser.add_argument(
         "-w",
         "--wav_file",
-        help="name of wav_file",
+        help="name of single wav_file or all_annotated_files to do all at once",
         type=str,
     )
     args = parser.parse_args()
@@ -839,3 +839,48 @@ def create_labels_commandline_parse():
         print('WARNING: exiting because "output_dir" not specified')
         exit
     return computer, project_dir
+
+
+def create_tvtdata_commandline_parse():
+    """parse command line arguments"""
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-c",
+        "--computer",
+        type=str,
+        help="specify computer as this affects directory paths",
+    )
+    parser.add_argument(
+        "-p",
+        "--project_dir",
+        help="name of project_dir (where all data is stored in project_dir/model_name/), output_dir with / at the end",
+        type=str,
+    )
+    parser.add_argument(
+        "-m",
+        "--model_name",
+        help="name of model",
+        type=str,
+    )
+    args = parser.parse_args()
+    print("PROGRAM CALL:")
+    if args.computer != None:
+        computer = args.computer
+    else:
+        print('WARNING: exiting because "computer" not specified')
+        exit
+    if args.project_dir != None:
+        project_dir = args.project_dir
+        print("project_dir:", project_dir)
+    else:
+        print('WARNING: exiting because "output_dir" not specified')
+        exit
+    if args.model_name != None:
+        model_name = args.model_name
+        print("model_name:", model_name)
+    else:
+        print('WARNING: exiting because "model_name" not specified')
+        exit
+    return computer, project_dir, model_name

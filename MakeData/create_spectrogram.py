@@ -56,40 +56,67 @@ channels_and_labels = pd.read_csv(
 
 
 # %%
-fnstem = Path(wav_file).stem
-# test for presence of fnstem in channels_and_labels
-if fnstem in channels_and_labels["fnstem"].values:
-
-    # get recording type
-    recording_type = list(
-        channels_and_labels["recording.type"][channels_and_labels["fnstem"] == fnstem]
-    )[0]
-    # get audio channel with whale sound recordings
-    channel = list(
-        channels_and_labels["best.channel"][channels_and_labels["fnstem"] == fnstem]
-    )[0]
-    spectrogram_dict["channel"] = channel
-    # get labels that are present in that annotation file
-    # row = channels_and_labels[calls_for_labeling_list][
-    #     channels_and_labels["fnstem"] == fnstem
-    # ]
-    # labels_present = list(row.columns[row.eq("yes").any()])
+# Make a single or all spectrograms
+if wav_file == "all_annotated_files":
+    # %%
+    # read in .txt and .wav files
     print(
-        "  - fnstem:",
-        fnstem,
-        # " labels used:",
-        # labels_present,
-        " channel:",
-        spectrogram_dict["channel"],
+        "READING .txt AND .wav FILE NAMES AND ELIMINATING FILES THAT SHOULD NOT BE INCLUDED"
     )
 
-    if os.path.exists(wav_file.replace(".wav", ".txt")):
-        root_dir_spectrograms = directories_dict[computer]["root_dir_spectrograms"]
-    else:
-        root_dir_spectrograms = (
-            directories_dict[computer]["root_dir_spectrograms"] + "wo_annot/"
+    eliminate = [
+        "._",
+        "_ChB",
+        "_Chb",
+        "Movie",
+        "Norway",
+        "_acceleration",
+        "_depthtemp",
+        "_H.",
+        "_orig",
+        "_old",
+    ]
+
+    all_annot_files, fnstem_annotfile_dict, all_wav_files, fnstem_wavfile_dict = (
+        aux.wav_and_annot_files(computer, directories_dict, eliminate)
+    )
+    wav_file_list = [x.replace(".txt", ".wav") for x in all_annot_files]
+
+else:
+    wav_file_list = [wav_file]
+
+for i in range(len(wav_file_list)):
+    fnstem = Path(wav_file_list[i]).stem
+    print("fnstem", i, "of", len(wav_file_list), ":", fnstem)
+    # test for presence of fnstem in channels_and_labels
+    if fnstem in channels_and_labels["fnstem"].values:
+
+        # get recording type
+        recording_type = list(
+            channels_and_labels["recording.type"][
+                channels_and_labels["fnstem"] == fnstem
+            ]
+        )[0]
+        # get audio channel with whale sound recordings
+        channel = list(
+            channels_and_labels["best.channel"][channels_and_labels["fnstem"] == fnstem]
+        )[0]
+        spectrogram_dict["channel"] = channel
+
+        print(
+            "  - fnstem:",
+            fnstem,
+            " channel:",
+            spectrogram_dict["channel"],
         )
-    spec.save_spectrogram(wav_file, root_dir_spectrograms, spectrogram_dict)
+
+        if os.path.exists(wav_file.replace(".wav", ".txt")):
+            root_dir_spectrograms = directories_dict[computer]["root_dir_spectrograms"]
+        else:
+            root_dir_spectrograms = (
+                directories_dict[computer]["root_dir_spectrograms"] + "wo_annot/"
+            )
+        spec.save_spectrogram(wav_file_list[i], root_dir_spectrograms, spectrogram_dict)
 
 # %%
 print("PROGRAM COMPLETED")

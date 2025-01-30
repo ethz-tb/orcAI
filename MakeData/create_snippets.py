@@ -27,7 +27,7 @@ import annotation as ann
 # Read command line if interactive
 interactive = aux.check_interactive()
 if not interactive:
-    computer, project_dir, model_name, mode = aux.extract_snippets_commandline_parse()
+    computer, project_dir, model_name, mode = aux.create_snippets_commandline_parse()
 else:
     computer = "laptop"
     model_name = "cnn_res_lstm_model"
@@ -45,6 +45,7 @@ dicts = {
     "directories_dict": "GenericParameters/directories.dict",
     "call_dict": "GenericParameters/call.dict",
     "spectrogram_dict": "GenericParameters/spectrogram.dict",
+    "segments_dict": "GenericParameters/segments.dict",
     "model_dict": project_dir + "Results/" + model_name + "/model.dict",
     "calls_for_labeling_list": "GenericParameters/calls_for_labeling.list",
     "extract_snippets_dict": "GenericParameters/extract_snippets.dict",
@@ -189,34 +190,20 @@ if mode == "generate_new_snippets":
         aux.wav_and_annot_files(computer, directories_dict, eliminate)
     )
 
-    # get all spectrogram dirs and whether they are labeled
-    spectrogram_dir = directories_dict[computer]["root_dir_spectrograms"]
-    spectrogram_subdirs = aux.list_spectrograms(spectrogram_dir)
-
-    # get list of subdirs of spectrograms with labels and read in all corresponding annotation files
-    fnstems_annotation = list(
-        spectrogram_subdirs["dirstem"][spectrogram_subdirs["labels"] == True]
-    )
-    selected_annot_files = list(
-        pd.DataFrame({"fnstems": fnstems_annotation})["fnstems"].map(
-            fnstem_annotfile_dict
-        )
-    )
-    selected_wav_files = list(
-        pd.DataFrame({"fnstems": fnstems_annotation})["fnstems"].map(
-            fnstem_wavfile_dict
-        )
-    )
-
-    annotations = ann.read_annotation_files(selected_annot_files)
+    annotations = ann.read_annotation_files(all_annot_files)
     annotations = ann.apply_label_dict(annotations, call_dict)
     annotation_statistics = aux.calculate_total_duration(annotations)
     print("Annotation statistics:")
     print(annotation_statistics.to_string())
 
-    fnstem_duration = aux.get_wav_duration(selected_wav_files)
+    all_annotated_wav_files = [x.replace(".txt", ".wav") for x in all_annot_files]
+    fnstem_duration = aux.get_wav_duration(all_annotated_wav_files)
     total_recording_time = fnstem_duration["duration"].sum()
-    print("total duration of annotated wav files:", total_recording_time)
+    print(
+        "total duration of annotated wav files:",
+        np.around(total_recording_time / 3600, 1),
+        "h",
+    )
     # add column n_segments to fnstem_duration
     fnstem_duration["n_segments"] = (
         fnstem_duration["duration"] // segments_dict["length"]
@@ -234,7 +221,7 @@ if mode == "generate_new_snippets":
             len_iter,
             ")",
         )
-        if list(fnstem_duration.iloc[iter]["n_segments"])[0] > 0:
+        if fnstem_duration.iloc[iter]["n_segments"] > 0:
             es = list_extract_snippets(
                 fnstem_duration.iloc[iter]["fnstem"],
                 fnstem_duration.iloc[iter]["n_segments"],
@@ -245,11 +232,11 @@ if mode == "generate_new_snippets":
         else:
             print(
                 "duration (",
-                list(fnstem_duration.iloc[iter]["duration"])[0],
+                fnstem_duration.iloc[iter]["duration"],
                 ") shorter than segment length (",
                 segments_dict["length"],
                 ") in fnstem (",
-                list(fnstem_duration.iloc[iter]["fnstem"])[0],
+                fnstem_duration.iloc[iter]["fnstem"],
                 ")",
             )
         if iter == 0:
