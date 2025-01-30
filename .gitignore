@@ -1,3 +1,13 @@
+# VSCode
 .vscode
+
+# Development
 Results/
+
+# Python
 __pycache__/
+
+# Distribution / packaging
+dist/
+*.egg-info/
+
