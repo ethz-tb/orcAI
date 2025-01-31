@@ -2,6 +2,7 @@
 .vscode
 
 # Development
+dev/
 Results/
 
 # Python
@@ -11,3 +12,5 @@ __pycache__/
 dist/
 *.egg-info/
 
+# macOS
+.DS_Store
