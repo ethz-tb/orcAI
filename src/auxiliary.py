@@ -32,15 +32,12 @@ def read_json_to_vector(filename):
     return np.linspace(dictionary["min"], dictionary["max"], dictionary["length"])
 
 
-def read_dict(fn, print_out=False):
+def read_dict(file_name, print_out=False):
     """Read a JSON file into a dictionary"""
-    try:
-        with open(fn, "r") as file:
-            dictionary = json.load(file)
-        if print_out:
+    with open(file_name, "r") as file:
+        dictionary = json.load(file)
+    if print_out:
             print(json.dumps(dictionary, indent=4))
-    except:
-        print("WARNING: exiting because file not found")
     return dictionary
 
 
