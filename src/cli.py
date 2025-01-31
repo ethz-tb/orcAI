@@ -1,6 +1,9 @@
 import argparse
 import pathlib
 
+from model import ORCAI_MODELS
+from Train_and_Test.train_model import train_model
+
 def orcai_cli():
     """
     Command line interface for ORCAI tool.
@@ -43,14 +46,17 @@ def orcai_cli():
     # train model
     parser_train = subparsers.add_parser("train", description = "train model")
     parser_train.add_argument(
+        "-m", "--model_name", help = "name of model",
+        choices = ORCAI_MODELS,
+        type = str,
+        required = True
+    )
+    parser_train.add_argument(
         "-d",
         "--data_dir",
         help = "path to directories where train/val/test data is (data_dir with / at the end)",
         type = str,
         required = True,
-    )
-    parser_train.add_argument(
-        "-m", "--model_name", help = "name of model", type = str, required = True
     )
     parser_train.add_argument(
         "-p",
@@ -66,7 +72,21 @@ def orcai_cli():
         action = "store_true",
         default = False,
     )
-    parser_train.set_defaults(func = _train_cli)
+    parser_train.add_argument(
+        "-calls",
+        "--calls_for_labeling",
+        help = "calls for labeling, 'default' or path to json file",
+        type = str,
+        default = "default"
+    )
+    parser_train.add_argument(
+        "-v",
+        "--verbosity",
+        help = "verbosity",
+        type = int,
+        default = 1,
+    )
+    parser_train.set_defaults(func = _train_model_cli)
 
     # parse the args and call func
     args = parser.parse_args()
@@ -82,13 +102,15 @@ def _hp_search_cli(args):
     )
 
 
-def _train_cli(args):
+def _train_model_cli(args):
     """helper function to unwrap environment passed by argparse"""
     train_model(
         model_name = args.model_name,
         data_dir = args.data_dir,
         project_dir = args.project_dir,
         load_weights = args.load_weights,
+        calls_for_labeling = args.calls_for_labeling,
+        verbosity = args.verbosity
     )
 
 
@@ -97,11 +119,3 @@ def hp_search(model_name, data_dir, project_dir):
     print(f"Model Name: {model_name}")
     print(f"Data Directory: {data_dir}")
     print(f"Project Directory: {project_dir}")
-
-
-def train_model(model_name, data_dir, project_dir, load_weights):
-    print("🐳 PLACEHOLDER TRAIN FUNCTION 🐳")
-    print(f"Model Name: {model_name}")
-    print(f"Data Directory: {data_dir}")
-    print(f"Project Directory: {project_dir}")
-    print(f"Load Weights: {load_weights}")

@@ -1,32 +1,7 @@
-# %%
-# import
 import tensorflow as tf
 from tensorflow.keras import layers, models, Model
 
-
-# build model from a choice of models
-
-
-def build_model(model_choice_dict, model_dict, input_shape, num_labels):
-    n_filters = len(model_dict["filters"])
-    output_shape = (input_shape[0] // 2**n_filters, num_labels)
-    if model_dict["name"] in model_choice_dict:
-        model = model_choice_dict[model_dict["name"]]()
-    else:
-        raise ValueError(f"Unknown model name: {model_dict['name']}")
-    print("  - model name:", model_dict["name"])
-    print("  - model input shape:", model.input_shape)
-    print("  - model output shape:", model.output_shape)
-    print("  - actual input_shape:", input_shape)
-    print("  - actual output_shape:", output_shape)
-    print("  - n_filters:", n_filters)
-    print("  - num_labels:", num_labels)
-    return model
-
-
 # CNN model with residual connection (corresponds to old mode)
-
-
 def build_cnn_res_model(input_shape, num_labels, filters, kernel_size, dropout_rate):
     inputs = tf.keras.Input(shape=input_shape)
 
@@ -108,8 +83,6 @@ def build_cnn_lstm_model(input_shape, num_labels):
 
 
 # CNN RES LSTM Model
-
-
 def build_cnn_res_lstm_model(
     input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units
 ):
@@ -248,10 +221,7 @@ def build_cnn_res_transformer_model(
     return tf.keras.Model(inputs, outputs)
 
 
-# %%
 # define masked binary crossentropy and masked binary accuracy
-
-
 def masked_binary_crossentropy(y_true, y_pred, mask_value=-1.0):
     """
     Custom binary cross-entropy loss function with label masking.
@@ -327,7 +297,6 @@ def reshape_labels(arr, n_filters):
         raise ValueError(
             "The number of rows in 'arr' must be divisible by 2**'n_filters'."
         )
-
 
 ### OLD / EXPERIMENTAL MODELS
 # Function to create model
@@ -520,3 +489,34 @@ def build_cnn_res_lstm_model_dropout_L2(input_shape, num_labels, filters):
     outputs = layers.Dense(num_labels, activation="sigmoid")(x)
 
     return tf.keras.Model(inputs, outputs)
+
+
+ORCAI_MODEL_FN = {
+    'cnn_res_model': build_cnn_res_model,
+    'cnn_res_lstm_model': build_cnn_res_lstm_model,
+    'cnn_res_transformer_model': build_cnn_res_transformer_model
+    }
+
+
+ORCAI_MODELS = list(ORCAI_MODEL_FN.keys())
+
+# build model from a choice of models
+def build_model(input_shape, num_labels, model_dict):
+    n_filters = len(model_dict["filters"])
+    output_shape = (input_shape[0] // 2**n_filters, num_labels)
+
+    if model_dict["name"] in ORCAI_MODELS:
+        model = ORCAI_MODEL_FN[model_dict["name"]](input_shape, num_labels, **model_dict)
+    else:
+        raise ValueError(f"Unknown model name: {model_dict['name']}")
+    
+    print("Build model:")
+    print("  - model name:", model_dict["name"])
+    print("  - model input shape:", model.input_shape)
+    print("  - model output shape:", model.output_shape)
+    print("  - actual input_shape:", input_shape)
+    print("  - actual output_shape:", output_shape)
+    print("  - n_filters:", n_filters)
+    print("  - num_labels:", num_labels)
+    return model
+      
