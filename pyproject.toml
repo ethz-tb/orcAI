@@ -26,3 +26,6 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/me/spam.git"
+
+[project.scripts]
+orcAI = "cli:orcai_cli"
