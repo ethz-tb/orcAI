@@ -30,14 +30,14 @@ def orcai_cli():
     parser_hp_search.add_argument(
         "-d",
         "--data_dir",
-        help = "path to directories where train/val/test data is (data_dir with / at the end)",
+        help = "path to directories where train/val/test data is",
         type = pathlib.Path,
         required = True,
     )
     parser_hp_search.add_argument(
         "-p",
         "--project_dir",
-        help = "name of project_dir (where all data is stored in project_dir/model_name/), output_dir with / at the end",
+        help = "name of project_dir (where all data is stored in project_dir/model_name/)",
         type = str,
         required = True,
     )
@@ -54,14 +54,14 @@ def orcai_cli():
     parser_train.add_argument(
         "-d",
         "--data_dir",
-        help = "path to directories where train/val/test data is (data_dir with / at the end)",
+        help = "path to directories where train/val/test data is",
         type = str,
         required = True,
     )
     parser_train.add_argument(
         "-p",
         "--project_dir",
-        help = "name of project_dir (where all data is stored in project_dir/model_name/), output_dir with / at the end",
+        help = "name of project_dir (where all data is stored in project_dir/model_name/)",
         type = str,
         required = True,
     )
