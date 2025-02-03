@@ -80,6 +80,13 @@ def orcai_cli():
         default = "default"
     )
     parser_train.add_argument(
+        "-tp",
+        "--transformer_parallel",
+        help = "transformer_parallel",
+        action = "store_true",
+        default = False,
+    )
+    parser_train.add_argument(
         "-v",
         "--verbosity",
         help = "verbosity",
@@ -110,6 +117,7 @@ def _train_model_cli(args):
         project_dir = args.project_dir,
         load_weights = args.load_weights,
         calls_for_labeling = args.calls_for_labeling,
+        transformer_parallel = args.transformer_parallel,
         verbosity = args.verbosity
     )
 

@@ -19,7 +19,11 @@ import load
 def count_params(trainable_weights):
     return np.sum([np.prod(w.shape) for w in trainable_weights])
 
-def train_model(model_name, data_dir, project_dir, load_weights, calls_for_labeling, verbosity):
+def train_model(model_name,
+                data_dir, project_dir,
+                load_weights, calls_for_labeling,
+                transformer_parallel = False,
+                verbosity=1):
     """Trains an orcAI model
     
     expects the following file structure:
@@ -86,7 +90,6 @@ def train_model(model_name, data_dir, project_dir, load_weights, calls_for_label
     model = mod.build_model(input_shape, num_labels, model_dict)
 
     #TRANSFORMER MODEL FIX
-    transformer_parallel = False
     if transformer_parallel:
         if model_name == "cnn_res_transformer_model":
             # Define model within strategy scope
