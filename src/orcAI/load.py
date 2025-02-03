@@ -11,8 +11,8 @@ from tensorflow.keras.utils import Sequence
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 
 # import local
-import auxiliary as aux
-import model as mod
+import orcAI.auxiliary as aux
+import orcAI.model as mod
 
 
 # Loader class

@@ -11,9 +11,9 @@ from tensorflow.keras.callbacks import (
 from tensorflow.keras.backend import count_params
 
 # import local
-from ..auxiliary import auxiliary as aux
-import model as mod
-import load
+import orcAI.auxiliary as aux
+import orcAI.model as mod
+import orcAI.load as load
 
 # model parameters
 def count_params(trainable_weights):
@@ -47,14 +47,14 @@ def train_model(model_name,
     file_paths = {
         "model_path": path.join(project_dir, "Results", model_name, model_name),
         "model_parameter": path.join(project_dir, "Results", model_name, "model.dict"),
-        "calls_labeling": files('data').joinpath('calls_for_labeling.json') if calls_for_labeling=="default" else calls_for_labeling,
+        "calls_labeling": files('orcAI.data').joinpath('calls_for_labeling.json') if calls_for_labeling=="default" else calls_for_labeling,
         "training_data": path.join(data_dir, "train_dataset"),
         "validation_data": path.join(data_dir, "val_dataset"),
         "test_data": path.join(data_dir, "test_dataset"),
         "history": path.join(project_dir, "Results", model_name, "training_history.json"),
         "confusion_matrices": path.join(project_dir , "Results", model_name, "confusion_matrices.json")
     }
-
+    print(file_paths)
     print("  - reading model parameters")
     model_dict = aux.read_dict(file_paths["model_parameter"], True)
     print("  - reading calls for labeling")

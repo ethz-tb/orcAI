@@ -1,8 +1,8 @@
 import argparse
 import pathlib
 
-from model import ORCAI_MODELS
-from Train_and_Test.train_model import train_model
+from orcAI.model import ORCAI_MODELS
+from orcAI.train_model import train_model
 
 def orcai_cli():
     """
