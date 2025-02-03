@@ -11,7 +11,7 @@ from tensorflow.keras.callbacks import (
 from tensorflow.keras.backend import count_params
 
 # import local
-import auxiliary as aux
+from ..auxiliary import auxiliary as aux
 import model as mod
 import load
 
