@@ -6,6 +6,7 @@ import sys
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import time
 
 import tensorflow as tf
 
@@ -28,10 +29,13 @@ else:
     pred_annot_file = "oo23_184a008_pred.txt"
     os.chdir("/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/")
 
+if os.path.exists(pred_annot_file):
+    print("WARNING: output annotation file already exists. Exiting...", pred_annot_file)
+    sys.exit()
 
 model_path = "FinalModel/model"
 # %%
-# Parameters
+# Parameters (HARD CODED HERE)
 calls_for_labeling_list = ["BR", "BUZZ", "HERDING", "PHS", "SS", "TAILSLAP", "WHISTLE"]
 input_shape = (736, 171, 1)  #  shape
 num_labels = 7  # Number of sound types
@@ -39,6 +43,16 @@ filters = [30, 40, 50, 60]
 kernel_size = 5
 dropout_rate = 0.4
 lstm_units = 64
+
+spectrogram_dict = {
+    "sampling_rate": 48000,
+    "nfft": 512,
+    "n_overlap": 256,
+    "freq_range": [0, 16000],
+    "quantiles": [0.01, 0.999],
+    "duration": 4,
+    "channel": 1,
+}
 
 
 # %%
@@ -77,7 +91,7 @@ model.compile(
 # %%
 # Generating spectrogram
 print("Load wav_file and generate spectrogram")
-print("  - spectrogram parameters:")
+print("  - spectrogram parameters (hard coded):")
 print("     - (down)sampling rate:", spectrogram_dict["sampling_rate"])
 print("     - nfft:", spectrogram_dict["nfft"])
 print("     - n_overlap:", spectrogram_dict["n_overlap"])
@@ -107,7 +121,7 @@ if spectrogram.shape[1] != input_shape[1]:
 # %%
 # Prediction
 print("Prediction of annotations for wav_file:", wav_file)
-
+start_time = time.time()
 # Parameters
 snippet_length = 736  # Time steps in a single snippet
 shift = snippet_length // 2  # Shift time steps for overlapping windows
@@ -128,6 +142,7 @@ snippets = np.array(
 print("  - prediction of snippets")
 
 snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
+
 predictions = model.predict(snippets)  # Shape: (num_snippets, 46, 7)
 
 # Step 3: Initialize arrays for aggregating predictions
@@ -177,11 +192,13 @@ df_predicted_labels = pd.DataFrame(
     }
 )
 print(f"  - found {len(df_predicted_labels)} acoustic signals")
+print(
+    f"  - time for prediction and preparing annotation file: {time.time()-start_time:.2f}"
+)
 
 # %%
 
 minimal_duration = 0.1
-print(f"  - eliminating calls with less then {minimal_duration} seconds duration")
 tmp = df_predicted_labels[
     (df_predicted_labels["stop"] - df_predicted_labels["start"]) < minimal_duration
 ]
@@ -189,8 +206,10 @@ tmp = tmp.groupby(["label"]).count()
 eliminated_calls = pd.DataFrame(
     {"label": list(tmp.index), "number": list(tmp["start"])}
 )
-print("  - eliminated signals")
-print(eliminated_calls.to_string())
+print(
+    f"  - number and type signals eliminated because shorter than {minimal_duration} seconds"
+)
+print(eliminated_calls.to_string(index=False))
 df_predicted_labels = df_predicted_labels[
     (df_predicted_labels["stop"] - df_predicted_labels["start"]) >= minimal_duration
 ]
