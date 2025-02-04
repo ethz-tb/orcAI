@@ -10,14 +10,12 @@ import time
 
 # import local
 import auxiliary as aux
-import spectrogram as spec
 
 
 # %%
 # functions
 def create_spectrogram(wav_file, spectrogram_dict):
     """creates spectrogram according to parameters in spectrogram_dict"""
-    print("  - creating spectrogram")
     start_time = time.time()
     recording, sr = librosa.load(
         wav_file,
@@ -28,7 +26,7 @@ def create_spectrogram(wav_file, spectrogram_dict):
         recording = recording[spectrogram_dict["channel"] - 1]
 
     load_time = time.time()
-    print(f"     - Time for loading wav file: {load_time - start_time:.2f} seconds")
+    print(f"  - Time for loading wav file: {load_time - start_time:.2f} seconds")
 
     # use matplotlib to generate spectrogram (OLD and slow version)
     # Sxx, f, t, im = plt.specgram(
@@ -59,14 +57,13 @@ def create_spectrogram(wav_file, spectrogram_dict):
         sr=spectrogram_dict["sampling_rate"],
         hop_length=spectrogram_dict["n_overlap"],
     )
+    print(f"  - Duration of wav file: {times[-1]:.2f} seconds")
 
     spectrogram = librosa.amplitude_to_db(
         np.abs(spectrogram), ref=np.max
     )  # Convert to power spectrogram (magnitude squared)
     spec_time = time.time()
-    print(
-        f"     - Time for generating spectrogram: {spec_time - load_time:.2f} seconds"
-    )
+    print(f"  - Time for generating spectrogram: {spec_time - load_time:.2f} seconds")
 
     # extract frequency range, clip according to quantiles, and normalise
     freqMinInd = np.argwhere(frequencies <= spectrogram_dict["freq_range"][0])[0][0]
@@ -84,7 +81,7 @@ def create_spectrogram(wav_file, spectrogram_dict):
     start_time = time.time()
     spectrogram = np.clip(spectrogram, lower_percentile, upper_percentile)
     clip_time = time.time()
-    print(f"     - Time for clipping: {clip_time - start_time:.2f} seconds")
+    print(f"  - Time for clipping: {clip_time - start_time:.2f} seconds")
 
     # Normalize the spectrogram to range [0, 1]
 
@@ -92,7 +89,7 @@ def create_spectrogram(wav_file, spectrogram_dict):
     max_val = np.max(spectrogram)
     spectrogram = (spectrogram - min_val) / (max_val - min_val)
     spec_time = time.time()
-    print(f"     - Time for normalisation: {spec_time - clip_time:.2f} seconds")
+    print(f"  - Time for normalisation: {spec_time - clip_time:.2f} seconds")
 
     # transpose spectogram
     spectrogram = spectrogram.T

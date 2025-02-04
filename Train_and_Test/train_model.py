@@ -31,7 +31,7 @@ interactive = aux.check_interactive()
 log_file = None
 
 if not interactive:
-    print("not interactive")
+    print("Command-line call:", " ".join(sys.argv))
     (computer, load_weights, data_dir, model_name, project_dir) = (
         aux.train_model_commandline_parse()
     )
@@ -40,7 +40,8 @@ else:
     data_dir = "/Users/sb/AI_data/tvtdata/"
     model_name = "cnn_res_model"
 
-if not data_dir.endswith("/") else data_dir = data_dir + "/"
+if not data_dir.endswith("/"):
+    data_dir = data_dir + "/"
 # %%
 # Read parameters
 print("Project directory:", project_dir)
@@ -62,6 +63,7 @@ for key, value in dicts.items():
 # %%
 # load data sets from local  disk
 print("Loading train, val and test datasets from disk:", data_dir)
+tf.config.set_soft_device_placement(True)
 start_time = time.time()
 train_dataset = load.reload_dataset(
     data_dir + "train_dataset", model_dict["batch_size"]
@@ -228,6 +230,7 @@ print("  - training history dictionary:", history.history)
 print("  - saving training history:", history_dict_file)
 with open(history_dict_file, "w") as f:
     f.write(str(history.history))
+
 
 # %%
 # Model evaluation

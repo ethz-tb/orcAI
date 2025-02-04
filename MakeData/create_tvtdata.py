@@ -21,6 +21,7 @@ aux.print_memory_usage()
 interactive = aux.check_interactive()
 
 if not interactive:
+    print("Command-line call:", " ".join(sys.argv))
     computer, project_dir, model_name = aux.create_tvtdata_commandline_parse()
 else:
     computer = "laptop"
@@ -41,7 +42,7 @@ dicts = {
 }
 
 for key, value in dicts.items():
-    print("  - reading", key)
+    print("  - reading", value)
     globals()[key] = aux.read_dict(value, True)
 
 

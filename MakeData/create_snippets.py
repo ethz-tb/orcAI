@@ -27,12 +27,13 @@ import annotation as ann
 # Read command line if interactive
 interactive = aux.check_interactive()
 if not interactive:
+    print("Command-line call:", " ".join(sys.argv))
     computer, project_dir, model_name, mode = aux.create_snippets_commandline_parse()
 else:
     computer = "laptop"
     model_name = "cnn_res_lstm_model"
     project_dir = "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/"
-    mode = "generate_new_snippets"
+    mode = "read_in_existing_snippets"
 
 
 # %%
@@ -69,60 +70,63 @@ def list_extract_snippets(
         + fnstem
         + "/labels/zarr.lbl"
     )
-    label_filepointer = zarr.open(fnlabel, mode="r")
-    fnlabel_list = (
-        directories_dict[computer]["root_dir_spectrograms"]
-        + fnstem
-        + "/labels/label_list.json"
-    )
-    label_list_dict = aux.read_dict(fnlabel_list, print_out=False)
-    label_names = list(label_list_dict.keys())
-    fn_times = (
-        directories_dict[computer]["root_dir_spectrograms"]
-        + fnstem
-        + "/spectrogram/times.json"
-    )
-    t_vector = aux.read_json_to_vector(fn_times)
-    delta_t = t_vector[1] - t_vector[0]
-    i_duration = int(
-        (2 ** model_dict["n_filters"])
-        * ((segments_dict["duration"] / delta_t) // (2 ** model_dict["n_filters"]))
-    )  # to make time axis divisible by 2 ** model_dict["n_filters"]
-    print(" - i_duration", i_duration)
-    label_duration_snippets = []
-    for i_segment in range(n_segments):  # iterate over all segments
-        print(" - segment", i_segment + 1, "of", n_segments)
-        slice = (0, 0)
-        for type in list(["train", "val", "test"]):  # iterate over type of snippet
-            slice = (slice[1], slice[1] + model_dict[type])
-            t_min = (i_segment + slice[0]) * segments_dict["length"]
-            for j in range(
-                int(
-                    model_dict[type]
-                    * segments_dict["length"]
-                    * segments_dict["per_sec"]
-                )
-            ):  # iterate over number of snippets per segment and type
-                t_max = (i_segment + slice[1]) * segments_dict[
-                    "length"
-                ] - segments_dict["duration"]
-                t_start = np.random.uniform(low=t_min, high=t_max, size=1)[0]
+    try:
+        label_filepointer = zarr.open(fnlabel, mode="r")
+        fnlabel_list = (
+            directories_dict[computer]["root_dir_spectrograms"]
+            + fnstem
+            + "/labels/label_list.json"
+        )
+        label_list_dict = aux.read_dict(fnlabel_list, print_out=False)
+        label_names = list(label_list_dict.keys())
+        fn_times = (
+            directories_dict[computer]["root_dir_spectrograms"]
+            + fnstem
+            + "/spectrogram/times.json"
+        )
+        t_vector = aux.read_json_to_vector(fn_times)
+        delta_t = t_vector[1] - t_vector[0]
+        n_filters = len(model_dict["filters"])
+        i_duration = int(
+            (2**n_filters) * ((segments_dict["duration"] / delta_t) // (2**n_filters))
+        )  # to make time axis divisible by 2 ** n_filters
+        print(" - i_duration", i_duration)
+        label_duration_snippets = []
+        for i_segment in range(n_segments):  # iterate over all segments
+            print(" - segment", i_segment + 1, "of", n_segments)
+            slice = (0, 0)
+            for type in list(["train", "val", "test"]):  # iterate over type of snippet
+                slice = (slice[1], slice[1] + model_dict[type])
+                t_min = (i_segment + slice[0]) * segments_dict["length"]
+                for j in range(
+                    int(
+                        model_dict[type]
+                        * segments_dict["length"]
+                        * segments_dict["per_sec"]
+                    )
+                ):  # iterate over number of snippets per segment and type
+                    t_max = (i_segment + slice[1]) * segments_dict[
+                        "length"
+                    ] - segments_dict["duration"]
+                    t_start = np.random.uniform(low=t_min, high=t_max, size=1)[0]
 
-                # Find the max index where entries are smaller than t_start
-                index_t_start = np.searchsorted(t_vector, t_start, side="left") - 1
-                # Find the min index where entries are smaller or equal to t_stop
-                index_t_stop = index_t_start + i_duration
-                label_chunk = label_filepointer[index_t_start:index_t_stop, :]
-                label_duration_snippet = label_chunk.sum(axis=0) * delta_t
-                label_duration_snippet[label_duration_snippet < 0] = np.nan
-                label_duration_snippets += [
-                    list([fnstem, type, index_t_start, index_t_stop])
-                    + list(label_duration_snippet)
-                ]
-    return pd.DataFrame(
-        label_duration_snippets,
-        columns=["fnstem", "type", "row_start", "row_stop"] + label_names,
-    )
+                    # Find the max index where entries are smaller than t_start
+                    index_t_start = np.searchsorted(t_vector, t_start, side="left") - 1
+                    # Find the min index where entries are smaller or equal to t_stop
+                    index_t_stop = index_t_start + i_duration
+                    label_chunk = label_filepointer[index_t_start:index_t_stop, :]
+                    label_duration_snippet = label_chunk.sum(axis=0) * delta_t
+                    label_duration_snippet[label_duration_snippet < 0] = np.nan
+                    label_duration_snippets += [
+                        list([fnstem, type, index_t_start, index_t_stop])
+                        + list(label_duration_snippet)
+                    ]
+        return pd.DataFrame(
+            label_duration_snippets,
+            columns=["fnstem", "type", "row_start", "row_stop"] + label_names,
+        )
+    except:
+        print("WARNING: cannot open label zarr file linked to", fnstem)
 
 
 def compute_snippet_stats(es):
@@ -169,7 +173,7 @@ def filter_no_label_snippets(es, fraction_removal, indices_no_label):
 # reading in or generating new snippets
 if mode == "read_in_existing_snippets":
     extracted_snippets = pd.read_csv(
-        project_dir + "Results/" "extracted_snippets.csv.gz"
+        project_dir + "Results/" + "extracted_snippets.csv.gz"
     )
 
 if mode == "generate_new_snippets":
@@ -209,6 +213,10 @@ if mode == "generate_new_snippets":
         fnstem_duration["duration"] // segments_dict["length"]
     ).astype(int)
 
+# %%
+# Generating new snippets
+if mode == "generate_new_snippets":
+
     # generating snippets for all fnstem
     len_iter = len(fnstem_duration)
     for iter in range(len_iter):
@@ -229,6 +237,7 @@ if mode == "generate_new_snippets":
                 directories_dict,
                 model_dict,
             )
+            first_es_created = True
         else:
             print(
                 "duration (",
@@ -239,7 +248,7 @@ if mode == "generate_new_snippets":
                 fnstem_duration.iloc[iter]["fnstem"],
                 ")",
             )
-        if iter == 0:
+        if iter == 0 and first_es_created:
             extracted_snippets = es
         else:
             extracted_snippets = pd.concat([extracted_snippets, es])
@@ -260,9 +269,20 @@ if mode == "generate_new_snippets":
 # statistics
 
 print("Statistics snippets: all extracted snippets")
-snippet_stats = compute_snippet_stats(extracted_snippets)
-print(snippet_stats.to_string())
-# computing indices of snippets without any label
+snippet_stats = {}
+for type in ["train", "val", "test"]:
+    snippet_stats[type] = compute_snippet_stats(
+        extracted_snippets[extracted_snippets["type"] == type]
+    )["total(s)"]
+index = list(pd.DataFrame(snippet_stats).index)
+for key, value in snippet_stats.items():
+    ll = []
+    for l in value:
+        ll += [aux.seconds_to_hms(l)]
+    snippet_stats[key] = ll
+snippet_stats = pd.DataFrame(snippet_stats)
+snippet_stats.index = index
+print(pd.DataFrame(snippet_stats).to_latex())
 indices_no_label = np.where(
     extracted_snippets[calls_for_labeling_list].sum(axis=1) <= 0.0000001
 )[0]
@@ -325,5 +345,8 @@ else:
     n = extract_snippets_dict["n_test"]
 test_df = extract_data_set(es, "test", n, directories_dict)
 
+
+# %%
+print("PROGRAM COMPLETED")
 
 # %%

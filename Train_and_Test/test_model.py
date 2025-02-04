@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # %%
 #  import
 import os
@@ -19,6 +20,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import auxiliary as aux
 import model as mod
 import plot
+import load
 
 
 computer = "laptop"
@@ -29,7 +31,7 @@ interactive = True
 
 interactive = aux.check_interactive()
 if not interactive:
-    print("not interactive")
+    print("Command-line call:", " ".join(sys.argv))
     (computer, data_dir, model_name, project_dir) = aux.train_model_commandline_parse()
 else:
     project_dir = "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/"
@@ -44,7 +46,7 @@ os.chdir(project_dir)
 print("READ IN PARAMETERS")
 dicts = {
     "directories_dict": "GenericParameters/directories.dict",
-    "model_dict": project_dir + "Results/" + model_name + "/model.dict",
+    "model_dict": "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/Results/Euler/Final/cnn_res_lstm_model_final/model.dict",
     "calls_for_labeling_list": "GenericParameters/calls_for_labeling.list",
 }
 for key, value in dicts.items():
@@ -61,7 +63,15 @@ test_df["t_start"] = test_df["row_start"] * delta_t
 test_df["t_stop"] = test_df["row_stop"] * delta_t
 test_df["t_start"] = test_df["t_start"].apply(aux.seconds_to_hms)
 test_df["t_stop"] = test_df["t_stop"].apply(aux.seconds_to_hms)
-test_df
+
+
+# %%
+# read in extracted snippets
+extracted_snippets = pd.read_csv(project_dir + "Results/" + "extracted_snippets.csv.gz")
+fnstems = list(extracted_snippets["fnstem"])
+extracted_snippets["fnstem_path"] = [
+    directories_dict[computer]["root_dir_spectrograms"] + x + "/" for x in fnstems
+]
 
 
 # %%
@@ -136,9 +146,8 @@ model = mod.build_model(model_choice_dict, model_dict, input_shape, num_labels)
 # Loading model weights
 print("Loading weights from stored model:", model_dict["name"])
 model.load_weights(
-    project_dir + "Results/" + model_dict["name"] + "/" + model_dict["name"]
+    "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/Results/Euler/Final/cnn_res_lstm_model_final/cnn_res_lstm_model"
 )
-
 
 # %%
 # Compiling Model
@@ -150,26 +159,6 @@ masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
     ),
     name="masked_binary_accuracy",
 )
-# Callbacks
-early_stopping = EarlyStopping(
-    monitor="val_masked_binary_accuracy",  # Use the validation metric
-    patience=model_dict["patience"],  # Number of epochs to wait for improvement
-    mode="max",  # Stop when accuracy stops increasing
-    restore_best_weights=True,  # Restore weights from the best epoch
-)
-model_checkpoint = ModelCheckpoint(
-    model_dict["name"],
-    monitor="val_masked_binary_accuracy",
-    save_best_only=True,
-    save_weights_only=True,
-)
-reduce_lr = ReduceLROnPlateau(
-    monitor="val_masked_binary_accuracy",  # Monitor your custom validation metric
-    factor=0.5,  # Reduce learning rate by a factor of 0.5
-    patience=3,  # Wait for 3 epochs of no improvement
-    min_lr=1e-6,  # Set a lower limit for the learning rate
-    verbose=1,  # Print updates to the console
-)
 
 model.compile(
     optimizer="adam",
@@ -178,19 +167,162 @@ model.compile(
     ),
     metrics=[masked_binary_accuracy_metric],
 )
+
 aux.print_memory_usage()
+
+# %%
+# run model on test data
+test_dataset = load.reload_dataset(data_dir + "test_dataset", model_dict["batch_size"])
+print("Evaluate model on test data:", model_dict["name"])
+test_loss, test_metric = model.evaluate(test_dataset)
+print(f"  - test loss: {test_loss}")
+print(f"  - test masked binary accuracy: {test_metric}")
+
+for spectrogram_batch, label_batch in test_dataset.take(1):
+    print(f"  - spectrogram batch shape: {spectrogram_batch.shape}")
+    print(f"  - Label batch shape: {label_batch.shape}")
+
+# Confusion matrices
+print(f"  - confusion matrices on test data:")
+# Extract true labels
+y_pred_batch = []
+y_true_batch = []
+i = 1
+len_test_data = len(test_dataset)
+print("  - predicting test data:")
+for spectrogram_batch, label_batch in test_dataset:
+    # print("  -", i, "of", len_test_data)
+    y_true_batch.append(label_batch.numpy())
+    y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
+    i += 1
+
+y_true_batch = np.concatenate(y_true_batch, axis=0)
+y_pred_batch = np.concatenate(y_pred_batch, axis=0)
+confusion_matrices = aux.compute_confusion_matrix(
+    y_true_batch, y_pred_batch, calls_for_labeling_list, mask_value=-1
+)
+aux.print_confusion_matrices(confusion_matrices)
+test_accuracy = mod.masked_binary_accuracy(
+    y_true_batch, y_pred_batch, mask_value=-1.0
+).numpy()
+
+print(
+    " - masked binary test accuracy based on select data (equivalent to train and val):",
+    test_accuracy,
+)
+
+# aux.write_dict(
+#     confusion_matrices,
+#     project_dir + "Results/" + model_dict["name"] + "/" + "/confusion_matrices",
+# )
+
+
+# %%
+# run model on test part of extracted_snippets
+test_all_df = extracted_snippets[["fnstem_path", "row_start", "row_stop"]][
+    extracted_snippets["type"] == "test"
+]
+test_all_df = test_all_df.sample(n=10000, replace=False).reset_index()
+batch_size = model_dict["batch_size"]
+n_filters = len(model_dict["filters"])
+shuffle = False
+test_all_loader = load.ChunkedMultiZarrDataLoader(
+    test_all_df,
+    batch_size=batch_size,
+    n_filters=n_filters,
+    shuffle=shuffle,
+)
+test_all_dataset = tf.data.Dataset.from_generator(
+    lambda: load.data_generator(test_all_loader),
+    output_signature=(
+        tf.TensorSpec(
+            shape=(spectrogram_batch.shape[1], spectrogram_batch.shape[2], 1),
+            dtype=tf.float32,
+        ),  # Single spectrogram shape
+        tf.TensorSpec(
+            shape=(label_batch.shape[1], label_batch.shape[2]), dtype=tf.float32
+        ),  # Single label shape
+    ),
+)
+test_all_dataset = test_all_dataset.batch(
+    batch_size, drop_remainder=True
+).prefetch(  # Batch size as defined in model_dict
+    buffer_size=tf.data.AUTOTUNE
+)
+total_batches = len(test_all_loader)  # Assuming test_all_loader supports len()
+
+test_all_dataset = test_all_dataset.apply(
+    tf.data.experimental.assert_cardinality(total_batches)
+)
+
+# %%
+print("Evaluate model on all snippets in test segments of wav:", model_dict["name"])
+test_loss, test_metric = model.evaluate(test_all_dataset)
+print(f"  - test loss: {test_loss}")
+print(f"  - test masked binary accuracy: {test_metric}")
+
+print(f"  - confusion matrices on all test snippets (not removing empty ones):")
+# Extract true labels
+y_pred_batch = []
+y_true_batch = []
+i = 1
+len_test_data_all = len(test_all_dataset)
+print("  - predicting test data on all snippets:")
+for spectrogram_batch, label_batch in test_all_dataset:
+    print("  -", i, "of", len_test_data)
+    y_true_batch.append(label_batch.numpy())
+    y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
+    i += 1
+
+y_true_batch = np.concatenate(y_true_batch, axis=0)
+y_pred_batch = np.concatenate(y_pred_batch, axis=0)
+confusion_matrices_test_all = aux.compute_confusion_matrix(
+    y_true_batch, y_pred_batch, calls_for_labeling_list, mask_value=-1
+)
+aux.print_confusion_matrices(confusion_matrices_test_all)
+test_all_accuracy = mod.masked_binary_accuracy(
+    y_true_batch, y_pred_batch, mask_value=-1.0
+).numpy()
+print(" - masked binary test accuracy based on all data:", test_all_accuracy)
+
+# aux.write_dict(
+#     confusion_matrices,
+#     project_dir + "Results/" + model_dict["name"] + "/" + "/confusion_matrices",
+# )
+
+
+# %%$
+# generate latex table for confusion matrices
+df = pd.DataFrame.from_dict(confusion_matrices, orient="index").reset_index()
+df.insert(1, "set", "select")
+df.rename(columns={"index": "label"}, inplace=True)
+df_all = pd.DataFrame.from_dict(
+    confusion_matrices_test_all, orient="index"
+).reset_index()
+df_all.insert(1, "set", "all")
+df_all.rename(columns={"index": "label"}, inplace=True)
+
+confusion_matrix_table = pd.concat([df, df_all])
+# confusion_matrix_table = confusion_matrix_table.sort_values(['label'])
+for col in ["TP", "FN", "FP", "TN"]:
+    confusion_matrix_table[col] = (confusion_matrix_table[col] * 100).round(3)
+
+print(confusion_matrix_table.to_latex(index=False))
+
+# %%
+
 
 # %%
 # show spec, lab_true, lab_pred for random element of test_df
 random_index = random.randint(0, len(test_df))
 predict = True
-spec1, lab_true, lab_pred, title = get_spec_labels(test_df, random_index, predict)
+spec, lab_true, lab_pred, title = get_spec_labels(test_df, random_index, predict)
 
-# lower_quantile, upper_quantile = np.quantile(spec, spectrogram_dict['quantiles'])
-# clipped_spec = np.clip(spec, lower_quantile, upper_quantile)
-# max_val = np.max(clipped_spec)
-# min_val = np.min(clipped_spec)
-# clipped_normed_spec = (clipped_spec-min_val)/(max_val - min_val)
+lower_quantile, upper_quantile = np.quantile(spec, [0.001, 0.999])
+clipped_spec = np.clip(spec, lower_quantile, upper_quantile)
+max_val = np.max(clipped_spec)
+min_val = np.min(clipped_spec)
+clipped_normed_spec = (clipped_spec - min_val) / (max_val - min_val)
 plot.plot_spec_and_labels(
     spec,
     calls_for_labeling_list,
@@ -198,6 +330,7 @@ plot.plot_spec_and_labels(
     lab_pred,
     title,
 )
+
 
 # %%
 extracted_snippets = pd.read_csv("extracted_snippets.csv.gz")

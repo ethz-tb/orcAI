@@ -22,6 +22,7 @@ import annotation as ann
 # Read command line if interactive
 interactive = aux.check_interactive()
 if not interactive:
+    print("Command-line call:", " ".join(sys.argv))
     (
         computer,
         project_dir,
@@ -110,12 +111,7 @@ for i in range(len(wav_file_list)):
             spectrogram_dict["channel"],
         )
 
-        if os.path.exists(wav_file.replace(".wav", ".txt")):
-            root_dir_spectrograms = directories_dict[computer]["root_dir_spectrograms"]
-        else:
-            root_dir_spectrograms = (
-                directories_dict[computer]["root_dir_spectrograms"] + "wo_annot/"
-            )
+        root_dir_spectrograms = directories_dict[computer]["root_dir_spectrograms"]
         spec.save_spectrogram(wav_file_list[i], root_dir_spectrograms, spectrogram_dict)
 
 # %%

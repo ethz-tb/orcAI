@@ -1,7 +1,0 @@
-# EXTRACT SNIPPETS
-module load stack/2024-06 python/3.11.6 py-pip
-source myenv/bin/activate
-python extract_snippets.py -c euler -m read_in_existing_snippets
-
-
-#

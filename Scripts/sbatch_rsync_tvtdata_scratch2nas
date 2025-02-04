@@ -1,0 +1,2 @@
+#!/bin/bash
+ sbatch --time=239 --wrap="rsync -avz  /cluster/scratch/sbonhoef/tvtdata/* /nfs/nas22/fs2201/usys_ibz_tb_data/TB-data/Sebastian_Bonhoeffer/OrcAI/tvtdata/"

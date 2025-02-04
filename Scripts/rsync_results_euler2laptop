@@ -1,0 +1,2 @@
+#!/bin/bash
+rsync -avz  sbonhoef@euler.ethz.ch:OrcAI_project/Results/* /Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/Results/Euler/
