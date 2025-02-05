@@ -68,45 +68,6 @@ def build_cnn_res_model(input_shape, num_labels, filters, kernel_size, dropout_r
     return tf.keras.Model(inputs, outputs)
 
 
-def build_cnn_lstm_model(input_shape, num_labels):
-    """
-    Build a CNN-LSTM model for multi-label spectrogram classification with 16-fold downsampling.
-
-    Args:
-        input_shape (tuple): Shape of the input spectrogram (time_steps, freq_bins, 1).
-        num_labels (int): Number of sound types to classify.
-
-    Returns:
-        tf.keras.Model: Compiled model.
-    """
-    inputs = tf.keras.Input(shape=input_shape)
-
-    # 2D CNN layers for spatial feature extraction
-    x = layers.Conv2D(16, (3, 3), activation="relu", padding="same")(inputs)
-    x = layers.MaxPooling2D((2, 2))(x)  # Downsample by 2
-    x = layers.Conv2D(32, (3, 3), activation="relu", padding="same")(x)
-    x = layers.MaxPooling2D((2, 2))(x)  # Downsample by 2
-
-    # Flatten the frequency axis to prepare for temporal processing
-    x = layers.Reshape(target_shape=(-1, x.shape[-2] * x.shape[-1]))(
-        x
-    )  # Shape: (time_steps_spectrogram//4, freq_bins*channels)
-
-    # Adjust the time resolution to match 46 time steps
-    x = layers.MaxPooling1D(pool_size=4)(x)  # Downsample by 4 (184 -> 46)
-
-    # Bidirectional GRU instead of LSTM for temporal dependency learning
-    x = layers.Bidirectional(layers.GRU(64, return_sequences=True))(x)
-
-    # Dense layer for multi-label classification with dropout
-    x = layers.Dense(64, activation="relu")(x)
-    x = layers.Dropout(0.3)(x)
-    outputs = layers.Dense(num_labels, activation="sigmoid")(x)
-
-    model = models.Model(inputs, outputs)
-    return model
-
-
 # CNN RES LSTM Model
 
 
@@ -220,7 +181,81 @@ def build_cnn_res_transformer_model(
         lambda inputs: tf.range(start=0, limit=inputs[0], delta=1)
     )([seq_len])
     positional_encodings = layers.Embedding(
-        input_dim=1000,  # Upper limit for sequence length
+        input_dim=50,  # Upper limit for sequence length
+        output_dim=embedding_dim,  # Match transformer_units to x's embedding dimension
+    )(positional_encodings)
+    x += positional_encodings
+
+    # Transformer layers
+    for _ in range(2):
+        attention_output = layers.MultiHeadAttention(
+            num_heads=num_heads, key_dim=embedding_dim
+        )(x, x)
+        attention_output = layers.Dropout(dropout_rate)(attention_output)
+        x = layers.Add()([x, attention_output])
+        x = layers.LayerNormalization(epsilon=1e-6)(x)
+
+        feed_forward = layers.Dense(embedding_dim, activation="relu")(x)
+        feed_forward = layers.Dense(embedding_dim)(feed_forward)
+        feed_forward = layers.Dropout(dropout_rate)(feed_forward)
+        x = layers.Add()([x, feed_forward])
+        x = layers.LayerNormalization(epsilon=1e-6)(x)
+
+    # Output layers
+    x = layers.Dense(128, activation="relu")(x)
+    x = layers.Dropout(dropout_rate)(x)
+    outputs = layers.Dense(num_labels, activation="sigmoid")(x)
+
+    return tf.keras.Model(inputs, outputs)
+
+
+# cnn_res_transformer model
+def build_cnn_res_transformer_model_new(
+    input_shape,
+    num_labels,
+    filters,
+    kernel_size,
+    dropout_rate,
+    num_heads,
+):
+    inputs = tf.keras.Input(shape=input_shape)
+
+    # CNN layers
+    x = layers.Conv2D(16, kernel_size, padding="same")(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    previous_block_activation = x
+
+    for size in filters:
+        x = layers.Activation("relu")(x)
+        x = layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.Activation("relu")(x)
+        x = layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.MaxPooling2D((3, 2), strides=(2, 2), padding="same")(x)
+        residual = layers.Conv2D(size, 1, strides=(2, 2), padding="same")(
+            previous_block_activation
+        )
+        x = layers.add([x, residual])
+        previous_block_activation = x
+
+    # Final CNN block
+    x = layers.SeparableConv2D(36, kernel_size, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+
+    # Reshape and add positional encodings
+    x = layers.Reshape(target_shape=(-1, x.shape[-2] * x.shape[-1]))(x)
+    seq_len = tf.shape(x)[1]
+    embedding_dim = 396
+
+    # Positional encodings with matching dimensions
+    positional_encodings = layers.Lambda(
+        lambda inputs: tf.range(start=0, limit=inputs[0], delta=1)
+    )([seq_len])
+    positional_encodings = layers.Embedding(
+        input_dim=50,  # Upper limit for sequence length
         output_dim=embedding_dim,  # Match transformer_units to x's embedding dimension
     )(positional_encodings)
     x += positional_encodings
