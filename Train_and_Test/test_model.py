@@ -321,7 +321,7 @@ misclassification_table_pred_vs_true
 test_all_df = extracted_snippets[["fnstem_path", "row_start", "row_stop"]][
     extracted_snippets["type"] == "test"
 ]
-# test_all_df = test_all_df.sample(n=50000, replace=False).reset_index()
+test_all_df = test_all_df.sample(n=100000, replace=False).reset_index()
 batch_size = model_dict["batch_size"]
 n_filters = len(model_dict["filters"])
 shuffle = False
@@ -419,7 +419,7 @@ misclassification_table_all_true_vs_pred = compute_misclassification_table(
     "pred",
     calls_for_labeling_list,
 )
-misclassification_table_all_true_vs_pred
+print(misclassification_table_all_true_vs_pred.to_latex())
 
 # %%
 # compute misclassification table pred vs true
@@ -435,7 +435,7 @@ misclassification_table_all_pred_vs_true = compute_misclassification_table(
     "true",
     calls_for_labeling_list,
 )
-misclassification_table_all_pred_vs_true
+print(misclassification_table_all_pred_vs_true.to_latex())
 
 
 # %%
@@ -476,3 +476,5 @@ if show_random_snippets:
         lab_pred,
         title,
     )
+
+# %%
