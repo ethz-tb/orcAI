@@ -337,6 +337,44 @@ def masked_binary_accuracy(y_true, y_pred, mask_value=-1.0):
     return tf.reduce_mean(accuracy)
 
 
+def masked_f1_score(y_true, y_pred, mask_value=-1.0, threshold=0.5):
+    """
+    Custom F1 metric that excludes masked labels.
+
+    Args:
+        y_true: True labels (with -1 or mask_value indicating missing labels).
+        y_pred: Predicted probabilities or logits.
+        mask_value: Value used to mask missing labels.
+        threshold: Threshold above which predictions are considered 1, else 0.
+
+    Returns:
+        Scalar F1 score (float) for the unmasked elements in this batch.
+    """
+    # Ensure y_true is float
+    y_true = tf.cast(y_true, tf.float32)
+    mask_value = tf.cast(mask_value, tf.float32)
+
+    # Create a mask for valid (non-masked) elements
+    mask = tf.not_equal(y_true, mask_value)
+    y_true_masked = tf.boolean_mask(y_true, mask)
+    y_pred_masked = tf.boolean_mask(y_pred, mask)
+
+    # Binarize the predictions
+    y_pred_bin = tf.cast(y_pred_masked >= threshold, tf.float32)
+
+    # Calculate confusion matrix components
+    tp = tf.reduce_sum(y_true_masked * y_pred_bin)  # 1 & 1
+    fp = tf.reduce_sum((1 - y_true_masked) * y_pred_bin)  # 0 & 1
+    fn = tf.reduce_sum(y_true_masked * (1 - y_pred_bin))  # 1 & 0
+
+    # Avoid division by zero
+    precision = tp / (tp + fp + 1e-7)
+    recall = tp / (tp + fn + 1e-7)
+
+    f1 = 2 * precision * recall / (precision + recall + 1e-7)
+    return f1
+
+
 def reshape_labels(arr, n_filters):
     """
     Reshape and process labels using the provided number of filters (n_filters) to achieve a time resolution on labels which is time_steps_spectogram//2**n_filters.

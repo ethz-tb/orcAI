@@ -156,28 +156,34 @@ else:
 # %%
 # Compiling Model
 print("Compiling model:", model_dict["name"])
-# Metric
+# Metrics
 masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
     fn=lambda y_true, y_pred: mod.masked_binary_accuracy(
         y_true, y_pred, mask_value=-1.0
     ),
     name="masked_binary_accuracy",
 )
+masked_f1_metric = tf.keras.metrics.MeanMetricWrapper(
+    fn=lambda y_true, y_pred: masked_f1_score(
+        y_true, y_pred, mask_value=-1.0, threshold=0.5
+    ),
+    name="masked_f1_score",
+)
 # Callbacks
 early_stopping = EarlyStopping(
-    monitor="val_masked_binary_accuracy",  # Use the validation metric
+    monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
     patience=model_dict["patience"],  # Number of epochs to wait for improvement
     mode="max",  # Stop when accuracy stops increasing
     restore_best_weights=True,  # Restore weights from the best epoch
 )
 model_checkpoint = ModelCheckpoint(
     project_dir + "Results/" + model_dict["name"] + "/" + model_dict["name"],
-    monitor="val_masked_binary_accuracy",
+    monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
     save_best_only=True,
     save_weights_only=True,
 )
 reduce_lr = ReduceLROnPlateau(
-    monitor="val_masked_binary_accuracy",  # Monitor your custom validation metric
+    monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
     factor=0.5,  # Reduce learning rate by a factor of 0.5
     patience=3,  # Wait for 3 epochs of no improvement
     min_lr=1e-6,  # Set a lower limit for the learning rate
@@ -188,7 +194,7 @@ model.compile(
     loss=lambda y_true, y_pred: mod.masked_binary_crossentropy(
         y_true, y_pred, mask_value=-1.0
     ),
-    metrics=[masked_binary_accuracy_metric],
+    metrics=[masked_binary_accuracy_metric, masked_f1_metric],
 )
 
 

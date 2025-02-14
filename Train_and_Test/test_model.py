@@ -216,13 +216,111 @@ print(
 #     project_dir + "Results/" + model_dict["name"] + "/" + "/confusion_matrices",
 # )
 
+y_pred_batch_test = y_pred_batch
+y_true_batch_test = y_true_batch
+
+
+# %%
+# Functions to compute misclassification matrix
+def stack_batch(batch):
+    stacked = np.vstack(batch).astype(int)
+    return stacked
+
+
+def get_mask_for_rows_with_atmost_one_1(mat):
+    count_ones_per_row = np.sum(mat == 1, axis=1)
+    # Create a boolean mask: True if the row has <= 1 '1'
+    mask = count_ones_per_row <= 1
+    return mask
+
+
+def compute_misclassification_table(mat1, mat2, suffix1, suffix2, calls_list):
+    cm = np.zeros((num_labels + 1, num_labels + 1))
+    for row_index in range(mat1.shape[0]):
+        col_mat1_equal_one = np.where(mat1[row_index, :] == 1)[0]
+        cols_mat2_equal_one = np.where(mat2[row_index, :] == 1)[0]
+        if len(col_mat1_equal_one) == 1:
+            if (
+                mat2[row_index, col_mat1_equal_one] != -1
+            ):  # only proceed if column in second matrix is not masked
+                if len(cols_mat2_equal_one) > 0:
+                    for cp_i in cols_mat2_equal_one:
+                        cm[col_mat1_equal_one, cp_i] += 1 / len(cols_mat2_equal_one)
+                else:
+                    cm[col_mat1_equal_one, num_labels] += 1
+        if len(col_mat1_equal_one) == 0:
+            if len(cols_mat2_equal_one) > 0:
+                for cp_i in cols_mat2_equal_one:
+                    cm[num_labels, cp_i] += 1 / len(cols_mat2_equal_one)
+            else:
+                cm[num_labels, num_labels] += 1
+        if len(col_mat1_equal_one) > 1:
+            print("WARNING: more than one 1 in row of matrix y_true_stacked_drop")
+
+    # normalize confusion matrix
+    row_sum = np.sum(cm, axis=1, keepdims=True)
+    cm = cm / row_sum
+    cm = np.around(cm, 3)
+    col_names = [suffix2 + "_" + x for x in calls_list]
+    col_names += [suffix2 + "_NOLABEL"]
+    row_names = [suffix1 + "_" + x for x in calls_list]
+    row_names += [suffix1 + "_NOLABEL"]
+    misclassification_table = pd.DataFrame(cm)
+    misclassification_table.columns = col_names
+    misclassification_table.index = row_names
+    misclassification_table["fraction_time"] = np.around(row_sum / sum(row_sum), 5)
+
+    return misclassification_table
+
+
+# %%
+# Convert to binary and stack batch
+# convert y_pred_batch to binary values
+y_pred_binary_batch_test = (y_pred_batch_test >= 0.5).astype(int)
+# stack y_true_batch and y_pred_binary_batch_test
+y_true_stacked = stack_batch(y_true_batch)
+y_pred_binary_stacked = stack_batch(y_pred_binary_batch_test)
+
+# %%
+# compute misclassification table true vs pred
+# get mask for those rows where there is at most one 1 (i.e. avoid overlapping labels)
+mask = get_mask_for_rows_with_atmost_one_1(y_true_stacked)
+# drop rows with overlapping labels in y_true_stacked
+y_true_stacked_drop = y_true_stacked[mask]
+y_pred_binary_stacked_drop = y_pred_binary_stacked[mask]
+# compute misclassification
+misclassification_table_true_vs_pred = compute_misclassification_table(
+    y_true_stacked_drop,
+    y_pred_binary_stacked_drop,
+    "true",
+    "pred",
+    calls_for_labeling_list,
+)
+misclassification_table_true_vs_pred
+
+# %%
+# compute misclassification table pred vs true
+# get mask for those rows where there is at most one 1 (i.e. avoid overlapping labels)
+mask = get_mask_for_rows_with_atmost_one_1(y_pred_binary_stacked)
+# drop rows with overlapping labels in y_true_stacked
+y_true_stacked_drop = y_true_stacked[mask]
+y_pred_binary_stacked_drop = y_pred_binary_stacked[mask]
+misclassification_table_pred_vs_true = compute_misclassification_table(
+    y_pred_binary_stacked_drop,
+    y_true_stacked_drop,
+    "pred",
+    "true",
+    calls_for_labeling_list,
+)
+misclassification_table_pred_vs_true
+
 
 # %%
 # run model on test part of extracted_snippets
 test_all_df = extracted_snippets[["fnstem_path", "row_start", "row_stop"]][
     extracted_snippets["type"] == "test"
 ]
-test_all_df = test_all_df.sample(n=10000, replace=False).reset_index()
+# test_all_df = test_all_df.sample(n=50000, replace=False).reset_index()
 batch_size = model_dict["batch_size"]
 n_filters = len(model_dict["filters"])
 shuffle = False
@@ -256,6 +354,7 @@ test_all_dataset = test_all_dataset.apply(
 )
 
 # %%
+# Evaluate on all snippets rather than just test
 print("Evaluate model on all snippets in test segments of wav:", model_dict["name"])
 test_loss, test_metric = model.evaluate(test_all_dataset)
 print(f"  - test loss: {test_loss}")
@@ -268,8 +367,11 @@ y_true_batch = []
 i = 1
 len_test_data_all = len(test_all_dataset)
 print("  - predicting test data on all snippets:")
+print("     - # snippets:", len_test_data)
 for spectrogram_batch, label_batch in test_all_dataset:
-    print("  -", i, "of", len_test_data)
+    print(".", sep="")
+    if i % 80 == 0:
+        print("")
     y_true_batch.append(label_batch.numpy())
     y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
     i += 1
@@ -290,8 +392,52 @@ print(" - masked binary test accuracy based on all data:", test_all_accuracy)
 #     project_dir + "Results/" + model_dict["name"] + "/" + "/confusion_matrices",
 # )
 
+y_pred_batch_all = y_pred_batch
+y_true_batch_all = y_true_batch
 
-# %%$
+# %%
+# Convert to binary and stack batch
+# convert y_pred_batch to binary values
+y_pred_binary_batch_all = (y_pred_batch_all >= 0.5).astype(int)
+# stack y_true_batch and y_pred_binary_batch_all
+y_true_stacked = stack_batch(y_true_batch_all)
+y_pred_binary_stacked = stack_batch(y_pred_binary_batch_all)
+
+# %%
+# compute misclassification table true vs pred
+# get mask for those rows where there is at most one 1 (i.e. avoid overlapping labels)
+mask = get_mask_for_rows_with_atmost_one_1(y_true_stacked)
+# drop rows with overlapping labels in y_true_stacked
+y_true_stacked_drop = y_true_stacked[mask]
+y_pred_binary_stacked_drop = y_pred_binary_stacked[mask]
+# compute misclassification
+misclassification_table_all_true_vs_pred = compute_misclassification_table(
+    y_true_stacked_drop,
+    y_pred_binary_stacked_drop,
+    "true",
+    "pred",
+    calls_for_labeling_list,
+)
+misclassification_table_all_true_vs_pred
+
+# %%
+# compute misclassification table pred vs true
+# get mask for those rows where there is at most one 1 (i.e. avoid overlapping labels)
+mask = get_mask_for_rows_with_atmost_one_1(y_pred_binary_stacked)
+# drop rows with overlapping labels in y_true_stacked
+y_true_stacked_drop = y_true_stacked[mask]
+y_pred_binary_stacked_drop = y_pred_binary_stacked[mask]
+misclassification_table_all_pred_vs_true = compute_misclassification_table(
+    y_pred_binary_stacked_drop,
+    y_true_stacked_drop,
+    "pred",
+    "true",
+    calls_for_labeling_list,
+)
+misclassification_table_all_pred_vs_true
+
+
+# %%
 # generate latex table for confusion matrices
 df = pd.DataFrame.from_dict(confusion_matrices, orient="index").reset_index()
 df.insert(1, "set", "select")
@@ -310,206 +456,22 @@ for col in ["TP", "FN", "FP", "TN"]:
 print(confusion_matrix_table.to_latex(index=False))
 
 # %%
-
-
-# %%
 # show spec, lab_true, lab_pred for random element of test_df
-random_index = random.randint(0, len(test_df))
-predict = True
-spec, lab_true, lab_pred, title = get_spec_labels(test_df, random_index, predict)
+show_random_snippets = False
+if show_random_snippets:
+    random_index = random.randint(0, len(test_df))
+    predict = True
+    spec, lab_true, lab_pred, title = get_spec_labels(test_df, random_index, predict)
 
-lower_quantile, upper_quantile = np.quantile(spec, [0.001, 0.999])
-clipped_spec = np.clip(spec, lower_quantile, upper_quantile)
-max_val = np.max(clipped_spec)
-min_val = np.min(clipped_spec)
-clipped_normed_spec = (clipped_spec - min_val) / (max_val - min_val)
-plot.plot_spec_and_labels(
-    spec,
-    calls_for_labeling_list,
-    lab_true,
-    lab_pred,
-    title,
-)
-
-
-# %%
-extracted_snippets = pd.read_csv("extracted_snippets.csv.gz")
-from matplotlib import pyplot as plt
-
-fns = extracted_snippets["fnstem"].iloc[1]
-plt.plot(
-    extracted_snippets["row_start"][
-        (extracted_snippets["fnstem"] == fns) & (extracted_snippets["type"] == "train")
-    ],
-    extracted_snippets["row_stop"][
-        (extracted_snippets["fnstem"] == fns) & (extracted_snippets["type"] == "train")
-    ],
-    marker=".",
-    linestyle="",
-    color="red",
-)
-plt.plot(
-    extracted_snippets["row_start"][
-        (extracted_snippets["fnstem"] == fns) & (extracted_snippets["type"] == "test")
-    ],
-    extracted_snippets["row_stop"][
-        (extracted_snippets["fnstem"] == fns) & (extracted_snippets["type"] == "test")
-    ],
-    marker=".",
-    linestyle="",
-    color="green",
-)
-plt.plot(
-    extracted_snippets["row_start"][
-        (extracted_snippets["fnstem"] == fns) & (extracted_snippets["type"] == "val")
-    ],
-    extracted_snippets["row_stop"][
-        (extracted_snippets["fnstem"] == fns) & (extracted_snippets["type"] == "val")
-    ],
-    marker=".",
-    linestyle="",
-    color="blue",
-)
-
-# %%
-# Parameters
-snippet_length = spec.shape[0]  # Time steps in a single snippet
-shift = snippet_length // 2  # Shift time steps for overlapping windows
-num_labels = lab_pred.shape[1]  # Number of label types
-prediction_length = lab_pred.shape[0]  # Output time steps per prediction
-time_steps_per_output_step = snippet_length // prediction_length
-
-# wavfile = "/Volumes/OrcAI-Disk/Acoustics/2023_dtag/oo23_184a008.wav"
-
-# full_spectrogram, frequencies, times = spec.create_spectrogram(wavfile, spectrogram_dict)
-
-zarr_file = zarr.open(
-    "/Users/sb/AI_data/spectrograms/wo_annot/oo23_184a008/spectrogram/zarr.spc",
-    mode="r",
-)
-full_spectrogram = zarr_file[:]
-# Step 1: Create overlapping spectrogram snippets
-num_snippets = (full_spectrogram.shape[0] - snippet_length) // shift + 1
-snippets = np.array(
-    [
-        full_spectrogram[i * shift : i * shift + snippet_length]
-        for i in range(num_snippets)
-    ]
-)  # Shape: (num_snippets, 736, 171)
-
-# Step 2: Model predictions for all snippets
-# Reshape snippets for model input (e.g., add channel dimension if required)
-snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
-predictions = model.predict(snippets)  # Shape: (num_snippets, 46, 7)
-
-# Step 3: Initialize arrays for aggregating predictions
-total_time_steps = full_spectrogram.shape[0] // time_steps_per_output_step
-aggregated_predictions = np.zeros(
-    (total_time_steps, num_labels)
-)  # Shape: (3600 * 46, 7)
-overlap_count = np.zeros(
-    total_time_steps
-)  # To track the number of overlaps per time step
-
-# Step 4: Overlay predictions
-for i, prediction in enumerate(predictions):
-    start = i * (
-        shift // time_steps_per_output_step
-    )  # Start index in aggregated predictions
-    end = start + prediction_length  # End index
-    aggregated_predictions[start:end] += prediction  # Add predictions
-    overlap_count[start:end] += 1  # Track overlaps
-
-# Step 5: Average the overlapping predictions (or apply another pooling function)
-valid_mask = overlap_count > 0
-aggregated_predictions[valid_mask] /= overlap_count[valid_mask, np.newaxis]
-threshold = 0.5 / np.max(overlap_count)  # larger than 0.5 in at least one snippet
-binary_prediction = np.zeros((total_time_steps, num_labels)).astype(int)
-binary_prediction[aggregated_predictions > threshold] = 1
-
-# Step 6: compute for each label in binary_prediction start and end of consecutive entries of ones
-calls_for_labeling_list
-
-row_starts = []
-row_stops = []
-label_names = []
-for i, label_name in enumerate(calls_for_labeling_list):
-    if sum(binary_prediction[:, i]) > 0:
-        row_start, row_stop = aux.find_consecutive_ones(binary_prediction[:, i])
-        row_starts += list(row_start)
-        row_stops += list(row_stop)
-        label_names += [label_name] * len(row_start)
-df_predicted_labels = pd.DataFrame(
-    {
-        "label": label_names,
-        "start": np.asarray(row_starts) * delta_t * time_steps_per_output_step,
-        "stop": np.asarray(row_stops) * delta_t * time_steps_per_output_step,
-    }
-)
-df_predicted_labels
-print(len(df_predicted_labels))
-df_predicted_labels[(df_predicted_labels["stop"] - df_predicted_labels["start"]) > 0.1]
-tmp = df_predicted_labels.sort_values(by="start").reset_index().drop(columns=["index"])
-tmp[["start", "stop", "label"]].to_csv("tmp.txt", sep="\t", index=False)
-
-
-# %%
-import json
-import os
-import pandas as pd
-
-# Path to the hyperparameter logs directory
-log_dir = "cnn_res_lstm_model/hyperparameter_logs/"
-
-# Find all trial files
-trial_files = [f for f in os.listdir(log_dir) if f.startswith("trial_")]
-
-# Initialize a list to store trial data
-trial_data = []
-
-# Loop through each trial file
-for trial_file in trial_files:
-    trial_path = os.path.join(log_dir, trial_file)
-
-    # Load the trial data
-    with open(trial_path + "/trial.json", "r") as f:
-        trial_info = json.load(f)
-
-    # Extract hyperparameters
-    hps = trial_info["hyperparameters"]["values"]  # Hyperparameters for this trial
-
-    # Extract metrics
-    metrics = trial_info.get("metrics", {}).get("metrics", {})
-    if "val_masked_binary_accuracy" in metrics:
-        val_accuracy = metrics["val_masked_binary_accuracy"]["observations"][0]["value"]
-    else:
-        val_accuracy = None
-
-    # Append trial data
-    trial_data.append({"trial_id": trial_file, **hps, "val_accuracy": val_accuracy})
-
-# Convert to a DataFrame for analysis
-df = pd.DataFrame(trial_data)
-
-# Display the DataFrame
-print(df)
-
-# Sort by validation accuracy
-df_sorted = df.sort_values(by="val_accuracy", ascending=False)
-print("Top Trials by Validation Accuracy:")
-print(df_sorted)
-
-
-# %%
-pred_tmp = model.predict(snippets[21:22, :, :, :])
-pred_tmp[pred_tmp > 0.5] = 1
-pred_tmp[pred_tmp <= 0.5] = 0
-pred_tmp = pred_tmp.astype(int)
-pred_tmp
-# %%
-tmp = predictions[21, :, :]
-tmp[tmp > 0.5] = 1
-tmp[tmp <= 0.5] = 0
-tmp = tmp.astype(int)
-tmp
-# %%
+    lower_quantile, upper_quantile = np.quantile(spec, [0.001, 0.999])
+    clipped_spec = np.clip(spec, lower_quantile, upper_quantile)
+    max_val = np.max(clipped_spec)
+    min_val = np.min(clipped_spec)
+    clipped_normed_spec = (clipped_spec - min_val) / (max_val - min_val)
+    plot.plot_spec_and_labels(
+        spec,
+        calls_for_labeling_list,
+        lab_true,
+        lab_pred,
+        title,
+    )
