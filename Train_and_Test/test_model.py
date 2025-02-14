@@ -170,55 +170,6 @@ model.compile(
 
 aux.print_memory_usage()
 
-# %%
-# run model on test data
-test_dataset = load.reload_dataset(data_dir + "test_dataset", model_dict["batch_size"])
-print("Evaluate model on test data:", model_dict["name"])
-test_loss, test_metric = model.evaluate(test_dataset)
-print(f"  - test loss: {test_loss}")
-print(f"  - test masked binary accuracy: {test_metric}")
-
-for spectrogram_batch, label_batch in test_dataset.take(1):
-    print(f"  - spectrogram batch shape: {spectrogram_batch.shape}")
-    print(f"  - Label batch shape: {label_batch.shape}")
-
-# Confusion matrices
-print(f"  - confusion matrices on test data:")
-# Extract true labels
-y_pred_batch = []
-y_true_batch = []
-i = 1
-len_test_data = len(test_dataset)
-print("  - predicting test data:")
-for spectrogram_batch, label_batch in test_dataset:
-    # print("  -", i, "of", len_test_data)
-    y_true_batch.append(label_batch.numpy())
-    y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
-    i += 1
-
-y_true_batch = np.concatenate(y_true_batch, axis=0)
-y_pred_batch = np.concatenate(y_pred_batch, axis=0)
-confusion_matrices = aux.compute_confusion_matrix(
-    y_true_batch, y_pred_batch, calls_for_labeling_list, mask_value=-1
-)
-aux.print_confusion_matrices(confusion_matrices)
-test_accuracy = mod.masked_binary_accuracy(
-    y_true_batch, y_pred_batch, mask_value=-1.0
-).numpy()
-
-print(
-    " - masked binary test accuracy based on select data (equivalent to train and val):",
-    test_accuracy,
-)
-
-# aux.write_dict(
-#     confusion_matrices,
-#     project_dir + "Results/" + model_dict["name"] + "/" + "/confusion_matrices",
-# )
-
-y_pred_batch_test = y_pred_batch
-y_true_batch_test = y_true_batch
-
 
 # %%
 # Functions to compute misclassification matrix
@@ -271,6 +222,56 @@ def compute_misclassification_table(mat1, mat2, suffix1, suffix2, calls_list):
     misclassification_table["fraction_time"] = np.around(row_sum / sum(row_sum), 5)
 
     return misclassification_table
+
+
+# %%
+# run model on test data
+test_dataset = load.reload_dataset(data_dir + "test_dataset", model_dict["batch_size"])
+print("Evaluate model on test data:", model_dict["name"])
+test_loss, test_metric = model.evaluate(test_dataset)
+print(f"  - test loss: {test_loss}")
+print(f"  - test masked binary accuracy: {test_metric}")
+
+for spectrogram_batch, label_batch in test_dataset.take(1):
+    print(f"  - spectrogram batch shape: {spectrogram_batch.shape}")
+    print(f"  - Label batch shape: {label_batch.shape}")
+
+# Confusion matrices
+print(f"  - confusion matrices on test data:")
+# Extract true labels
+y_pred_batch = []
+y_true_batch = []
+i = 1
+len_test_data = len(test_dataset)
+print("  - predicting test data:")
+for spectrogram_batch, label_batch in test_dataset:
+    # print("  -", i, "of", len_test_data)
+    y_true_batch.append(label_batch.numpy())
+    y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
+    i += 1
+
+y_true_batch = np.concatenate(y_true_batch, axis=0)
+y_pred_batch = np.concatenate(y_pred_batch, axis=0)
+confusion_matrices = aux.compute_confusion_matrix(
+    y_true_batch, y_pred_batch, calls_for_labeling_list, mask_value=-1
+)
+aux.print_confusion_matrices(confusion_matrices)
+test_accuracy = mod.masked_binary_accuracy(
+    y_true_batch, y_pred_batch, mask_value=-1.0
+).numpy()
+
+print(
+    " - masked binary test accuracy based on select data (equivalent to train and val):",
+    test_accuracy,
+)
+
+# aux.write_dict(
+#     confusion_matrices,
+#     project_dir + "Results/" + model_dict["name"] + "/" + "/confusion_matrices",
+# )
+
+y_pred_batch_test = y_pred_batch
+y_true_batch_test = y_true_batch
 
 
 # %%
