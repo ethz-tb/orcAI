@@ -60,18 +60,9 @@ def train_model(model_name,
     print("  - reading calls for labeling")
     calls_for_labeling_list = aux.read_dict(file_paths["calls_labeling"], True)
 
-    # this complicates static code analysis
-    #
-    # dicts = {
-    #     "model_dict": path.join(project_dir, "Results", model_name, "/model.dict"),
-    #     "calls_for_labeling_list": path.join("GenericParameters/calls_for_labeling.list"),
-    # }
-    # for key, value in dicts.items():
-    #     print("  - reading", key)
-    #     globals()[key] = aux.read_dict(value, True)
-
     # load data sets from local disk
     print("Loading train, val and test datasets from disk:", data_dir)
+    tf.config.set_soft_device_placement(True)
     start_time = time.time()
     train_dataset = load.reload_dataset(file_paths["training_data"], model_dict["batch_size"])
     val_dataset = load.reload_dataset(file_paths["validation_data"], model_dict["batch_size"])
@@ -84,12 +75,12 @@ def train_model(model_name,
         print("Labels batch shape:", labels.numpy().shape)
 
     # Build model
-    input_shape = tuple(spectrogram.shape[1:])  #  shape
+    input_shape = tuple(spectrogram.shape[1:])  # shape
     num_labels = labels.shape[2]  # Number of sound types
 
     model = mod.build_model(input_shape, num_labels, model_dict)
 
-    #TRANSFORMER MODEL FIX
+    # TRANSFORMER MODEL FIX
     if transformer_parallel:
         if model_name == "cnn_res_transformer_model":
             # Define model within strategy scope
@@ -114,7 +105,6 @@ def train_model(model_name,
                     metrics=[masked_binary_accuracy_metric],
                 )
 
-    # %%
     # Loading model weights if required
     print("Fitting mode:", model_name)
     if load_weights:
@@ -125,28 +115,35 @@ def train_model(model_name,
 
     # Compiling Model
     print("Compiling model:", model_name)
-    # Metric
+    # Metrics
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
         fn=lambda y_true, y_pred: mod.masked_binary_accuracy(
             y_true, y_pred, mask_value=-1.0
         ),
         name="masked_binary_accuracy",
     )
+    masked_f1_metric = tf.keras.metrics.MeanMetricWrapper(
+        fn=lambda y_true, y_pred: mod.masked_f1_score(
+            y_true, y_pred, mask_value=-1.0, threshold=0.5
+        ),
+        name="masked_f1_score",
+    )
+
     # Callbacks
     early_stopping = EarlyStopping(
-        monitor="val_masked_binary_accuracy",  # Use the validation metric
+        monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
         patience=model_dict["patience"],  # Number of epochs to wait for improvement
         mode="max",  # Stop when accuracy stops increasing
         restore_best_weights=True,  # Restore weights from the best epoch
     )
     model_checkpoint = ModelCheckpoint(
         file_paths["model_path"],
-        monitor="val_masked_binary_accuracy",
+        monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
         save_best_only=True,
         save_weights_only=True,
     )
     reduce_lr = ReduceLROnPlateau(
-        monitor="val_masked_binary_accuracy",  # Monitor your custom validation metric
+        monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
         factor=0.5,  # Reduce learning rate by a factor of 0.5
         patience=3,  # Wait for 3 epochs of no improvement
         min_lr=1e-6,  # Set a lower limit for the learning rate
@@ -157,7 +154,7 @@ def train_model(model_name,
         loss=lambda y_true, y_pred: mod.masked_binary_crossentropy(
             y_true, y_pred, mask_value=-1.0
         ),
-        metrics=[masked_binary_accuracy_metric],
+        metrics=[masked_binary_accuracy_metric, masked_f1_metric],
     )
 
     total_params = model.count_params()
