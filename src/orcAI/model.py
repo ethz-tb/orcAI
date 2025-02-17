@@ -374,13 +374,14 @@ def reshape_labels(arr, n_filters):
 
 
 ORCAI_MODEL_FN = {
-    'cnn_res_model': build_cnn_res_model,
+    "cnn_res_model": build_cnn_res_model,
     "cnn_res_lstm_model": build_cnn_res_lstm_model,
-    'cnn_res_transformer_model': build_cnn_res_transformer_model
-    }
-
+    "cnn_res_transformer_model": build_cnn_res_transformer_model,
+    "cnn_res_transformer_model_new": build_cnn_res_transformer_model_new,
+}
 
 ORCAI_MODELS = list(ORCAI_MODEL_FN.keys())
+
 
 # build model from a choice of models
 def build_model(input_shape, num_labels, model_dict):
@@ -388,10 +389,12 @@ def build_model(input_shape, num_labels, model_dict):
     output_shape = (input_shape[0] // 2**n_filters, num_labels)
 
     if model_dict["name"] in ORCAI_MODELS:
-        model = ORCAI_MODEL_FN[model_dict["name"]](input_shape, num_labels, **model_dict)
+        model = ORCAI_MODEL_FN[model_dict["name"]](
+            input_shape, num_labels, **model_dict
+        )
     else:
         raise ValueError(f"Unknown model name: {model_dict['name']}")
-    
+
     print("Build model:")
     print("  - model name:", model_dict["name"])
     print("  - model input shape:", model.input_shape)
@@ -401,4 +404,3 @@ def build_model(input_shape, num_labels, model_dict):
     print("  - n_filters:", n_filters)
     print("  - num_labels:", num_labels)
     return model
-      
