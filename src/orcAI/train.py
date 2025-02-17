@@ -3,16 +3,12 @@ import numpy as np
 import tensorflow as tf
 from os import path
 from importlib.resources import files
-from tensorflow.keras.callbacks import (
-    EarlyStopping,
-    ModelCheckpoint,
-    ReduceLROnPlateau,
-)
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.backend import count_params
 
 # import local
 import orcAI.auxiliary as aux
-import orcAI.model as mod
+import orcAI.architectures as arch
 import orcAI.load as load
 
 # model parameters
@@ -78,7 +74,7 @@ def train_model(model_name,
     input_shape = tuple(spectrogram.shape[1:])  # shape
     num_labels = labels.shape[2]  # Number of sound types
 
-    model = mod.build_model(input_shape, num_labels, model_dict)
+    model = arch.build_model(input_shape, num_labels, model_dict)
 
     # TRANSFORMER MODEL FIX
     if transformer_parallel:
@@ -87,19 +83,19 @@ def train_model(model_name,
             strategy = tf.distribute.MirroredStrategy()
             with strategy.scope():
                 masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-                    fn=lambda y_true, y_pred: mod.masked_binary_accuracy(
+                    fn=lambda y_true, y_pred: arch.masked_binary_accuracy(
                         y_true, y_pred, mask_value=-1.0
                     ),
                     name="masked_binary_accuracy",
                 )
-                model = mod.build_cnn_res_transformer_model(
+                model = arch.build_cnn_res_transformer_model(
                     input_shape,
                     num_labels,
                     **model_dict
                 )
                 model.compile(
                     optimizer="adam",
-                    loss=lambda y_true, y_pred: mod.masked_binary_crossentropy(
+                    loss=lambda y_true, y_pred: arch.masked_binary_crossentropy(
                         y_true, y_pred, mask_value=-1.0
                     ),
                     metrics=[masked_binary_accuracy_metric],
@@ -117,13 +113,13 @@ def train_model(model_name,
     print("Compiling model:", model_name)
     # Metrics
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: mod.masked_binary_accuracy(
+        fn=lambda y_true, y_pred: arch.masked_binary_accuracy(
             y_true, y_pred, mask_value=-1.0
         ),
         name="masked_binary_accuracy",
     )
     masked_f1_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: mod.masked_f1_score(
+        fn=lambda y_true, y_pred: arch.masked_f1_score(
             y_true, y_pred, mask_value=-1.0, threshold=0.5
         ),
         name="masked_f1_score",
@@ -151,7 +147,7 @@ def train_model(model_name,
     )
     model.compile(
         optimizer="adam",
-        loss=lambda y_true, y_pred: mod.masked_binary_crossentropy(
+        loss=lambda y_true, y_pred: arch.masked_binary_crossentropy(
             y_true, y_pred, mask_value=-1.0
         ),
         metrics=[masked_binary_accuracy_metric, masked_f1_metric],
@@ -210,7 +206,7 @@ def train_model(model_name,
         y_true_batch, y_pred_batch, calls_for_labeling_list, mask_value=-1
     )
     aux.print_confusion_matrices(confusion_matrices)
-    mod.masked_binary_accuracy(y_true_batch, y_pred_batch, mask_value=-1.0)
+    arch.masked_binary_accuracy(y_true_batch, y_pred_batch, mask_value=-1.0)
     aux.write_dict(
         confusion_matrices,
         file_paths["confusion_matrices"],
