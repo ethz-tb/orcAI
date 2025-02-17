@@ -3,7 +3,7 @@ from tensorflow.keras import layers
 
 
 # CNN model with residual connection (corresponds to old model)
-def build_cnn_res_model(input_shape, num_labels, filters, kernel_size, dropout_rate):
+def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_rate):
     inputs = tf.keras.Input(shape=input_shape)
 
     # Entry block
@@ -45,7 +45,7 @@ def build_cnn_res_model(input_shape, num_labels, filters, kernel_size, dropout_r
 
 
 # CNN RES LSTM Model
-def build_cnn_res_lstm_model(
+def build_cnn_res_lstm_arch(
     input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units
 ):
     inputs = tf.keras.Input(shape=input_shape)
@@ -110,7 +110,7 @@ def build_cnn_res_lstm_model(
 
 
 # cnn_res_transformer model
-def build_cnn_res_transformer_model(
+def build_cnn_res_transformer_arch(
     input_shape,
     num_labels,
     filters,
@@ -184,7 +184,7 @@ def build_cnn_res_transformer_model(
 
 
 # cnn_res_transformer model
-def build_cnn_res_transformer_model_new(
+def build_cnn_res_transformer_arch_new(
     input_shape,
     num_labels,
     filters,
@@ -373,14 +373,14 @@ def reshape_labels(arr, n_filters):
         )
 
 
-ORCAI_MODEL_FN = {
-    "cnn_res_model": build_cnn_res_model,
-    "cnn_res_lstm_model": build_cnn_res_lstm_model,
-    "cnn_res_transformer_model": build_cnn_res_transformer_model,
-    "cnn_res_transformer_model_new": build_cnn_res_transformer_model_new,
+ORCAI_ARCHITECTURES_FN = {
+    "cnn_res_model": build_cnn_res_arch,
+    "cnn_res_lstm_model": build_cnn_res_lstm_arch,
+    "cnn_res_transformer_model": build_cnn_res_transformer_arch,
+    "cnn_res_transformer_model_new": build_cnn_res_transformer_arch_new,
 }
 
-ORCAI_MODELS = list(ORCAI_MODEL_FN.keys())
+ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
 
 
 # build model from a choice of models
@@ -388,8 +388,8 @@ def build_model(input_shape, num_labels, model_dict):
     n_filters = len(model_dict["filters"])
     output_shape = (input_shape[0] // 2**n_filters, num_labels)
 
-    if model_dict["name"] in ORCAI_MODELS:
-        model = ORCAI_MODEL_FN[model_dict["name"]](
+    if model_dict["name"] in ORCAI_ARCHITECTURES:
+        model = ORCAI_ARCHITECTURES_FN[model_dict["name"]](
             input_shape, num_labels, **model_dict
         )
     else:
