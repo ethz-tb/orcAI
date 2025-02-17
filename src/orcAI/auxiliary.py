@@ -292,7 +292,7 @@ def print_memory_usage():
     import psutil
 
     process = psutil.Process(os.getpid())
-    print(f"Memory usage: {process.memory_info().rss / 1024 ** 2} MB")
+    print(f"  - memory usage: {process.memory_info().rss / 1024 ** 2} MB")
 
 
 def check_interactive():
@@ -445,6 +445,71 @@ def print_confusion_matrices(confusion_matrices):
         print(f"   Actual:    POS | {100*cm['TP']:.5f} | {100*cm['FN']:.5f} ")
         print(f"              -------------------------- ")
         print(f"   Actual:    NEG | {100*cm['FP']:.5f} | {100*cm['TN']:.5f} ")
+    return
+
+
+def latex_confusion_matrices(confusion_matrices):
+    print("\\begin{table}[h]\n\\centering\n\\begin{tabular}{c c}\n")
+    for label, cms in confusion_matrices.items():
+        cm1 = cms["cm"]
+        cm2 = cms["cm_all"]
+        print("\\begin{tabularx}{0.5\\textwidth}{|l|c|c|}")
+        print("\\hline")
+        print(
+            "\\multicolumn{3}{|c|}{\\", label, ", total=", cm1["Total"], "}\\\\", sep=""
+        )
+        print("\\hline")
+        print("  & pred POS & pred NEG \\\\")
+        print("\\hline")
+        print(
+            "act POS  & ",
+            np.around(100 * cm1["TP"], 5),
+            "&",
+            np.around(100 * cm1["FN"], 5),
+            "\\\\",
+        )
+        print("\\hline")
+        print(
+            "act NEG  & ",
+            np.around(100 * cm1["FP"], 5),
+            "&",
+            np.around(100 * cm1["TN"], 5),
+            "\\\\",
+        )
+        print("\\hline")
+        print("\\end{tabularx}")
+
+        print("&")
+
+        print("\\begin{tabularx}{0.5\\textwidth}{|l|c|c|}")
+        print("\\hline")
+        print(
+            "\\multicolumn{3}{|c|}{\\", label, ", total=", cm2["Total"], "}\\\\", sep=""
+        )
+        print("\\hline")
+        print("  & pred POS & pred NEG \\\\")
+        print("\\hline")
+        print(
+            "act POS  & ",
+            np.around(100 * cm2["TP"], 5),
+            "&",
+            np.around(100 * cm2["FN"], 5),
+            "\\\\",
+        )
+        print("\\hline")
+        print(
+            "act NEG  & ",
+            np.around(100 * cm2["FP"], 5),
+            "&",
+            np.around(100 * cm2["TN"], 5),
+            "\\\\",
+        )
+        print("\\hline")
+        print("\\end{tabularx} \\\\")
+
+    print("\\end{tabular}")
+    print("\\end{table}\n")
+
     return
 
 
@@ -872,7 +937,7 @@ def create_tvtdata_commandline_parse():
         project_dir = args.project_dir
         print("project_dir:", project_dir)
     else:
-        print('WARNING: exiting because "output_dir" not specified')
+        print('WARNING: exiting because "project_dir" not specified')
         exit
     if args.model_name != None:
         model_name = args.model_name
@@ -881,3 +946,37 @@ def create_tvtdata_commandline_parse():
         print('WARNING: exiting because "model_name" not specified')
         exit
     return computer, project_dir, model_name
+
+
+def predict_wav2annot_commandline_parse():
+    """parse command line arguments"""
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-w",
+        "--wav_file",
+        help="name of input wav_file",
+        type=str,
+    )
+    parser.add_argument(
+        "-o",
+        "--pred_annot_file",
+        help="name of input wav_file",
+        type=str,
+    )
+    args = parser.parse_args()
+    if args.wav_file != None:
+        wav_file = args.wav_file
+        print("wav_file:", wav_file)
+    else:
+        print('WARNING: exiting because "wav_file" not specified')
+        exit
+    if args.pred_annot_file != None:
+        pred_annot_file = args.pred_annot_file
+        print("pred_annot_file:", pred_annot_file)
+    else:
+        print('WARNING: exiting because "pred_annot_file" not specified')
+        exit
+
+    return wav_file, pred_annot_file

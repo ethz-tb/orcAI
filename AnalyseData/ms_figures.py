@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import json
 import sys
 import matplotlib.colors as mcolors
+import numpy as np
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -15,14 +16,14 @@ import auxiliary as aux
 # directories
 project_dir = "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/"
 os.chdir(project_dir)
-data_dir = project_dir + "/Results/Laptop/Final/"
+data_dir = project_dir + "/Results/Euler/Final/"
 msfigure_dir = project_dir + "AnalyseData/MSFigures/"
 
 # %%
 # load histories of model training
 
 
-models = []"cnn_res_model", "cnn_res_lstm_model", "cnn_res_transformer_model"]
+models = ["cnn_res_model", "cnn_res_lstm_model", "cnn_res_transformer_model"]
 
 histories = {}
 for mod in models:
@@ -35,16 +36,31 @@ for mod in models:
     parsed_data = json.loads(valid_json_data)
     histories[mod] = parsed_data
 
+# %%
+# print max validation accuracy for each model
+print("Maximal validation accuracy:")
+for mod in models:
+    print(
+        "  - model:",
+        mod,
+        "accuracy:",
+        np.around(100 * np.max(histories[mod]["val_masked_binary_accuracy"]), 1),
+        "%",
+    )
 
 # %%
 # Plot training and validation loss
-plt.figure(figsize=(12, 6))
+plt.figure(figsize=(13, 6))
 
 cols = list(mcolors.TABLEAU_COLORS.values())[0:3]  # solid cols
 x_offset = 0
 y_offset = 1.05
 linestyles = {"loss": "dotted", "val_loss": "solid"}
-models_colors = {"cnn_res_model":cols[0], "cnn_res_lstm_model":cols[1], "cnn_res_transformer_model":cols[2]}
+models_colors = {
+    "cnn_res_model": cols[0],
+    "cnn_res_lstm_model": cols[1],
+    "cnn_res_transformer_model": cols[2],
+}
 # Subplot 1: Training Loss
 plt.subplot(1, 3, 1)
 for i, mod in enumerate(histories.keys()):
@@ -60,15 +76,20 @@ for i, mod in enumerate(histories.keys()):
 plt.xlabel("Epochs")
 plt.ylabel("Masked loss")
 model_legend_handles = [
-    plt.Line2D([0], [0], color=color, lw=2, label=model) for model, color in models_colors.items()
+    plt.Line2D([0], [0], color=color, lw=2, label=model)
+    for model, color in models_colors.items()
 ]
+linestyles_1 = {"training": "dotted", "validation": "solid"}
+
 style_legend_handles = [
-    plt.Line2D([0], [0], color="black", linestyle=linestyles[style], lw=2, label=style)
-    for style in list(linestyles.keys())
+    plt.Line2D(
+        [0], [0], color="black", linestyle=linestyles_1[style], lw=2, label=style
+    )
+    for style in list(linestyles_1.keys())
 ]
-first_legend = plt.legend(handles=model_legend_handles,loc="upper right")
+first_legend = plt.legend(handles=model_legend_handles, loc="upper right")
 plt.gca().add_artist(first_legend)  # Add the first legend to the plot
-plt.legend(handles=style_legend_handles, loc="lower left")
+plt.legend(handles=style_legend_handles, loc="right")
 plt.grid()
 plt.text(
     x_offset,
@@ -96,7 +117,7 @@ for i, mod in enumerate(histories.keys()):
         )
 plt.xlabel("Epochs")
 plt.ylabel("Masked accuracy")
-#plt.title("Validation Accuracy")
+# plt.title("Validation Accuracy")
 # plt.legend()
 plt.grid()
 plt.text(
@@ -148,7 +169,7 @@ import pandas as pd
 
 # %%
 # Directory containing trials
-trials_dir = "cnn_res_lstm_model/hp_logs/lstm/"
+trials_dir = data_dir + "cnn_res_lstm_model/hp_logs/lstm1/"
 
 # Collect trial results
 trial_data = []
@@ -186,7 +207,7 @@ for i, factor in enumerate(factors):
     sns.boxplot(x=factor, y="validation accuracy", data=df_trials, ax=axes[i])
 
 # Show the plot
-plt.savefig("MSFigures/hyperparam_boxplot.pdf")
+plt.savefig(project_dir + "AnalyseData/MSFigures/hyperparam_boxplot.pdf")
 plt.show()
 
 

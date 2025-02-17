@@ -30,10 +30,11 @@ aux.print_memory_usage()
 interactive = aux.check_interactive()
 
 if not interactive:
+    print("Command-line call:", " ".join(sys.argv))
     (
         computer,
-        model_name,
         data_dir,
+        model_name,
         project_dir,
     ) = aux.hyperparameter_search_commandline_parse()
 else:
@@ -61,7 +62,7 @@ dicts = {
     + "/hyperparameter.dict",
 }
 for key, value in dicts.items():
-    print("  - reading", key)
+    print("  - reading", value, flush=True)
     globals()[key] = aux.read_dict(value, True)
 
 # %%
@@ -161,7 +162,7 @@ if not hyperparameter_dict["multi_gpu"]:
 start_time = time.time()
 if hyperparameter_dict["multi_gpu"]:
     gpus = tf.config.list_physical_devices("GPU")
-    print("  - Paralell: # gpus", len(gpus))
+    print("  -  Parallel: # gpus", len(gpus))
 
     def model_builder(hp):
         hp_filters = hp.Choice(
@@ -203,6 +204,18 @@ if hyperparameter_dict["multi_gpu"]:
             executions_per_trial=1,
         )
 
+    early_stopping = EarlyStopping(
+        monitor="val_masked_binary_accuracy",  # Use the validation metric
+        patience=5,  # Number of epochs to wait for improvement
+        mode="max",  # Stop when accuracy stops increasing
+        restore_best_weights=True,  # Restore weights from the best epoch
+    )
+    model_checkpoint = ModelCheckpoint(
+        model_dict["name"],
+        monitor="val_masked_binary_accuracy",
+        save_best_only=True,
+        save_weights_only=True,
+    )
     tuner.search(
         train_dataset,
         validation_data=val_dataset,

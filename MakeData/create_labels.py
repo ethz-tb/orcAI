@@ -24,6 +24,7 @@ import annotation as ann
 
 interactive = aux.check_interactive()
 if not interactive:
+    print("Command-line call:", " ".join(sys.argv))
     computer, project_dir = aux.create_labels_commandline_parse()
 else:
     computer = "laptop"
