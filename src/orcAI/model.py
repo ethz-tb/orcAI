@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 
-# CNN model with residual connection (corresponds to old mode)
+# CNN model with residual connection (corresponds to old model)
 def build_cnn_res_model(input_shape, num_labels, filters, kernel_size, dropout_rate):
     inputs = tf.keras.Input(shape=input_shape)
 
