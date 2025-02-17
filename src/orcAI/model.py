@@ -375,7 +375,7 @@ def reshape_labels(arr, n_filters):
 
 ORCAI_MODEL_FN = {
     'cnn_res_model': build_cnn_res_model,
-    'cnn_res_lstm_model': build_cnn_res_lstm_model,
+    "cnn_res_lstm_model": build_cnn_res_lstm_model,
     'cnn_res_transformer_model': build_cnn_res_transformer_model
     }
 
