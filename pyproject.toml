@@ -21,7 +21,8 @@ dependencies = [
     "librosa",
     "Ipython",
     "psutil",
-    "matplotlib"
+    "matplotlib",
+    "click"
 ]
 
 [project.urls]
