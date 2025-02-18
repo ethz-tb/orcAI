@@ -32,13 +32,13 @@ def count_params(trainable_weights):
 @click.option("-m", "--model_parameter", "model_parameter_path",
     help="Path to a JSON file containing model specifications",
     type=click.Path(exists=True, readable=True, resolve_path=True),
-    default=str(files("orcAI.data").joinpath("default_model_parameter.json")),
+    default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
     show_default=True,
 )
 @click.option("-lc", "--label_calls", "label_calls_path",
     help="Path to a JSON file containing calls for labeling",
     type=click.Path(exists=True, readable=True, resolve_path=True),
-    default=str(files("orcAI.data").joinpath("default_calls.json")), show_default=True,
+    default=str(files("orcAI.defaults").joinpath("default_calls.json")), show_default=True,
 )
 @click.option("-lw", "--load_weights",
     is_flag=True,
@@ -51,8 +51,8 @@ def count_params(trainable_weights):
 )
 @click.option("-v", "--verbosity", type=click.IntRange(0, 1), default=0, show_default=True)
 def train(data_dir, output_dir,
-          model_parameter_path = str(files("orcAI.data").joinpath("default_model_parameter.json")),
-          label_calls_path = str(files("orcAI.data").joinpath("default_calls.json")),
+          model_parameter_path = str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
+          label_calls_path = str(files("orcAI.defaults").joinpath("default_calls.json")),
           load_weights = False,
           transformer_parallel = False,
           verbosity = 1):
