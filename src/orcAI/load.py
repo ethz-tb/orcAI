@@ -271,7 +271,7 @@ def create_dataset_list(loader_list, model_dict, spectrogram_shape, label_shape)
 
 # reload tf dataset
 def reload_dataset(file_path, batch_size):
-    dataset = tf.data.Dataset.load(file_path)
+    dataset = tf.data.Dataset.load(str(file_path))
     dataset = (
         dataset.shuffle(buffer_size=1000)
         .batch(batch_size, drop_remainder=True)  # Batch size as defined in model_dict

@@ -2,7 +2,7 @@ import click
 import time
 import numpy as np
 import tensorflow as tf
-from os import path
+from pathlib import Path
 from importlib.resources import files
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.backend import count_params
@@ -11,7 +11,6 @@ from tensorflow.keras.backend import count_params
 import orcAI.auxiliary as aux
 import orcAI.architectures as arch
 import orcAI.load as load
-from orcAI.auxiliary import Messenger
 
 # model parameters
 def count_params(trainable_weights):
@@ -60,7 +59,7 @@ def train(data_dir, output_dir,
     
     """
     # Initialize messenger
-    msgr = Messenger(verbosity=verbosity)
+    msgr = aux.Messenger(verbosity=verbosity)
 
     msgr.part("OrcAI - training model")
     msgr.info(f"Output directory: {output_dir}")
@@ -79,13 +78,13 @@ def train(data_dir, output_dir,
     msgr.info(label_calls)
 
     file_paths = {
-        "training_data": path.join(data_dir, "train_dataset"),
-        "validation_data": path.join(data_dir, "val_dataset"),
-        "test_data": path.join(data_dir, "test_dataset"),
-        "model": path.join(output_dir, model_name),
-        "weights": path.join(output_dir, model_name, model_name+".weights.h5"),
-        "history": path.join(output_dir, model_name, "training_history.json"),
-        "confusion_matrices": path.join(output_dir, "confusion_matrices.json")
+        "training_data": Path(data_dir, "train_dataset"),
+        "validation_data": Path(data_dir, "val_dataset"),
+        "test_data": Path(data_dir, "test_dataset"),
+        "model": Path(output_dir, model_name),
+        "weights": Path(output_dir, model_name, model_name+".weights.h5"),
+        "history": Path(output_dir, model_name, "training_history.json"),
+        "confusion_matrices": Path(output_dir, "confusion_matrices.json")
     }
 
     # load data sets from local disk
@@ -243,7 +242,7 @@ def train(data_dir, output_dir,
 
     aux.write_dict(
         model_parameter,
-        path.join(
+        Path(
             file_paths["model"],
             time.strftime("%Y%m%dT%H%M_",time.localtime(time.time())) + "model_parameter.json"
         )
