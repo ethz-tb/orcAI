@@ -1,3 +1,4 @@
+import click
 import time
 import numpy as np
 import tensorflow as tf
@@ -10,16 +11,85 @@ from tensorflow.keras.backend import count_params
 import orcAI.auxiliary as aux
 import orcAI.architectures as arch
 import orcAI.load as load
+from orcAI.auxiliary import Messenger
 
 # model parameters
 def count_params(trainable_weights):
     return np.sum([np.prod(w.shape) for w in trainable_weights])
 
-def train_model(model_name,
-                data_dir, project_dir,
-                load_weights, calls_for_labeling,
-                transformer_parallel = False,
-                verbosity=1):
+@click.command(
+    help="Train a model on the given data",
+    short_help="Train a model on the given data",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+)
+@click.argument(
+    "data_dir",
+    type=click.Path(
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=False,
+        readable=True,
+        resolve_path=True,
+        allow_dash=False,
+        path_type=None,
+        executable=False,
+    ),
+)
+@click.argument(
+    "output_dir",
+    type=click.Path(
+        exists=False,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        readable=True,
+        resolve_path=True,
+        allow_dash=False,
+        path_type=None,
+        executable=False,
+    ),
+)
+@click.option(
+    "-m",
+    "--model_parameter",
+    help="Path to a JSON file containing model architecture and parameter",
+    type=click.Path(exists=True, readable=True, resolve_path=True),
+    default=str(files("orcAI.data").joinpath("model_parameter.json")),
+    show_default=True,
+)
+@click.option(
+    "-cfl",
+    "--calls_for_labeling",
+    help="Path to a JSON file containing calls for labeling",
+    type=click.Path(exists=True, readable=True, resolve_path=True),
+    default=str(files("orcAI.data").joinpath("calls_for_labeling.json")),
+    show_default=True,
+)
+@click.option(
+    "-lw",
+    "--load_weights",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Load weights and continue fitting",
+)
+@click.option(
+    "-tp",
+    "--transformer_parallel",
+    is_flag=True,
+    help="Use transformer parallelization",
+)
+@click.option(
+    "-v", "--verbosity", type=click.IntRange(0, 1), default=0, show_default=True
+)
+def train(model_parameter,
+          data_dir, output_dir,
+          calls_for_labeling,
+          load_weights,
+          transformer_parallel = False,
+          verbosity = 1):
     """Trains an orcAI model
     
     expects the following file structure:
@@ -27,54 +97,64 @@ def train_model(model_name,
             val_dataset
             test_dataset
             train_dataset
-        /(project_dir)/
-            Results/
-                (model_name)/
-                    model.dict
-                    (model_name) # for model weigths
+        /(output_dir)/
+            (TMSTP_model_name)/
+                model.json
+                (model_name) # for model weigths
         # GenericParameters/
         #     calls_for_labeling.list
     """
-    print("OrcAI - training model ...")
-    print("Project directory:", project_dir)
+    # Initialize messenger
+    msgr = Messenger(verbosity=verbosity)
 
-    print("READ IN PARAMETERS")
+    msgr.part("OrcAI - training model")
+    msgr.info(f"Output directory: {output_dir}")
+    msgr.info(f"Data directory: {data_dir}")
 
+    msgr.info("Loading parameter and data...", indent = True)
+    msgr.info("reading model parameters")
+    
+    model_parameter_path = files('orcAI.data').joinpath('model_parameter.json') \
+        if model_parameter=="default" else model_parameter
+    model_parameter = aux.read_dict(model_parameter_path)
+    msgr.info(model_parameter)
+    model_name = model_parameter["name"]
+
+    msgr.info("reading calls for labeling")
+    calls_labeling_path = files('orcAI.data').joinpath('calls_for_labeling.json') \
+        if calls_for_labeling=="default" else calls_for_labeling
+    calls_for_labeling = aux.read_dict(calls_labeling_path)
+    msgr.info(calls_for_labeling)
+
+    model_out_dir = time.strftime("%Y%m%dT%H%M_",time.localtime(time.time())) + model_name
     file_paths = {
-        "model_path": path.join(project_dir, "Results", model_name, model_name),
-        "model_parameter": path.join(project_dir, "Results", model_name, "model.dict"),
-        "calls_labeling": files('orcAI.data').joinpath('calls_for_labeling.json') if calls_for_labeling=="default" else calls_for_labeling,
         "training_data": path.join(data_dir, "train_dataset"),
         "validation_data": path.join(data_dir, "val_dataset"),
         "test_data": path.join(data_dir, "test_dataset"),
-        "history": path.join(project_dir, "Results", model_name, "training_history.json"),
-        "confusion_matrices": path.join(project_dir , "Results", model_name, "confusion_matrices.json")
+        "model_path": path.join(output_dir, model_out_dir, model_name),
+        "history": path.join(output_dir, model_out_dir, "training_history.json"),
+        "confusion_matrices": path.join(output_dir, model_out_dir, "confusion_matrices.json")
     }
-    print(file_paths)
-    print("  - reading model parameters")
-    model_dict = aux.read_dict(file_paths["model_parameter"], True)
-    print("  - reading calls for labeling")
-    calls_for_labeling_list = aux.read_dict(file_paths["calls_labeling"], True)
 
     # load data sets from local disk
-    print("Loading train, val and test datasets from disk:", data_dir)
+    msgr.info(f"Loading train, val and test datasets from {data_dir}", indent = True)
     tf.config.set_soft_device_placement(True)
     start_time = time.time()
-    train_dataset = load.reload_dataset(file_paths["training_data"], model_dict["batch_size"])
-    val_dataset = load.reload_dataset(file_paths["validation_data"], model_dict["batch_size"])
-    test_dataset = load.reload_dataset(file_paths["test_data"], model_dict["batch_size"])
-    print(f"  - time to load datasets: {time.time() - start_time:.2f} seconds")
+    train_dataset = load.reload_dataset(file_paths["training_data"], model_parameter["batch_size"])
+    val_dataset = load.reload_dataset(file_paths["validation_data"], model_parameter["batch_size"])
+    test_dataset = load.reload_dataset(file_paths["test_data"], model_parameter["batch_size"])
+    msgr.info(f"  - time to load datasets: {time.time() - start_time:.2f} seconds")
 
     # Verify the val dataset and obtain shape
     for spectrogram, labels in val_dataset.take(1):
-        print("Spectrogram batch shape:", spectrogram.numpy().shape)
-        print("Labels batch shape:", labels.numpy().shape)
+        msgr.info(f"Spectrogram batch shape: {spectrogram.numpy().shape}", set_indent = 2)
+        msgr.info(f"Labels batch shape: {labels.numpy().shape}")
 
     # Build model
     input_shape = tuple(spectrogram.shape[1:])  # shape
     num_labels = labels.shape[2]  # Number of sound types
 
-    model = arch.build_model(input_shape, num_labels, model_dict)
+    model = arch.build_model(input_shape, num_labels, model_parameter)
 
     # TRANSFORMER MODEL FIX
     if transformer_parallel:
@@ -91,7 +171,7 @@ def train_model(model_name,
                 model = arch.build_cnn_res_transformer_model(
                     input_shape,
                     num_labels,
-                    **model_dict
+                    **model_parameter
                 )
                 model.compile(
                     optimizer="adam",
@@ -101,49 +181,50 @@ def train_model(model_name,
                     metrics=[masked_binary_accuracy_metric],
                 )
 
+    # Compiling Model
     # Loading model weights if required
-    print("Fitting mode:", model_name)
+    msgr.part("Compiling model: " + model_name)
     if load_weights:
-        print("  - Loading weights from stored model:", model_name)
+        msgr.info("Loading weights from stored model: "+ model_name)
         model.load_weights(file_paths["model_path"])
     else:
-        print("  - Learning weights from scratch")
+        msgr.info("Learning weights from scratch")
 
-    # Compiling Model
-    print("Compiling model:", model_name)
     # Metrics
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
         fn=lambda y_true, y_pred: arch.masked_binary_accuracy(
-            y_true, y_pred, mask_value=-1.0
+            y_true, y_pred, **model_parameter["masked_binary_accuracy_metric"]
         ),
         name="masked_binary_accuracy",
     )
     masked_f1_metric = tf.keras.metrics.MeanMetricWrapper(
         fn=lambda y_true, y_pred: arch.masked_f1_score(
-            y_true, y_pred, mask_value=-1.0, threshold=0.5
+            y_true, y_pred, **model_parameter["masked_f1_metric"]
         ),
         name="masked_f1_score",
     )
 
     # Callbacks
     early_stopping = EarlyStopping(
-        monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
-        patience=model_dict["patience"],  # Number of epochs to wait for improvement
+        monitor=model_parameter["callback_metric"],  # val_masked_binary_accuracy | val_masked_f1_score
+        patience=model_parameter["patience"],  # Number of epochs to wait for improvement
         mode="max",  # Stop when accuracy stops increasing
         restore_best_weights=True,  # Restore weights from the best epoch
+        verbose=verbosity
     )
     model_checkpoint = ModelCheckpoint(
-        file_paths["model_path"],
-        monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
+        path.join(file_paths["model_path"], "weights.weights.h5"),
+        monitor=model_parameter["callback_metric"],  # val_masked_binary_accuracy | val_masked_f1_score
         save_best_only=True,
         save_weights_only=True,
+        verbose=verbosity
     )
     reduce_lr = ReduceLROnPlateau(
-        monitor="val_masked_binary_accuracy",  # swap val_masked_binary_accuracy with val_masked_f1_score as needed
+        monitor=model_parameter["callback_metric"],  # val_masked_binary_accuracy | val_masked_f1_score
         factor=0.5,  # Reduce learning rate by a factor of 0.5
         patience=3,  # Wait for 3 epochs of no improvement
         min_lr=1e-6,  # Set a lower limit for the learning rate
-        verbose=1,  # Print updates to the console
+        verbose=verbosity,  # Print updates to the console
     )
     model.compile(
         optimizer="adam",
@@ -156,60 +237,59 @@ def train_model(model_name,
     total_params = model.count_params()
     trainable_params = count_params(model.trainable_weights)
     non_trainable_params = count_params(model.non_trainable_weights)
-    print("Model size:")
-    print(f"  - Total parameters: {total_params}")
-    print(f"  - Trainable parameters: {trainable_params}")
-    print(f"  - Non-trainable parameters: {non_trainable_params}")
-    aux.print_memory_usage()
+    msgr.info("Model size:", indent = True)
+    msgr.info(f"Total parameters: {total_params}")
+    msgr.info(f"Trainable parameters: {trainable_params}")
+    msgr.info(f"Non-trainable parameters: {non_trainable_params}")
+    msgr.print_memory_usage()
 
     # Train model
-    print("Training model:", model_name)
+    msgr.part(f"Training model: {model_name}")
     start_time = time.time()
 
     with tf.device("/GPU:0"):
         history = model.fit(
             train_dataset,
             validation_data=val_dataset,
-            epochs=model_dict["epochs"],
+            epochs=model_parameter["epochs"],
             callbacks=[early_stopping, model_checkpoint, reduce_lr],
             verbose=verbosity,
         )
-    print(f"  - total time for training: {time.time() - start_time:.2f} seconds")
+    msgr.info(f"  - total time for training: {time.time() - start_time:.2f} seconds")
 
-    print("  - training history dictionary:", history.history)
-    print("  - saving training history:", file_paths["history"])
+    msgr.info(f"training history: {history.history}")
+    msgr.info(f"saving training history: {file_paths['history']}")
     with open(file_paths["history"], "w") as f:
         f.write(str(history.history))
 
     # Model evaluation
-    print("Evaluate model:", model_name)
+    msgr.info(f"Evaluating model: {model_name}", level = "part")
     test_loss, test_metric = model.evaluate(test_dataset)
-    print(f"  - test loss: {test_loss}")
-    print(f"  - test masked binary accuracy: {test_metric}")
+    msgr.info(f"test loss: {test_loss}")
+    msgr.info(f"test masked binary accuracy: {test_metric}")
 
-    print(f"  - confusion matrices:")
+    msgr.part("Predicting test data:")
     # Extract true labels
     y_pred_batch = []
     y_true_batch = []
-    i = 1
-    len_test_data = len(test_dataset)
-    print("Predicting test data:")
-    for spectrogram_batch, label_batch in test_dataset:
-        # print("  -", i, "of", len_test_data)
-        y_true_batch.append(label_batch.numpy())
-        y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
-        i += 1
+
+    with click.progressbar(test_dataset, label="Predicting test data") as test_data:
+        for spectrogram_batch, label_batch in test_data:
+            y_true_batch.append(label_batch.numpy())
+            y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
 
     y_true_batch = np.concatenate(y_true_batch, axis=0)
     y_pred_batch = np.concatenate(y_pred_batch, axis=0)
     confusion_matrices = aux.compute_confusion_matrix(
-        y_true_batch, y_pred_batch, calls_for_labeling_list, mask_value=-1
+        y_true_batch, y_pred_batch, calls_for_labeling, mask_value=-1
     )
-    aux.print_confusion_matrices(confusion_matrices)
+    msgr.info(f"confusion matrices:", indent = 1)
+    msgr.print_confusion_matrices(confusion_matrices)
     arch.masked_binary_accuracy(y_true_batch, y_pred_batch, mask_value=-1.0)
     aux.write_dict(
         confusion_matrices,
-        file_paths["confusion_matrices"],
+        file_paths["confusion_matrices"]
     )
+    msgr.print_dict(confusion_matrices)
     
-    print("PROGRAM COMPLETED")
+    msgr.success("OrcAI - training model finished")
