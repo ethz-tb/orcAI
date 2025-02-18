@@ -32,4 +32,4 @@ Repository = "https://github.com/me/spam.git"
 orcAI = "orcAI.cli:cli"
 
 [tool.setuptools.package-data]
-"orcAI.data" = ["*.json"]
+"orcAI.defaults" = ["*.json"]
