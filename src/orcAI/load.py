@@ -13,7 +13,7 @@ import numpy as np
 
 # import local
 import orcAI.auxiliary as aux
-import orcAI.model as mod
+import orcAI.architectures as arch
 
 
 # Loader class

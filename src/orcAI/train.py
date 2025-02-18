@@ -126,14 +126,14 @@ def train(model_parameter,
     calls_for_labeling = aux.read_dict(calls_labeling_path)
     msgr.info(calls_for_labeling)
 
-    model_out_dir = time.strftime("%Y%m%dT%H%M_",time.localtime(time.time())) + model_name
     file_paths = {
         "training_data": path.join(data_dir, "train_dataset"),
         "validation_data": path.join(data_dir, "val_dataset"),
         "test_data": path.join(data_dir, "test_dataset"),
-        "model_path": path.join(output_dir, model_out_dir, model_name),
-        "history": path.join(output_dir, model_out_dir, "training_history.json"),
-        "confusion_matrices": path.join(output_dir, model_out_dir, "confusion_matrices.json")
+        "model": path.join(output_dir, model_name),
+        "weights": path.join(output_dir, model_name, model_name+".weights.h5"),
+        "history": path.join(output_dir, model_name, "training_history.json"),
+        "confusion_matrices": path.join(output_dir, "confusion_matrices.json")
     }
 
     # load data sets from local disk
@@ -186,7 +186,7 @@ def train(model_parameter,
     msgr.part("Compiling model: " + model_name)
     if load_weights:
         msgr.info("Loading weights from stored model: "+ model_name)
-        model.load_weights(file_paths["model_path"])
+        model.load_weights(file_paths["weights"])
     else:
         msgr.info("Learning weights from scratch")
 
@@ -213,7 +213,7 @@ def train(model_parameter,
         verbose=verbosity
     )
     model_checkpoint = ModelCheckpoint(
-        path.join(file_paths["model_path"], "weights.weights.h5"),
+        file_paths["weights"],
         monitor=model_parameter["callback_metric"],  # val_masked_binary_accuracy | val_masked_f1_score
         save_best_only=True,
         save_weights_only=True,
@@ -286,10 +286,15 @@ def train(model_parameter,
     msgr.info(f"confusion matrices:", indent = 1)
     msgr.print_confusion_matrices(confusion_matrices)
     arch.masked_binary_accuracy(y_true_batch, y_pred_batch, mask_value=-1.0)
-    aux.write_dict(
-        confusion_matrices,
-        file_paths["confusion_matrices"]
-    )
+    aux.write_dict(confusion_matrices, file_paths["confusion_matrices"])
     msgr.print_dict(confusion_matrices)
+
+    aux.write_dict(
+        model_parameter,
+        path.join(
+            file_paths["model"],
+            time.strftime("%Y%m%dT%H%M_",time.localtime(time.time())) + "model_parameter.json"
+        )
+    )
     
     msgr.success("OrcAI - training model finished")
