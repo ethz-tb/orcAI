@@ -5,7 +5,7 @@ from orcAI.auxiliary import Messenger
 
 
 # CNN model with residual connection (corresponds to old model)
-def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_rate):
+def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_rate, **kwargs):
     inputs = tf.keras.Input(shape=input_shape)
 
     # Entry block
@@ -47,7 +47,7 @@ def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_ra
 
 
 # CNN RES LSTM Model
-def build_cnn_res_lstm_arch(input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units):
+def build_cnn_res_lstm_arch(input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units, **kwargs):
     inputs = tf.keras.Input(shape=input_shape)
 
     # Entry block
@@ -117,6 +117,7 @@ def build_cnn_res_transformer_arch(
     kernel_size,
     dropout_rate,
     num_heads,
+    **kwargs
 ):
     inputs = tf.keras.Input(shape=input_shape)
 
@@ -191,6 +192,7 @@ def build_cnn_res_transformer_arch_new(
     kernel_size,
     dropout_rate,
     num_heads,
+    **kwargs
 ):
     inputs = tf.keras.Input(shape=input_shape)
 
