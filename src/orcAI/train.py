@@ -23,86 +23,41 @@ def count_params(trainable_weights):
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
-@click.argument(
-    "data_dir",
-    type=click.Path(
-        exists=True,
-        file_okay=False,
-        dir_okay=True,
-        writable=False,
-        readable=True,
-        resolve_path=True,
-        allow_dash=False,
-        path_type=None,
-        executable=False,
-    ),
+@click.argument("data_dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True),
 )
-@click.argument(
-    "output_dir",
-    type=click.Path(
-        exists=False,
-        file_okay=False,
-        dir_okay=True,
-        writable=True,
-        readable=True,
-        resolve_path=True,
-        allow_dash=False,
-        path_type=None,
-        executable=False,
-    ),
+@click.argument("output_dir",
+    type=click.Path(exists=False, file_okay=False, dir_okay=True, writable=True, resolve_path=True),
 )
-@click.option(
-    "-m",
-    "--model_parameter",
-    help="Path to a JSON file containing model architecture and parameter",
+@click.option("-m", "--model_parameter",
+    help="Path to a JSON file containing model specifications",
     type=click.Path(exists=True, readable=True, resolve_path=True),
     default=str(files("orcAI.data").joinpath("model_parameter.json")),
     show_default=True,
 )
-@click.option(
-    "-cfl",
-    "--calls_for_labeling",
+@click.option("-lc", "--label_calls",
     help="Path to a JSON file containing calls for labeling",
     type=click.Path(exists=True, readable=True, resolve_path=True),
-    default=str(files("orcAI.data").joinpath("calls_for_labeling.json")),
-    show_default=True,
+    default=str(files("orcAI.data").joinpath("default_calls.json")), show_default=True,
 )
-@click.option(
-    "-lw",
-    "--load_weights",
+@click.option("-lw", "--load_weights",
     is_flag=True,
-    show_default=True,
-    default=False,
+    default=False, show_default=True,
     help="Load weights and continue fitting",
 )
-@click.option(
-    "-tp",
-    "--transformer_parallel",
-    is_flag=True,
+@click.option("-tp", "--transformer_parallel",
+    is_flag=True, default=False, show_default=True,
     help="Use transformer parallelization",
 )
-@click.option(
-    "-v", "--verbosity", type=click.IntRange(0, 1), default=0, show_default=True
-)
-def train(model_parameter,
-          data_dir, output_dir,
-          calls_for_labeling,
-          load_weights,
+@click.option("-v", "--verbosity", type=click.IntRange(0, 1), default=0, show_default=True)
+def train(data_dir, output_dir,
+          model_parameter = str(files("orcAI.data").joinpath("model_parameter.json")),
+          label_calls = str(files("orcAI.data").joinpath("default_calls.json")),
+          load_weights = False,
           transformer_parallel = False,
           verbosity = 1):
     """Trains an orcAI model
     
-    expects the following file structure:
-        /(data_dir)/
-            val_dataset
-            test_dataset
-            train_dataset
-        /(output_dir)/
-            (TMSTP_model_name)/
-                model.json
-                (model_name) # for model weigths
-        # GenericParameters/
-        #     calls_for_labeling.list
     """
     # Initialize messenger
     msgr = Messenger(verbosity=verbosity)
@@ -121,10 +76,10 @@ def train(model_parameter,
     model_name = model_parameter["name"]
 
     msgr.info("reading calls for labeling")
-    calls_labeling_path = files('orcAI.data').joinpath('calls_for_labeling.json') \
-        if calls_for_labeling=="default" else calls_for_labeling
-    calls_for_labeling = aux.read_dict(calls_labeling_path)
-    msgr.info(calls_for_labeling)
+    calls_labeling_path = files('orcAI.data').joinpath('default_calls.json') \
+        if label_calls=="default" else label_calls
+    label_calls = aux.read_dict(calls_labeling_path)
+    msgr.info(label_calls)
 
     file_paths = {
         "training_data": path.join(data_dir, "train_dataset"),
@@ -281,7 +236,7 @@ def train(model_parameter,
     y_true_batch = np.concatenate(y_true_batch, axis=0)
     y_pred_batch = np.concatenate(y_pred_batch, axis=0)
     confusion_matrices = aux.compute_confusion_matrix(
-        y_true_batch, y_pred_batch, calls_for_labeling, mask_value=-1
+        y_true_batch, y_pred_batch, label_calls, mask_value=-1
     )
     msgr.info(f"confusion matrices:", indent = 1)
     msgr.print_confusion_matrices(confusion_matrices)
