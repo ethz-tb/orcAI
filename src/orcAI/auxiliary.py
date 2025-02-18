@@ -7,7 +7,7 @@ import json
 import glob
 import librosa
 from sklearn.metrics import confusion_matrix
-
+import click
 
 #######
 # NEW
@@ -27,19 +27,17 @@ def read_json_to_vector(filename):
     return np.linspace(dictionary["min"], dictionary["max"], dictionary["length"])
 
 
-def read_dict(file_name, print_out=False):
+def read_dict(filename):
     """Read a JSON file into a dictionary"""
-    with open(file_name, "r") as file:
+    with open(filename, "r") as file:
         dictionary = json.load(file)
-    if print_out:
-            print(json.dumps(dictionary, indent=4))
     return dictionary
 
 
-def write_dict(dictionary, fn):
+def write_dict(dictionary, filename):
     """write dictionary into json file"""
     json_string = json.dumps(dictionary, indent=4)
-    with open(fn, "w") as file:
+    with open(filename, "w") as file:
         file.write(json_string)
     return
 
@@ -281,15 +279,6 @@ def calculate_total_duration(annotations):
     return wide_format
 
 
-# Function to print memory usage
-def print_memory_usage():
-    """print memory usage"""
-    import psutil
-
-    process = psutil.Process(os.getpid())
-    print(f"  - memory usage: {process.memory_info().rss / 1024 ** 2} MB")
-
-
 def check_interactive():
     """check if running interactive or not"""
 
@@ -432,17 +421,6 @@ def compute_confusion_matrix(y_true_batch, y_pred_batch, label_names, mask_value
     return confusion_matrices
 
 
-def print_confusion_matrices(confusion_matrices):
-    for label, cm in confusion_matrices.items():
-        print(f"............................")
-        print(f"Label: {label}, total={cm['Total']}")
-        print(f"   Predicted:     | POS     | NEG  ")
-        print(f"   Actual:    POS | {100*cm['TP']:.5f} | {100*cm['FN']:.5f} ")
-        print(f"              -------------------------- ")
-        print(f"   Actual:    NEG | {100*cm['FP']:.5f} | {100*cm['TN']:.5f} ")
-    return
-
-
 def latex_confusion_matrices(confusion_matrices):
     print("\\begin{table}[h]\n\\centering\n\\begin{tabular}{c c}\n")
     for label, cms in confusion_matrices.items():
@@ -533,3 +511,69 @@ def find_consecutive_ones(binary_vector):
 
     # Combine starts and ends into a list of tuples
     return starts, stops
+
+class Messenger:
+    def __init__(self, n_indent=0, verbosity=1, indent_str="    ", file=None):
+        self.n_indent = n_indent
+        self.verbosity = verbosity
+        self.file = file
+        self.indent_str = indent_str
+    
+    def print(self, message, indent=False, set_indent=None, prepend="", **kwargs):
+        if set_indent is not None:
+            self.n_indent = set_indent
+        
+        if isinstance(message, dict) or isinstance(message, list):
+            message = self.dict_to_str(message)
+        else:
+            message = self.indent_str * self.n_indent + prepend + message
+        
+        message = click.style(message, **kwargs)
+
+        if self.verbosity > 0:
+            click.echo(message, file=self.file)
+
+        if indent:
+            self.n_indent += 1
+
+    def info(self, message, indent=False, set_indent=None):
+        self.print(message, indent, set_indent)
+    
+    def part(self, message, indent=True, set_indent=0):
+        self.print(message, indent, set_indent, prepend = "🐳 ", bold = True)
+    
+    def success(self, message, indent=False, set_indent=None):
+        self.print(message, indent, set_indent, prepend = "🐳 ", fg = "green")
+
+    def warning(self, message, indent=False, set_indent=None):
+        self.print(message, indent, set_indent, prepend = "‼️ ", fg = "yellow")
+    
+    def error(self, message, indent=False, set_indent=None):
+        self.print(message, indent, set_indent, prepend = "❌ ", fg="red")
+
+    def print_memory_usage(self, indent=False, set_indent=None):
+        """print memory usage"""
+        import psutil
+
+        process = psutil.Process(os.getpid())
+        self.info(f"memory usage: {process.memory_info().rss / 1024 ** 2} MB", indent=indent, set_indent=set_indent)
+
+    def confusion_matrices_to_str(self, confusion_matrices):
+        message = ""
+        for label, cm in confusion_matrices.items():
+            message = message.append(
+                "\n".join([
+                    f"............................",
+                    f"Label: {label}, total={cm['Total']}",
+                    f"   Predicted:     | POS     | NEG  ",
+                    f"   Actual:    POS | {100*cm['TP']:.5f} | {100*cm['FN']:.5f} ",
+                    f"              -------------------------- ",
+                    f"   Actual:    NEG | {100*cm['FP']:.5f} | {100*cm['TN']:.5f} "
+                ])
+            )
+        return message
+    
+    def dict_to_str(self, dictionary):
+        json_string = json.dumps(dictionary, indent=4)
+        indented_json = "\n".join(self.indent_str*(self.n_indent+1) + line for line in json_string.splitlines())
+        return indented_json

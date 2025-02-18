@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
+from orcAI.auxiliary import Messenger
+
 
 # CNN model with residual connection (corresponds to old model)
 def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_rate):
@@ -45,9 +47,7 @@ def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_ra
 
 
 # CNN RES LSTM Model
-def build_cnn_res_lstm_arch(
-    input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units
-):
+def build_cnn_res_lstm_arch(input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units):
     inputs = tf.keras.Input(shape=input_shape)
 
     # Entry block
@@ -372,6 +372,18 @@ def reshape_labels(arr, n_filters):
             "The number of rows in 'arr' must be divisible by 2**'n_filters'."
         )
 
+ORCAI_METRICS_FN = {
+    "masked_binary_accuracy": masked_binary_accuracy,
+    "masked_f1_score": masked_f1_score,
+}
+
+ORCAI_METRICS = list(ORCAI_METRICS_FN.keys())
+
+def choose_metric(metric_name):
+    if metric_name in ORCAI_METRICS:
+        return ORCAI_METRICS_FN[metric_name]
+    else:
+        raise ValueError(f"Unknown metric name: {metric_name}")
 
 ORCAI_ARCHITECTURES_FN = {
     "cnn_res_model": build_cnn_res_arch,
@@ -384,7 +396,7 @@ ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
 
 
 # build model from a choice of models
-def build_model(input_shape, num_labels, model_dict):
+def build_model(input_shape, num_labels, model_dict, msgr=Messenger()):
     n_filters = len(model_dict["filters"])
     output_shape = (input_shape[0] // 2**n_filters, num_labels)
 
@@ -395,12 +407,12 @@ def build_model(input_shape, num_labels, model_dict):
     else:
         raise ValueError(f"Unknown model name: {model_dict['name']}")
 
-    print("Build model:")
-    print("  - model name:", model_dict["name"])
-    print("  - model input shape:", model.input_shape)
-    print("  - model output shape:", model.output_shape)
-    print("  - actual input_shape:", input_shape)
-    print("  - actual output_shape:", output_shape)
-    print("  - n_filters:", n_filters)
-    print("  - num_labels:", num_labels)
+    msgr.part("Building model:")
+    msgr.info(f"model name:          {model_dict['name']}")
+    msgr.info(f"model input shape:   {model.input_shape}")
+    msgr.info(f"model output shape:  {model.output_shape}")
+    msgr.info(f"actual input_shape:  {input_shape}")
+    msgr.info(f"actual output_shape: {output_shape}")
+    msgr.info(f"n_filters:           {n_filters}")
+    msgr.info(f"num_labels:          {num_labels}")
     return model
