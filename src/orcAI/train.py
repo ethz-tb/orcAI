@@ -29,13 +29,13 @@ def count_params(trainable_weights):
 @click.argument("output_dir",
     type=click.Path(exists=False, file_okay=False, dir_okay=True, writable=True, resolve_path=True),
 )
-@click.option("-m", "--model_parameter",
+@click.option("-m", "--model_parameter", "model_parameter_path",
     help="Path to a JSON file containing model specifications",
     type=click.Path(exists=True, readable=True, resolve_path=True),
-    default=str(files("orcAI.data").joinpath("model_parameter.json")),
+    default=str(files("orcAI.data").joinpath("default_model_parameter.json")),
     show_default=True,
 )
-@click.option("-lc", "--label_calls",
+@click.option("-lc", "--label_calls", "label_calls_path",
     help="Path to a JSON file containing calls for labeling",
     type=click.Path(exists=True, readable=True, resolve_path=True),
     default=str(files("orcAI.data").joinpath("default_calls.json")), show_default=True,
@@ -51,8 +51,8 @@ def count_params(trainable_weights):
 )
 @click.option("-v", "--verbosity", type=click.IntRange(0, 1), default=0, show_default=True)
 def train(data_dir, output_dir,
-          model_parameter = str(files("orcAI.data").joinpath("model_parameter.json")),
-          label_calls = str(files("orcAI.data").joinpath("default_calls.json")),
+          model_parameter_path = str(files("orcAI.data").joinpath("default_model_parameter.json")),
+          label_calls_path = str(files("orcAI.data").joinpath("default_calls.json")),
           load_weights = False,
           transformer_parallel = False,
           verbosity = 1):
@@ -69,16 +69,13 @@ def train(data_dir, output_dir,
     msgr.info("Loading parameter and data...", indent = True)
     msgr.info("reading model parameters")
     
-    model_parameter_path = files('orcAI.data').joinpath('model_parameter.json') \
-        if model_parameter=="default" else model_parameter
     model_parameter = aux.read_dict(model_parameter_path)
     msgr.info(model_parameter)
     model_name = model_parameter["name"]
 
     msgr.info("reading calls for labeling")
-    calls_labeling_path = files('orcAI.data').joinpath('default_calls.json') \
-        if label_calls=="default" else label_calls
-    label_calls = aux.read_dict(calls_labeling_path)
+    
+    label_calls = aux.read_dict(label_calls_path)
     msgr.info(label_calls)
 
     file_paths = {
