@@ -76,7 +76,7 @@ def count_params(trainable_weights):
     help="Use transformer parallelization",
 )
 @click.option(
-    "-v", "--verbosity", type=click.IntRange(0, 1), default=0, show_default=True
+    "-v", "--verbosity", type=click.IntRange(0, 2), default=1, show_default=True
 )
 def train(
     data_dir,
@@ -144,7 +144,7 @@ def train(
     input_shape = tuple(spectrogram.shape[1:])  # shape
     num_labels = labels.shape[2]  # Number of sound types
 
-    model = arch.build_model(input_shape, num_labels, model_parameter)
+    model = arch.build_model(input_shape, num_labels, model_parameter, msgr=msgr)
 
     # TRANSFORMER MODEL FIX
     if transformer_parallel:

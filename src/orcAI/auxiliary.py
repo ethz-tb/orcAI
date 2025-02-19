@@ -463,13 +463,13 @@ def find_consecutive_ones(binary_vector):
 class Messenger:
     """Class for printing messages with different levels of verbosity and indentation"""
 
-    def __init__(self, n_indent=0, verbosity=1, indent_str="    ", file=None):
+    def __init__(self, n_indent=0, verbosity=2, indent_str="    ", file=None):
         """
         Initialize the Messenger object with the specified verbosity level and indentation.
 
         Parameters:
         n_indent (int): The initial indentation level.
-        verbosity (int): The verbosity level (0, 1).
+        verbosity (int): The verbosity level.
         file (file): The file to write the messages to.
         indent_str (str): The string to use for indentation.
         """
@@ -478,7 +478,9 @@ class Messenger:
         self.file = file
         self.indent_str = indent_str
 
-    def print(self, message, indent=0, set_indent=None, prepend="", **kwargs):
+    def print(
+        self, message, indent=0, set_indent=None, prepend="", severity=2, **kwargs
+    ):
         """
         Print a message with the specified indentation level and verbosity.
 
@@ -487,6 +489,7 @@ class Messenger:
         indent (int): The number of additional indent levels after this message.
         set_indent (int): The absolute indent level for this message.
         prepend (str): A string to prepend to the message.
+        severity (int): The severity level of the message (0: error, 1: warning, 2: info, ...).
         **kwargs: Additional keyword arguments for click.style.
         """
         if set_indent is not None:
@@ -499,32 +502,56 @@ class Messenger:
 
         message = click.style(message, **kwargs)
 
-        if self.verbosity > 0:
+        if self.verbosity >= severity:
             click.echo(message, file=self.file)
 
         self.n_indent = self.n_indent + indent
 
-    def info(self, message, indent=0, set_indent=None, **kwargs):
+    def info(self, message, indent=0, set_indent=None, severity=2, **kwargs):
         """Print a message."""
-        self.print(message, indent, set_indent, **kwargs)
+        self.print(message, indent, set_indent, severity=severity, **kwargs)
 
-    def part(self, message, indent=1, set_indent=0, **kwargs):
+    def part(self, message, indent=1, set_indent=0, severity=1, **kwargs):
         """Print a message in bold at indent 0 to indicate a new part"""
-        self.print(message, indent, set_indent, prepend="🐳 ", bold=True, **kwargs)
+        self.print(message, indent, set_indent, prepend="🐳 ", severity=severity, bold=True, **kwargs)
 
-    def success(self, message, indent=0, set_indent=0, **kwargs):
+    def success(self, message, indent=0, set_indent=0, severity=1, **kwargs):
         """Print a success message."""
-        self.print(message, indent, set_indent, prepend="🐳 ", fg="green", **kwargs)
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="🐳 ",
+            severity=severity,
+            fg="green",
+            **kwargs,
+        )
 
-    def warning(self, message, indent=0, set_indent=None, **kwargs):
+    def warning(self, message, indent=0, set_indent=None, severity=1, **kwargs):
         """Print a warning message."""
-        self.print(message, indent, set_indent, prepend="‼️ ", fg="yellow", **kwargs)
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="‼️ ",
+            severity=severity,
+            fg="yellow",
+            **kwargs,
+        )
 
-    def error(self, message, indent=0, set_indent=None, **kwargs):
+    def error(self, message, indent=0, set_indent=None, severity=0, **kwargs):
         """Print an error message."""
-        self.print(message, indent, set_indent, prepend="❌ ", fg="red", **kwargs)
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="❌ ",
+            severity=severity,
+            fg="red",
+            **kwargs,
+        )
 
-    def print_memory_usage(self, indent=0, set_indent=None, **kwargs):
+    def print_memory_usage(self, indent=0, set_indent=None, severity=2, **kwargs):
         """print memory usage"""
         import psutil
 
@@ -533,6 +560,7 @@ class Messenger:
             f"memory usage: {process.memory_info().rss / 1024 ** 2} MB",
             indent=indent,
             set_indent=set_indent,
+            severity=severity,
         )
 
     def confusion_matrices_to_str(self, confusion_matrices):
