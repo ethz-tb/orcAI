@@ -9,9 +9,7 @@ import librosa
 from sklearn.metrics import confusion_matrix
 import click
 
-#######
-# NEW
-#####
+
 def write_vector_to_json(vector, filename):
     """write out equally spaced vector in short form with min, max and length"""
     dictionary = {"min": vector[0], "max": vector[-1], "length": len(vector)}
@@ -63,58 +61,6 @@ def get_all_files_with_ext(directory, extension):
                 all_files.append(os.path.join(root, file))
 
     return all_files
-
-
-def list_spectrograms(directory):
-    """
-    Returns a pandas DataFrame listing all subdirectories of a given directory
-    and whether each contains a subdirectory named 'labels/'.
-
-    Args:
-        directory (str): The root directory to scan.
-
-    Returns:
-        pd.DataFrame: A DataFrame with columns ['Subdirectory', 'Has_labels'].
-    """
-    subdirs = []
-    has_labels = []
-    label_names = []
-
-    # Scan all subdirectories in the given directory
-    for root, dirs, files in os.walk(directory):
-        for subdir in dirs:
-            subdir_path = os.path.join(root, subdir)
-            subdirs.append(subdir)
-            # Check if the 'labels/' subdirectory exists
-            labels_path = os.path.join(subdir_path, "labels")
-            label_dict = read_dict(labels_path + "/label_list.json")
-            label_names += [",".join(list(label_dict.keys()))]
-            has_labels.append(os.path.isdir(labels_path))
-        # Stop recursion after first level
-        break
-
-    # Create a DataFrame
-    data = {"dirstem": subdirs, "labels": has_labels, "label_names": label_names}
-    return pd.DataFrame(data)
-
-
-def read_parameters(printout):
-    """
-    Read in parameters
-    Args:
-        printout (bool): Whether parameters should be displayed
-
-    Returns:
-        directories: dict with directories
-        call_dict: dict with calls
-        par: dict with parameters
-        calls_for_labelling: dict with calls for labelling
-    """
-    directories = read_dict("directories.dict", printout)
-    call_dict = read_dict("call.dict", printout)
-    spectrogram_dict = read_dict("spectrogram.dict", printout)
-    calls_for_labeling = read_dict("calls_for_labeling.list", printout)
-    return directories, call_dict, spectrogram_dict, calls_for_labeling
 
 
 def filter_filenames(files, eliminate):
@@ -279,6 +225,7 @@ def calculate_total_duration(annotations):
     return wide_format
 
 
+# TODO: remove
 def check_interactive():
     """check if running interactive or not"""
 
@@ -318,7 +265,6 @@ def get_annot_and_wav_files(root_dir, computer):
     all_wav_files = list(glob.iglob(root_dir + "**/*.wav", recursive=True))
     print("    -", len(all_wav_files), "audio files found")
 
-    # %%
     # keeping only files for which there is a .txt corresponding to a *.wav
     print("  - keeping only files were there is a .txt and .wav with identical name")
     xs = [x.replace(".txt", "") for x in all_txt_files] + [
@@ -421,6 +367,7 @@ def compute_confusion_matrix(y_true_batch, y_pred_batch, label_names, mask_value
     return confusion_matrices
 
 
+# TODO: move to paper code
 def latex_confusion_matrices(confusion_matrices):
     print("\\begin{table}[h]\n\\centering\n\\begin{tabular}{c c}\n")
     for label, cms in confusion_matrices.items():
