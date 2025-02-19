@@ -15,8 +15,9 @@ def create_spectrogram(wav_file_path,
     """creates spectrogram according to spectrogram_parameters """
     # Initialize messenger
     msgr = aux.Messenger(verbosity=verbosity)
-    msgr.part("OrcAI - creating spectrogram")
+    msgr.part("Creating spectrogram")
     msgr.info(f"Loading wav file: {wav_file_path}")
+    msgr.info(f"NOTE: using channel {spectrogram_parameters['channel']}")
     
     start_time = time.time()
     recording, sr = librosa.load(
