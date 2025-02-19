@@ -1,20 +1,10 @@
-# %%
-# import
 from pathlib import Path
-import numpy as np
 import numpy as np
 import pandas as pd
 import zarr
 
-
 # import local
-import auxiliary as aux
-
-
-# %%
-##########################
-# FUNCTIONS
-##########################
+import orcAI.auxiliary as aux
 
 
 def read_annotation_file(fn):
@@ -127,7 +117,6 @@ def labelarr_from_annot(
     return
 
 
-# %%
 def reshape_label_arr(arr, n_filters):
     dim1 = arr.shape[0] // n_filters
     dim2 = arr.shape[1]

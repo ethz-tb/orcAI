@@ -3,19 +3,15 @@
 # %%
 
 # import
-import numpy as np
 import pandas as pd
 from pathlib import Path
 import os
-import shutil
 import sys
 
 
 # import local
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-import spectrogram as spec
-import auxiliary as aux
-import annotation as ann
+import orcAI.spectrogram as spec
+import orcAI.auxiliary as aux
 
 
 # %%

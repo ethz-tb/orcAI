@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-
-# # %%
-# extract from specs for train/val/test
-
-# %%
-# import
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -12,13 +5,8 @@ import zarr
 import os
 import sys
 
-
-# import local
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import spectrogram as spec
-import auxiliary as aux
-import annotation as ann
+import orcAI.auxiliary as aux
+import orcAI.annotation as ann
 
 # import load as load
 

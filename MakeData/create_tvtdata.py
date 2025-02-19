@@ -11,8 +11,8 @@ import os
 
 # import local
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-import auxiliary as aux
-import load
+import orcAI.auxiliary as aux
+import orcAI.load as load
 
 
 # %%

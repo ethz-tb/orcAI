@@ -12,11 +12,9 @@ import sys
 
 
 # import local
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import spectrogram as spec
-import auxiliary as aux
-import annotation as ann
+import orcAI.spectrogram as spec
+import orcAI.auxiliary as aux
+import orcAI.annotation as ann
 
 
 # %%
