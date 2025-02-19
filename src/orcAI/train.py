@@ -65,18 +65,18 @@ def train(data_dir, output_dir,
     msgr.info(f"Output directory: {output_dir}")
     msgr.info(f"Data directory: {data_dir}")
 
-    msgr.info("Loading parameter and data...", indent = True)
-    msgr.info("reading model parameters")
+    msgr.info("Loading parameter and data...", indent = 1)
+    msgr.info("Model parameter")
     
     model_parameter = aux.read_json(model_parameter_path)
     msgr.info(model_parameter)
     model_name = model_parameter['name']
 
-    msgr.info("reading calls for labeling")
-    
     label_calls = aux.read_json(label_calls_path)
-    msgr.info(label_calls)
+    msgr.info("Calls for labeling")
+    msgr.info(label_calls, indent = -1)
 
+    # TODO: Model Weights, dca had to make a change here, because of Keras API changes
     file_paths = {
         'training_data': data_dir.joinpath("train_dataset"),
         'validation_data': data_dir.joinpath("val_dataset"),
@@ -89,20 +89,20 @@ def train(data_dir, output_dir,
     }
 
     # load data sets from local disk
-    msgr.info(f"Loading train, val and test datasets from {data_dir}", indent = True)
+    msgr.info(f"Loading train, val and test datasets from {data_dir}", indent = 1)
     tf.config.set_soft_device_placement(True)
     start_time = time.time()
     train_dataset = load.reload_dataset(file_paths['training_data'], model_parameter['batch_size'])
     val_dataset = load.reload_dataset(file_paths['validation_data'], model_parameter['batch_size'])
     test_dataset = load.reload_dataset(file_paths['test_data'], model_parameter['batch_size'])
-    msgr.info(f"  - time to load datasets: {time.time() - start_time:.2f} seconds")
+    msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")
 
     # Verify the val dataset and obtain shape
     for spectrogram, labels in val_dataset.take(1):
-        msgr.info(f"Spectrogram batch shape: {spectrogram.numpy().shape}", set_indent = 2)
+        msgr.info(f"Spectrogram batch shape: {spectrogram.numpy().shape}")
         msgr.info(f"Labels batch shape: {labels.numpy().shape}")
 
-    # Build model
+    # Build model architecture
     input_shape = tuple(spectrogram.shape[1:])  # shape
     num_labels = labels.shape[2]  # Number of sound types
 
@@ -189,7 +189,7 @@ def train(data_dir, output_dir,
     total_params = model.count_params()
     trainable_params = count_params(model.trainable_weights)
     non_trainable_params = count_params(model.non_trainable_weights)
-    msgr.info("Model size:", indent = True)
+    msgr.info("Model size:", indent = 1)
     msgr.info(f"Total parameters: {total_params}")
     msgr.info(f"Trainable parameters: {trainable_params}")
     msgr.info(f"Non-trainable parameters: {non_trainable_params}")
@@ -238,12 +238,13 @@ def train(data_dir, output_dir,
     msgr.info(f"confusion matrices:", indent = 1)
     msgr.print_confusion_matrices(confusion_matrices)
     arch.masked_binary_accuracy(y_true_batch, y_pred_batch, mask_value=-1.0)
-    aux.write_dict(confusion_matrices, file_paths['confusion_matrices'])
+    aux.write_json(confusion_matrices, file_paths['confusion_matrices'])
     msgr.print_dict(confusion_matrices)
 
-    aux.write_dict(model_parameter, file_paths['model_dir'].joinpath("model_parameter.json"))
-    aux.write_dict(label_calls, file_paths['model_dir'].joinpath("trained_calls.json"))
-    aux.write_dict({"input_shape": input_shape, "num_labels": num_labels}, file_paths['model_dir'].joinpath("shape.json"))
+    aux.write_json(model_parameter, file_paths['model_dir'].joinpath("model_parameter.json"))
+    aux.write_json(label_calls, file_paths['model_dir'].joinpath("trained_calls.json"))
+    aux.write_json({"input_shape": input_shape, "num_labels": num_labels}, file_paths['model_dir'].joinpath("shape.json"))
+    # TODO: Save model?
     model.save(file_paths['model'])
 
     msgr.success(f"OrcAI - training model finished. Model saved to {file_paths['model']}")
