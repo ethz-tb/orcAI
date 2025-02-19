@@ -211,7 +211,7 @@ def train(
         ],  # val_masked_binary_accuracy | val_masked_f1_score
         save_best_only=True,
         save_weights_only=True,
-        verbose=verbosity,
+        verbose= 1 if verbosity>0 else 0,
     )
     reduce_lr = ReduceLROnPlateau(
         monitor=model_parameter[
@@ -220,7 +220,7 @@ def train(
         factor=0.5,  # Reduce learning rate by a factor of 0.5
         patience=3,  # Wait for 3 epochs of no improvement
         min_lr=1e-6,  # Set a lower limit for the learning rate
-        verbose=verbosity,  # Print updates to the console
+        verbose=1 if verbosity>0 else 0,  # Print updates to the console
     )
     model.compile(
         optimizer="adam",
@@ -249,7 +249,7 @@ def train(
             validation_data=val_dataset,
             epochs=model_parameter["epochs"],
             callbacks=[early_stopping, model_checkpoint, reduce_lr],
-            verbose=verbosity,
+            verbose=1 if verbosity>0 else 0,
         )
     msgr.info(f"total time for training: {time.time() - start_time:.2f} seconds")
 
