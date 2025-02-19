@@ -55,9 +55,7 @@ def get_all_files_with_ext(directory, extension):
     # Walk through the directory recursively
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.lower().endswith(
-                extension
-            ): 
+            if file.lower().endswith(extension):
                 all_files.append(os.path.join(root, file))
 
     return all_files
@@ -503,7 +501,7 @@ class Messenger:
             message = self.indent_str * self.n_indent + prepend + message
 
         message = click.style(message, **kwargs)
-        
+
         click.echo(message, file=self.file)
 
         self.n_indent = self.n_indent + indent
@@ -514,7 +512,15 @@ class Messenger:
 
     def part(self, message, indent=1, set_indent=0, severity=1, **kwargs):
         """Print a message in bold at indent 0 to indicate a new part"""
-        self.print(message, indent, set_indent, prepend="🐳 ", severity=severity, bold=True, **kwargs)
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="🐳 ",
+            severity=severity,
+            bold=True,
+            **kwargs,
+        )
 
     def success(self, message, indent=0, set_indent=0, severity=1, **kwargs):
         """Print a success message."""

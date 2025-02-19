@@ -5,8 +5,11 @@ from orcAI.auxiliary import Messenger
 
 # TODO: docstrings for functions
 
+
 # CNN model with residual connection (corresponds to old model)
-def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_rate, **unused):
+def build_cnn_res_arch(
+    input_shape, num_labels, filters, kernel_size, dropout_rate, **unused
+):
     inputs = tf.keras.Input(shape=input_shape)
 
     # Entry block
@@ -48,7 +51,9 @@ def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_ra
 
 
 # CNN RES LSTM Model
-def build_cnn_res_lstm_arch(input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units, **unused):
+def build_cnn_res_lstm_arch(
+    input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units, **unused
+):
     inputs = tf.keras.Input(shape=input_shape)
 
     # Entry block
@@ -112,13 +117,7 @@ def build_cnn_res_lstm_arch(input_shape, num_labels, filters, kernel_size, dropo
 
 # cnn_res_transformer model
 def build_cnn_res_transformer_arch(
-    input_shape,
-    num_labels,
-    filters,
-    kernel_size,
-    dropout_rate,
-    num_heads,
-    **unused
+    input_shape, num_labels, filters, kernel_size, dropout_rate, num_heads, **unused
 ):
     inputs = tf.keras.Input(shape=input_shape)
 
@@ -184,16 +183,11 @@ def build_cnn_res_transformer_arch(
 
     return tf.keras.Model(inputs, outputs)
 
+
 # TODO: which function is the correct one?
 # cnn_res_transformer model
 def build_cnn_res_transformer_arch_new(
-    input_shape,
-    num_labels,
-    filters,
-    kernel_size,
-    dropout_rate,
-    num_heads,
-    **unused
+    input_shape, num_labels, filters, kernel_size, dropout_rate, num_heads, **unused
 ):
     inputs = tf.keras.Input(shape=input_shape)
 
@@ -375,6 +369,7 @@ def reshape_labels(arr, n_filters):
             "The number of rows in 'arr' must be divisible by 2**'n_filters'."
         )
 
+
 ORCAI_METRICS_FN = {
     "masked_binary_accuracy": masked_binary_accuracy,
     "masked_f1_score": masked_f1_score,
@@ -382,11 +377,13 @@ ORCAI_METRICS_FN = {
 
 ORCAI_METRICS = list(ORCAI_METRICS_FN.keys())
 
+
 def choose_metric(metric_name):
     if metric_name in ORCAI_METRICS:
         return ORCAI_METRICS_FN[metric_name]
     else:
         raise ValueError(f"Unknown metric name: {metric_name}")
+
 
 ORCAI_ARCHITECTURES_FN = {
     "cnn_res_model": build_cnn_res_arch,
