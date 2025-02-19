@@ -410,7 +410,7 @@ def build_model(input_shape, num_labels, model_dict, msgr=Messenger()):
     else:
         raise ValueError(f"Unknown model name: {model_dict['name']}")
 
-    msgr.part("Building model architecture:")
+    msgr.part("Building model architecture")
     msgr.info(f"model name:          {model_dict['name']}")
     msgr.info(f"model input shape:   {model.input_shape}")
     msgr.info(f"model output shape:  {model.output_shape}")
