@@ -27,7 +27,7 @@ def count_params(trainable_weights):
 @click.argument(
     "data_dir",
     type=click.Path(
-        exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path
+        exists=True, file_okay=False, resolve_path=True, path_type=Path
     ),
 )
 @click.argument(
@@ -35,7 +35,6 @@ def count_params(trainable_weights):
     type=click.Path(
         exists=False,
         file_okay=False,
-        dir_okay=True,
         writable=True,
         resolve_path=True,
         path_type=Path,
@@ -46,7 +45,7 @@ def count_params(trainable_weights):
     "--model_parameter",
     "model_parameter_path",
     help="Path to a JSON file containing model specifications",
-    type=click.Path(exists=True, readable=True, resolve_path=True, path_type=Path),
+    type=click.Path(exists=True, dir_okay=False, readable=True, resolve_path=True, path_type=Path),
     default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
     show_default=True,
 )
@@ -146,6 +145,7 @@ def train(
 
     model = arch.build_model(input_shape, num_labels, model_parameter, msgr=msgr)
 
+    # TODO: is this necessary?
     # TRANSFORMER MODEL FIX
     if transformer_parallel:
         if model_name == "cnn_res_transformer_model":
