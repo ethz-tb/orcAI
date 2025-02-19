@@ -1,6 +1,7 @@
 import click
 from .train import train
 from .predict import predict
+from .spectrogram import create_spectrograms
 
 
 @click.group(
@@ -21,3 +22,4 @@ def cli():
 
 cli.add_command(train)
 cli.add_command(predict)
+cli.add_command(create_spectrograms)
