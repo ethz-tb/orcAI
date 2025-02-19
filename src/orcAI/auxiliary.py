@@ -48,7 +48,7 @@ def get_all_files_with_ext(directory, extension):
         directory (str): The root directory to search in.
 
     Returns:
-        list: A list of full file paths to all .wav files found.
+        list: A list of full file paths to all files with extension found.
     """
     all_files = []
 
@@ -57,7 +57,7 @@ def get_all_files_with_ext(directory, extension):
         for file in files:
             if file.lower().endswith(
                 extension
-            ):  # Check for .wav extension (case insensitive)
+            ): 
                 all_files.append(os.path.join(root, file))
 
     return all_files
@@ -492,6 +492,8 @@ class Messenger:
         severity (int): The severity level of the message (0: error, 1: warning, 2: info, ...).
         **kwargs: Additional keyword arguments for click.style.
         """
+        if self.verbosity <= severity:
+            return
         if set_indent is not None:
             self.n_indent = set_indent
 
@@ -501,9 +503,8 @@ class Messenger:
             message = self.indent_str * self.n_indent + prepend + message
 
         message = click.style(message, **kwargs)
-
-        if self.verbosity >= severity:
-            click.echo(message, file=self.file)
+        
+        click.echo(message, file=self.file)
 
         self.n_indent = self.n_indent + indent
 
