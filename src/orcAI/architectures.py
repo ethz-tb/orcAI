@@ -3,6 +3,7 @@ from tensorflow.keras import layers
 
 from orcAI.auxiliary import Messenger
 
+# TODO: docstrings for functions
 
 # CNN model with residual connection (corresponds to old model)
 def build_cnn_res_arch(input_shape, num_labels, filters, kernel_size, dropout_rate, **unused):
@@ -183,7 +184,7 @@ def build_cnn_res_transformer_arch(
 
     return tf.keras.Model(inputs, outputs)
 
-
+# TODO: which function is the correct one?
 # cnn_res_transformer model
 def build_cnn_res_transformer_arch_new(
     input_shape,
@@ -409,7 +410,7 @@ def build_model(input_shape, num_labels, model_dict, msgr=Messenger()):
     else:
         raise ValueError(f"Unknown model name: {model_dict['name']}")
 
-    msgr.part("Building model:")
+    msgr.part("Building model architecture:")
     msgr.info(f"model name:          {model_dict['name']}")
     msgr.info(f"model input shape:   {model.input_shape}")
     msgr.info(f"model output shape:  {model.output_shape}")
