@@ -43,7 +43,7 @@ dicts = {
 
 for key, value in dicts.items():
     print("  - reading", value)
-    globals()[key] = aux.read_dict(value, True)
+    globals()[key] = aux.read_json(value, True)
 
 
 print("Project directory:", project_dir)

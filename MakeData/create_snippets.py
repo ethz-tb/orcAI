@@ -53,7 +53,7 @@ dicts = {
 }
 for key, value in dicts.items():
     print("  - reading", key)
-    globals()[key] = aux.read_dict(value, True)
+    globals()[key] = aux.read_json(value, True)
 
 
 # %%
@@ -77,7 +77,7 @@ def list_extract_snippets(
             + fnstem
             + "/labels/label_list.json"
         )
-        label_list_dict = aux.read_dict(fnlabel_list, print_out=False)
+        label_list_dict = aux.read_json(fnlabel_list, print_out=False)
         label_names = list(label_list_dict.keys())
         fn_times = (
             directories_dict[computer]["root_dir_spectrograms"]

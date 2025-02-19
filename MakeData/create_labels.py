@@ -45,7 +45,7 @@ dicts = {
 }
 for key, value in dicts.items():
     print("  - reading", key)
-    globals()[key] = aux.read_dict(value, True)
+    globals()[key] = aux.read_json(value, True)
 
 print("  - reading in channels_and_labels.csv")
 channels_and_labels = pd.read_csv(

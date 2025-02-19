@@ -27,14 +27,14 @@ def read_json_to_vector(filename):
     return np.linspace(dictionary["min"], dictionary["max"], dictionary["length"])
 
 
-def read_dict(filename):
+def read_json(filename):
     """Read a JSON file into a dictionary"""
     with open(filename, "r") as file:
         dictionary = json.load(file)
     return dictionary
 
 
-def write_dict(dictionary, filename):
+def write_json(dictionary, filename):
     """write dictionary into json file"""
     json_string = json.dumps(dictionary, indent=4)
     with open(filename, "w") as file:

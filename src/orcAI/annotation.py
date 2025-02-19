@@ -123,7 +123,7 @@ def labelarr_from_annot(
     zarr_file[:] = label_arr
 
     # save label array to zarr
-    aux.write_dict(label_list, root_dir + stem_dir + sub_dir + "/label_list.json")
+    aux.write_json(label_list, root_dir + stem_dir + sub_dir + "/label_list.json")
     return
 
 
