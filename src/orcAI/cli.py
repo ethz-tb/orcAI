@@ -1,5 +1,6 @@
 import click
 from .train import train
+from .predict import predict
 
 
 @click.group(
@@ -7,7 +8,7 @@ from .train import train
     + "            █████  " + click.style("Command line interface for ", bold=True) + click.style("orcAI", fg="cyan", bold=True) + "\n"
     + "███ ███   ████████ " + "  a tool for \n"
     + "  ████  ████░██░░░ " + "  training, testing & applying AI models \n"
-    + "    ██████████░░░  " + "  to recognize Orca (Orcinus orca) vocalization patterns.\n"
+    + "    ██████████░░░  " + "  to detect acoustic signals in spectrograms generated from audio recordings.\n"
     + "     ░░██░░░░      \n"
     + "      ███ ██       \n",
     epilog="For further information see the help pages of the individual subcommands (e.g. "
@@ -19,3 +20,4 @@ def cli():
 
 
 cli.add_command(train)
+cli.add_command(predict)
