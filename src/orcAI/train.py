@@ -2,7 +2,6 @@ import click
 import time
 import numpy as np
 import tensorflow as tf
-from pathlib import Path
 from importlib.resources import files
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.backend import count_params
@@ -18,51 +17,6 @@ def count_params(trainable_weights):
     return np.sum([np.prod(w.shape) for w in trainable_weights])
 
 
-@click.command(
-    help="Train a model on the given data",
-    short_help="Train a model on the given data",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
-)
-@click.argument("data_dir", type=aux.ClickDirPathR)
-@click.argument("output_dir", type=aux.ClickDirPathW)
-@click.option(
-    "-m",
-    "--model_parameter",
-    "model_parameter_path",
-    help="Path to a JSON file containing model specifications",
-    type=aux.ClickFilePathR,
-    default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
-    show_default=True,
-)
-@click.option(
-    "-lc",
-    "--label_calls",
-    "label_calls_path",
-    help="Path to a JSON file containing calls for labeling",
-    type=aux.ClickFilePathR,
-    default=str(files("orcAI.defaults").joinpath("default_calls.json")),
-    show_default=True,
-)
-@click.option(
-    "-lw",
-    "--load_weights",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Load weights and continue fitting",
-)
-@click.option(
-    "-tp",
-    "--transformer_parallel",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Use transformer parallelization",
-)
-@click.option(
-    "-v", "--verbosity", type=click.IntRange(0, 2), default=1, show_default=True
-)
 def train(
     data_dir,
     output_dir,

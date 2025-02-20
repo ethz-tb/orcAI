@@ -14,46 +14,6 @@ import orcAI.architectures as arch
 import orcAI.spectrogram as spec
 
 
-@click.command(
-    help="Predicts call annotations.",
-    short_help="Predicts call annotations.",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
-)
-@click.argument("wav_file_path", type=aux.ClickFilePathR, required=True)
-@click.option(
-    "--model",
-    "-m",
-    "model_path",
-    type=aux.ClickDirPathR,
-    default=files("orcAI.defaults").joinpath("orcai_Orca_1_0_0"),
-    show_default="orcai_Orca_1_0_0",
-    help="Path to the model directory.",
-)
-@click.option(
-    "--output_file",
-    "-o",
-    type=aux.ClickFilePathW,
-    default=None,
-    show_default="None",
-    help="Path to the output file or None if the output file should be saved in the same directory as the wav file.",
-)
-@click.option(
-    "--spectrogram_parameter",
-    "-sp",
-    type=aux.ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
-    show_default="default_spectrogram_parameter.json",
-    help="Path to the spectrogram parameter file.",
-)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 1),
-    default=1,
-    show_default=True,
-    help="Verbosity level.",
-)
 def predict(
     wav_file_path,
     model_path=files("orcAI.defaults").joinpath("orcai_Orca_1_0_0"),

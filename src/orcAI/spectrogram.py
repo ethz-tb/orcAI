@@ -178,51 +178,6 @@ def save_spectrogram(
     return
 
 
-@click.command(
-    help="Creates spectrograms for all files in spectrogram_table",
-    short_help="Creates spectrograms for all files in spectrogram_table",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
-)
-@click.option(
-    "--wav_table_path",
-    "-st",
-    type=aux.ClickFilePathR,
-    required=True,
-    help="Path to .csv table with columns 'wav_file', 'channel' and columns corresponding to calls intendend for teaching indicating possibility of presence of calls.",
-)
-@click.option(
-    "--base_dir",
-    "-bd",
-    type=aux.ClickDirPathR,
-    default=None,
-    show_default="None",
-    help="Base directory for the wav files. If not None entries in the wav_file column are interpreted as filenames searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.",
-)
-@click.option(
-    "--output_dir",
-    "-od",
-    type=aux.ClickDirPathW,
-    default=None,
-    show_default="None",
-    help="Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.",
-)
-@click.option(
-    "--spectrogram_parameter_path",
-    "-sp",
-    type=aux.ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
-    show_default="default_spectrogram_parameter.json",
-    help="Path to the spectrogram parameter file.",
-)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 2),
-    default=1,
-    show_default=True,
-    help="Verbosity level.",
-)
 def create_spectrograms(
     wav_table_path,
     base_dir=None,
@@ -254,10 +209,9 @@ def create_spectrograms(
     spectrogram_table = pd.read_csv(wav_table_path)
     if base_dir is not None:
         msgr.info(f"Resolving file paths...")
-        spectrogram_table["wav_file"] = [
-            list(Path(base_dir).rglob(wav_file))[0]
-            for wav_file in spectrogram_table["wav_file"]
-        ]
+        spectrogram_table["wav_file"] = aux.resolve_file_paths(
+            base_dir, spectrogram_table["wav_file"], ".wav", msgr=msgr
+        )
 
     spectrogram_parameter = aux.read_json(spectrogram_parameter_path)
 
