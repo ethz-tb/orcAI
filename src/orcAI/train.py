@@ -11,6 +11,7 @@ from tensorflow.keras.backend import count_params
 import orcAI.auxiliary as aux
 import orcAI.architectures as arch
 import orcAI.load as load
+from orcAI.cli import ClickDirPathR, ClickDirPathW, ClickFilePathR
 
 
 # model parameters
@@ -24,30 +25,14 @@ def count_params(trainable_weights):
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
-@click.argument(
-    "data_dir",
-    type=click.Path(
-        exists=True, file_okay=False, readable=True, resolve_path=True, path_type=Path
-    ),
-)
-@click.argument(
-    "output_dir",
-    type=click.Path(
-        exists=False,
-        file_okay=False,
-        writable=True,
-        resolve_path=True,
-        path_type=Path,
-    ),
-)
+@click.argument("data_dir", type=ClickDirPathR)
+@click.argument("output_dir", type=ClickDirPathW)
 @click.option(
     "-m",
     "--model_parameter",
     "model_parameter_path",
     help="Path to a JSON file containing model specifications",
-    type=click.Path(
-        exists=True, dir_okay=False, readable=True, resolve_path=True, path_type=Path
-    ),
+    type=ClickFilePathR,
     default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
     show_default=True,
 )
@@ -56,9 +41,7 @@ def count_params(trainable_weights):
     "--label_calls",
     "label_calls_path",
     help="Path to a JSON file containing calls for labeling",
-    type=click.Path(
-        exists=True, file_okay=True, readable=True, resolve_path=True, path_type=Path
-    ),
+    type=ClickFilePathR,
     default=str(files("orcAI.defaults").joinpath("default_calls.json")),
     show_default=True,
 )

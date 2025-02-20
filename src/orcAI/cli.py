@@ -1,7 +1,21 @@
 import click
+from pathlib import Path
 from .train import train
 from .predict import predict
 from .spectrogram import create_spectrograms
+
+ClickDirPathR = click.Path(
+    exists=True, file_okay=False, readable=True, resolve_path=True, path_type=Path
+)
+ClickDirPathW = click.Path(
+    exists=True, file_okay=False, writable=True, resolve_path=True, path_type=Path
+)
+ClickFilePathR = click.Path(
+    exists=True, dir_okay=False, readable=True, resolve_path=True, path_type=Path
+)
+ClickFilePathW = click.Path(
+    exists=False, dir_okay=False, writable=True, resolve_path=True, path_type=Path
+)
 
 
 @click.group(
