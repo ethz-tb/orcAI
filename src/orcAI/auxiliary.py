@@ -10,6 +10,145 @@ from sklearn.metrics import confusion_matrix
 import click
 
 
+class Messenger:
+    """Class for printing messages with different levels of verbosity and indentation"""
+
+    def __init__(self, n_indent=0, verbosity=2, indent_str="    ", file=None):
+        """
+        Initialize the Messenger object with the specified verbosity level and indentation.
+
+        Parameter:
+        n_indent (int): The initial indentation level.
+        verbosity (int): The verbosity level.
+        file (file): The file to write the messages to.
+        indent_str (str): The string to use for indentation.
+        """
+        self.n_indent = n_indent
+        self.verbosity = verbosity
+        self.file = file
+        self.indent_str = indent_str
+
+    def print(
+        self, message, indent=0, set_indent=None, prepend="", severity=2, **kwargs
+    ):
+        """
+        Print a message with the specified indentation level and verbosity.
+
+        Parameters:
+        message (str | dict | list): The message (or dict or list) to print.
+        indent (int): The number of additional indent levels after this message.
+        set_indent (int): The absolute indent level for this message.
+        prepend (str): A string to prepend to the message.
+        severity (int): The severity level of the message (0: error, 1: warning, 2: info, ...).
+        **kwargs: Additional keyword arguments for click.style.
+        """
+        if self.verbosity < severity:
+            return
+        if set_indent is not None:
+            self.n_indent = set_indent
+
+        if isinstance(message, dict) or isinstance(message, list):
+            message = self.dict_to_str(message)
+        else:
+            message = self.indent_str * self.n_indent + prepend + message
+
+        message = click.style(message, **kwargs)
+
+        click.echo(message, file=self.file)
+
+        self.n_indent = self.n_indent + indent
+
+    def info(self, message, indent=0, set_indent=None, severity=2, **kwargs):
+        """Print a message."""
+        self.print(message, indent, set_indent, severity=severity, **kwargs)
+
+    def part(self, message, indent=1, set_indent=0, severity=1, **kwargs):
+        """Print a message in bold at indent 0 to indicate a new part"""
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="🐳 ",
+            severity=severity,
+            bold=True,
+            **kwargs,
+        )
+
+    def success(self, message, indent=0, set_indent=0, severity=1, **kwargs):
+        """Print a success message."""
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="🐳 ",
+            severity=severity,
+            fg="green",
+            **kwargs,
+        )
+
+    def warning(self, message, indent=0, set_indent=None, severity=1, **kwargs):
+        """Print a warning message."""
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="‼️ ",
+            severity=severity,
+            fg="yellow",
+            **kwargs,
+        )
+
+    def error(self, message, indent=0, set_indent=None, severity=0, **kwargs):
+        """Print an error message."""
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="❌ ",
+            severity=severity,
+            fg="red",
+            **kwargs,
+        )
+
+    def print_memory_usage(self, indent=0, set_indent=None, severity=2, **kwargs):
+        """print memory usage"""
+        import psutil
+
+        process = psutil.Process(os.getpid())
+        self.info(
+            f"memory usage: {process.memory_info().rss / 1024 ** 2} MB",
+            indent=indent,
+            set_indent=set_indent,
+            severity=severity,
+        )
+
+    def confusion_matrices_to_str(self, confusion_matrices):
+        """Convert confusion matrices to a formatted string."""
+        message = ""
+        for label, cm in confusion_matrices.items():
+            message = message.append(
+                "\n".join(
+                    [
+                        f"............................",
+                        f"Label: {label}, total={cm['Total']}",
+                        f"   Predicted:     | POS     | NEG  ",
+                        f"   Actual:    POS | {100*cm['TP']:.5f} | {100*cm['FN']:.5f} ",
+                        f"              -------------------------- ",
+                        f"   Actual:    NEG | {100*cm['FP']:.5f} | {100*cm['TN']:.5f} ",
+                    ]
+                )
+            )
+        return message
+
+    def dict_to_str(self, dictionary):
+        """Convert a dictionary or list to a formatted string with indentation."""
+        json_string = json.dumps(dictionary, indent=4)
+        indented_json = "\n".join(
+            self.indent_str * self.n_indent + line for line in json_string.splitlines()
+        )
+        return indented_json
+
+
 def write_vector_to_json(vector, filename):
     """write out equally spaced vector in short form with min, max and length"""
     dictionary = {"min": vector[0], "max": vector[-1], "length": len(vector)}
@@ -59,6 +198,34 @@ def get_all_files_with_ext(directory, extension):
                 all_files.append(os.path.join(root, file))
 
     return all_files
+
+
+def resolve_file_paths(
+    directory, file_names, extension="", msgr=Messenger(verbosity=2)
+):
+    """
+    Resolve file paths for a list of file names in a directory.
+
+    Args:
+        directory (str): The root directory to search in.
+        file_names (list): A list of file names to resolve.
+        extension (str): The file extension to append to the file names.
+
+    Returns:
+        list: A list of full file paths for the specified file names.
+    """
+    file_paths = []
+    for wav_file in file_names:
+        results = sorted(Path(directory).rglob(wav_file + extension))
+        if len(results) == 0:
+            msgr.warning(f"No file found for {wav_file}. Returning None.")
+            results = [None]
+        elif len(results) > 1:
+            msgr.warning(f"WARNING: Multiple files found for {wav_file}", indent=1)
+            msgr.info(f"{results}")
+            msgr.warning(f"Returning the first path.", indent=-1)
+        file_paths.append(results[0])
+    return file_paths
 
 
 def filter_filenames(files, eliminate):
@@ -456,145 +623,6 @@ def find_consecutive_ones(binary_vector):
 
     # Combine starts and ends into a list of tuples
     return starts, stops
-
-
-class Messenger:
-    """Class for printing messages with different levels of verbosity and indentation"""
-
-    def __init__(self, n_indent=0, verbosity=2, indent_str="    ", file=None):
-        """
-        Initialize the Messenger object with the specified verbosity level and indentation.
-
-        Parameters:
-        n_indent (int): The initial indentation level.
-        verbosity (int): The verbosity level.
-        file (file): The file to write the messages to.
-        indent_str (str): The string to use for indentation.
-        """
-        self.n_indent = n_indent
-        self.verbosity = verbosity
-        self.file = file
-        self.indent_str = indent_str
-
-    def print(
-        self, message, indent=0, set_indent=None, prepend="", severity=2, **kwargs
-    ):
-        """
-        Print a message with the specified indentation level and verbosity.
-
-        Parameters:
-        message (str | dict | list): The message (or dict or list) to print.
-        indent (int): The number of additional indent levels after this message.
-        set_indent (int): The absolute indent level for this message.
-        prepend (str): A string to prepend to the message.
-        severity (int): The severity level of the message (0: error, 1: warning, 2: info, ...).
-        **kwargs: Additional keyword arguments for click.style.
-        """
-        if self.verbosity <= severity:
-            return
-        if set_indent is not None:
-            self.n_indent = set_indent
-
-        if isinstance(message, dict) or isinstance(message, list):
-            message = self.dict_to_str(message)
-        else:
-            message = self.indent_str * self.n_indent + prepend + message
-
-        message = click.style(message, **kwargs)
-
-        click.echo(message, file=self.file)
-
-        self.n_indent = self.n_indent + indent
-
-    def info(self, message, indent=0, set_indent=None, severity=2, **kwargs):
-        """Print a message."""
-        self.print(message, indent, set_indent, severity=severity, **kwargs)
-
-    def part(self, message, indent=1, set_indent=0, severity=1, **kwargs):
-        """Print a message in bold at indent 0 to indicate a new part"""
-        self.print(
-            message,
-            indent,
-            set_indent,
-            prepend="🐳 ",
-            severity=severity,
-            bold=True,
-            **kwargs,
-        )
-
-    def success(self, message, indent=0, set_indent=0, severity=1, **kwargs):
-        """Print a success message."""
-        self.print(
-            message,
-            indent,
-            set_indent,
-            prepend="🐳 ",
-            severity=severity,
-            fg="green",
-            **kwargs,
-        )
-
-    def warning(self, message, indent=0, set_indent=None, severity=1, **kwargs):
-        """Print a warning message."""
-        self.print(
-            message,
-            indent,
-            set_indent,
-            prepend="‼️ ",
-            severity=severity,
-            fg="yellow",
-            **kwargs,
-        )
-
-    def error(self, message, indent=0, set_indent=None, severity=0, **kwargs):
-        """Print an error message."""
-        self.print(
-            message,
-            indent,
-            set_indent,
-            prepend="❌ ",
-            severity=severity,
-            fg="red",
-            **kwargs,
-        )
-
-    def print_memory_usage(self, indent=0, set_indent=None, severity=2, **kwargs):
-        """print memory usage"""
-        import psutil
-
-        process = psutil.Process(os.getpid())
-        self.info(
-            f"memory usage: {process.memory_info().rss / 1024 ** 2} MB",
-            indent=indent,
-            set_indent=set_indent,
-            severity=severity,
-        )
-
-    def confusion_matrices_to_str(self, confusion_matrices):
-        """Convert confusion matrices to a formatted string."""
-        message = ""
-        for label, cm in confusion_matrices.items():
-            message = message.append(
-                "\n".join(
-                    [
-                        f"............................",
-                        f"Label: {label}, total={cm['Total']}",
-                        f"   Predicted:     | POS     | NEG  ",
-                        f"   Actual:    POS | {100*cm['TP']:.5f} | {100*cm['FN']:.5f} ",
-                        f"              -------------------------- ",
-                        f"   Actual:    NEG | {100*cm['FP']:.5f} | {100*cm['TN']:.5f} ",
-                    ]
-                )
-            )
-        return message
-
-    def dict_to_str(self, dictionary):
-        """Convert a dictionary or list to a formatted string with indentation."""
-        json_string = json.dumps(dictionary, indent=4)
-        indented_json = "\n".join(
-            self.indent_str * self.n_indent + line for line in json_string.splitlines()
-        )
-        return indented_json
 
 
 ClickDirPathR = click.Path(
