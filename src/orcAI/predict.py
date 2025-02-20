@@ -12,7 +12,6 @@ import tensorflow as tf
 import orcAI.auxiliary as aux
 import orcAI.architectures as arch
 import orcAI.spectrogram as spec
-from orcAI.cli import ClickFilePathR, ClickDirPathR, ClickFilePathW
 
 
 @click.command(
@@ -21,12 +20,12 @@ from orcAI.cli import ClickFilePathR, ClickDirPathR, ClickFilePathW
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
-@click.argument("wav_file_path", type=ClickFilePathR, required=True)
+@click.argument("wav_file_path", type=aux.ClickFilePathR, required=True)
 @click.option(
     "--model",
     "-m",
     "model_path",
-    type=ClickDirPathR,
+    type=aux.ClickDirPathR,
     default=files("orcAI.defaults").joinpath("orcai_Orca_1_0_0"),
     show_default="orcai_Orca_1_0_0",
     help="Path to the model directory.",
@@ -34,7 +33,7 @@ from orcAI.cli import ClickFilePathR, ClickDirPathR, ClickFilePathW
 @click.option(
     "--output_file",
     "-o",
-    type=ClickFilePathW,
+    type=aux.ClickFilePathW,
     default=None,
     show_default="None",
     help="Path to the output file or None if the output file should be saved in the same directory as the wav file.",
@@ -42,7 +41,7 @@ from orcAI.cli import ClickFilePathR, ClickDirPathR, ClickFilePathW
 @click.option(
     "--spectrogram_parameter",
     "-sp",
-    type=ClickFilePathR,
+    type=aux.ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
     show_default="default_spectrogram_parameter.json",
     help="Path to the spectrogram parameter file.",

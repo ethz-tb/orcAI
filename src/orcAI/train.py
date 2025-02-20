@@ -11,7 +11,6 @@ from tensorflow.keras.backend import count_params
 import orcAI.auxiliary as aux
 import orcAI.architectures as arch
 import orcAI.load as load
-from orcAI.cli import ClickDirPathR, ClickDirPathW, ClickFilePathR
 
 
 # model parameters
@@ -25,14 +24,14 @@ def count_params(trainable_weights):
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
-@click.argument("data_dir", type=ClickDirPathR)
-@click.argument("output_dir", type=ClickDirPathW)
+@click.argument("data_dir", type=aux.ClickDirPathR)
+@click.argument("output_dir", type=aux.ClickDirPathW)
 @click.option(
     "-m",
     "--model_parameter",
     "model_parameter_path",
     help="Path to a JSON file containing model specifications",
-    type=ClickFilePathR,
+    type=aux.ClickFilePathR,
     default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
     show_default=True,
 )
@@ -41,7 +40,7 @@ def count_params(trainable_weights):
     "--label_calls",
     "label_calls_path",
     help="Path to a JSON file containing calls for labeling",
-    type=ClickFilePathR,
+    type=aux.ClickFilePathR,
     default=str(files("orcAI.defaults").joinpath("default_calls.json")),
     show_default=True,
 )

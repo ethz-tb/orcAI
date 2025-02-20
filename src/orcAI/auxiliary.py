@@ -595,3 +595,17 @@ class Messenger:
             self.indent_str * self.n_indent + line for line in json_string.splitlines()
         )
         return indented_json
+
+
+ClickDirPathR = click.Path(
+    exists=True, file_okay=False, readable=True, resolve_path=True, path_type=Path
+)
+ClickDirPathW = click.Path(
+    exists=True, file_okay=False, writable=True, resolve_path=True, path_type=Path
+)
+ClickFilePathR = click.Path(
+    exists=True, dir_okay=False, readable=True, resolve_path=True, path_type=Path
+)
+ClickFilePathW = click.Path(
+    exists=False, dir_okay=False, writable=True, resolve_path=True, path_type=Path
+)

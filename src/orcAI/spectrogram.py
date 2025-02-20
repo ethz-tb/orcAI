@@ -9,7 +9,6 @@ import click
 
 # import local
 import orcAI.auxiliary as aux
-from orcAI.cli import ClickFilePathR, ClickDirPathR, ClickDirPathW
 
 
 def create_spectrogram(
@@ -188,14 +187,14 @@ def save_spectrogram(
 @click.option(
     "--wav_table_path",
     "-st",
-    type=ClickFilePathR,
+    type=aux.ClickFilePathR,
     required=True,
     help="Path to .csv table with columns 'wav_file', 'channel' and columns corresponding to calls intendend for teaching indicating possibility of presence of calls.",
 )
 @click.option(
     "--base_dir",
     "-bd",
-    type=ClickDirPathR,
+    type=aux.ClickDirPathR,
     default=None,
     show_default="None",
     help="Base directory for the wav files. If not None entries in the wav_file column are interpreted as filenames searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.",
@@ -203,7 +202,7 @@ def save_spectrogram(
 @click.option(
     "--output_dir",
     "-od",
-    type=ClickDirPathW,
+    type=aux.ClickDirPathW,
     default=None,
     show_default="None",
     help="Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.",
@@ -211,7 +210,7 @@ def save_spectrogram(
 @click.option(
     "--spectrogram_parameter_path",
     "-sp",
-    type=ClickFilePathR,
+    type=aux.ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
     show_default="default_spectrogram_parameter.json",
     help="Path to the spectrogram parameter file.",
@@ -254,7 +253,7 @@ def create_spectrograms(
     msgr.part("OrcAI - Creating spectrograms")
     spectrogram_table = pd.read_csv(wav_table_path)
     if base_dir is not None:
-        msgr.info(f"Resolving file paths. This might take a while.")
+        msgr.info(f"Resolving file paths...")
         spectrogram_table["wav_file"] = [
             list(Path(base_dir).rglob(wav_file))[0]
             for wav_file in spectrogram_table["wav_file"]
