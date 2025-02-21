@@ -28,7 +28,25 @@ def train(
     transformer_parallel=False,
     verbosity=1,
 ):
-    """Trains an orcAI model"""
+    """Trains an orcAI model
+
+    Parameters
+    ----------
+    data_dir : Path
+        Path to the directory containing the training, validation and test datasets.
+    output_dir : Path
+        Path to the output directory.
+    model_parameter_path : Path
+        Path to a JSON file containing model specifications.
+    label_calls_path : Path
+        Path to a JSON file containing calls to be labeled.
+    load_weights : bool
+        Load weights from previous training.
+    transformer_parallel : bool
+        Use transformer fix #TODO: Is this necessary
+    verbosity : int
+        Verbosity level.
+    """
     # Initialize messenger
     msgr = aux.Messenger(verbosity=verbosity)
 
