@@ -2,6 +2,7 @@ import click
 import time
 import numpy as np
 import tensorflow as tf
+from pathlib import Path
 from importlib.resources import files
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.backend import count_params
@@ -20,10 +21,8 @@ def count_params(trainable_weights):
 def train(
     data_dir,
     output_dir,
-    model_parameter_path=files("orcAI.defaults").joinpath(
-        "default_model_parameter.json"
-    ),
-    label_calls_path=files("orcAI.defaults").joinpath("default_calls.json"),
+    model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
+    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     load_weights=False,
     transformer_parallel=False,
     verbosity=1,
@@ -36,10 +35,10 @@ def train(
         Path to the directory containing the training, validation and test datasets.
     output_dir : Path
         Path to the output directory.
-    model_parameter_path : Path
-        Path to a JSON file containing model specifications.
-    label_calls_path : Path
-        Path to a JSON file containing calls to be labeled.
+    model_parameter_path : (Path | str) | dict
+        Path to a JSON file containing model specifications or a dictionary with model specifications.
+    label_calls : (Path | str) | dict
+        Path to a JSON file containing calls to be labeled or a dictionary with calls to be labeled.
     load_weights : bool
         Load weights from previous training.
     transformer_parallel : bool
@@ -56,12 +55,15 @@ def train(
 
     msgr.info("Loading parameter and data...", indent=1)
     msgr.info("Model parameter")
+    if isinstance(model_parameter, (Path | str)):
+        model_parameter = aux.read_json(model_parameter)
 
-    model_parameter = aux.read_json(model_parameter_path)
     msgr.info(model_parameter)
     model_name = model_parameter["name"]
 
-    label_calls = aux.read_json(label_calls_path)
+    if isinstance(label_calls, (Path | str)):
+        label_calls = aux.read_json(label_calls)
+
     msgr.info("Calls for labeling")
     msgr.info(label_calls, indent=-1)
 

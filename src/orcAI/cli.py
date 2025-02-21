@@ -62,7 +62,7 @@ def cli():
 @click.option(
     "-m",
     "--model_parameter",
-    "model_parameter_path",
+    "model_parameter",
     help="Path to a JSON file containing model specifications",
     type=ClickFilePathR,
     default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
@@ -71,7 +71,7 @@ def cli():
 @click.option(
     "-lc",
     "--label_calls",
-    "label_calls_path",
+    "label_calls",
     help="Path to a JSON file containing calls for labeling",
     type=ClickFilePathR,
     default=str(files("orcAI.defaults").joinpath("default_calls.json")),
