@@ -237,14 +237,16 @@ def resolve_file_paths(
         list: A list of full file paths for the specified file names.
     """
     file_paths = []
+    if extension[0] != ".":
+        extension = "." + extension
     for wav_file in file_names:
         results = sorted(Path(directory).rglob(wav_file + extension))
         if len(results) == 0:
-            msgr.warning(f"No file found for {wav_file}. Returning None.")
+            msgr.warning(f"No {extension} file found for {wav_file}. Returning None.")
             results = [None]
         elif len(results) > 1:
             msgr.warning(f"WARNING: Multiple files found for {wav_file}", indent=1)
-            msgr.info(f"{results}")
+            msgr.info(results)
             msgr.warning(f"Returning the first path.", indent=-1)
         file_paths.append(results[0])
     return file_paths
