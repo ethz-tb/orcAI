@@ -153,7 +153,7 @@ def cli_predict(**kwargs):
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
 @click.argument(
-    "recording_table",
+    "recording_table_path",
     type=ClickFilePathR,
 )
 @click.option(

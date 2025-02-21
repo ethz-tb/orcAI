@@ -110,18 +110,18 @@ def convert_annotation(
 
 
 def make_label_arrays(
-    recording_table,
+    recording_table_path,
     base_dir=None,
     output_dir=None,
     label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     call_equivalences=None,
     verbosity=2,
 ):
-    """Makes label arrays for all files in recording_table_path
+    """Makes label arrays for all files in recording_table
 
     Parameters
     ----------
-    recording_table : (Path | str) | dict
+    recording_table_path : Path
         Path to .csv table with columns 'recording', 'channel' and columns corresponding to calls intendend for
         teaching (corresponding to calls in label_call) indicating possibility of presence of calls
         (even if no instance of this call is annotated).
@@ -140,8 +140,8 @@ def make_label_arrays(
     msgr = aux.Messenger(verbosity=verbosity)
     msgr.part("OrcAI - Making label arrays")
 
-    if isinstance(recording_table, (Path | str)):
-        recording_table = aux.read_json(recording_table)
+    recording_table = pd.read_csv(recording_table_path)
+
     if base_dir is not None:
         msgr.info(f"Resolving file paths...")
         recording_table["annotation_file"] = aux.resolve_file_paths(

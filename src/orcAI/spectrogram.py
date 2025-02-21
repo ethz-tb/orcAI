@@ -148,7 +148,7 @@ def save_spectrogram(
 
 
 def create_spectrograms(
-    recording_table,
+    recording_table_path,
     base_dir=None,
     output_dir=None,
     spectrogram_parameter=files("orcAI.defaults").joinpath(
@@ -162,7 +162,7 @@ def create_spectrograms(
 
     Parameters
     ----------
-    recording_table : (Path | str) | dict
+    recording_table_path : Path
         Path to .csv table with columns 'recording', 'channel' and columns indicating possibility of presence of calls (True/False). #TODO: clarify
     base_dir : Path
         Base directory for the wav files. If not None entries in the recording column are interpreted as filenames
@@ -180,8 +180,7 @@ def create_spectrograms(
     """
     msgr = aux.Messenger(verbosity=verbosity)
 
-    if isinstance(recording_table, (Path | str)):
-        recording_table = aux.read_json(recording_table)
+    recording_table = pd.read_csv(recording_table_path)
 
     if exclude:
         if isinstance(label_calls, (Path | str)):
