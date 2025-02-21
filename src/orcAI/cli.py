@@ -102,12 +102,12 @@ def cli_train(**kwargs):
 
 @cli.command(
     name="predict",
-    help="Predicts call annotations.",
+    help="Predicts call annotations in the wav file at WAV_FILE_PATH.",
     short_help="Predicts call annotations.",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
-@click.argument("wav_file_path", type=ClickFilePathR, required=True)
+@click.argument("wav_file_path", type=ClickFilePathR)
 @click.option(
     "--model",
     "-m",
