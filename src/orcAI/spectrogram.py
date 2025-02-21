@@ -216,13 +216,13 @@ def create_spectrograms(
                 msgr=silent_msgr,
             )
             if output_dir is None:
-                output_dir = (
+                recording_output_dir = (
                     Path(recording_table.loc[i, "wav_file_path"])
                     .with_suffix("")
                     .joinpath("spectrogram")
                 )
             else:
-                output_dir = Path(output_dir).joinpath(
+                recording_output_dir = Path(output_dir).joinpath(
                     recording_table.loc[i, "recording"], "spectrogram"
                 )
 
@@ -230,7 +230,7 @@ def create_spectrograms(
                 spectrogram,
                 frequencies,
                 times,
-                output_dir,
+                recording_output_dir,
                 msgr=silent_msgr,
             )
 
