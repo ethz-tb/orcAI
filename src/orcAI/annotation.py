@@ -111,8 +111,8 @@ def convert_annotation(
 
 def make_label_arrays(
     recording_table_path,
+    output_dir,
     base_dir=None,
-    output_dir=None,
     label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     call_equivalences=None,
     verbosity=2,
@@ -138,7 +138,7 @@ def make_label_arrays(
         Verbosity level.
     """
     msgr = aux.Messenger(verbosity=verbosity)
-    msgr.part("OrcAI - Making label arrays")
+    msgr.part("Making label arrays")
 
     recording_table = pd.read_csv(recording_table_path)
 
@@ -183,18 +183,19 @@ def make_label_arrays(
                     msgr=aux.Messenger(verbosity=0),
                 )
 
-                # save to as numpy
-                if output_dir is None:
-                    output_dir = recording_table.loc[
-                        i, "annotation_file"
-                    ].parent.joinpath(recording_table.loc[i, "recording"], "labels")
-                else:
-                    output_dir = Path(output_dir).joinpath("labels")
+                # save
+                recording_output_dir = Path(output_dir).joinpath(
+                    recording_table.loc[i, "recording"], "labels"
+                )
 
                 aux.save_as_zarr(
-                    annotations_array.to_numpy(), output_dir.joinpath("zarr.lbl")
+                    annotations_array.to_numpy(),
+                    recording_output_dir.joinpath("labels.zarr"),
+                    msgr=aux.Messenger(verbosity=0),
                 )
-                aux.write_json(label_list, output_dir.joinpath("label_list.json"))
+                aux.write_json(
+                    label_list, recording_output_dir.joinpath("label_list.json")
+                )
 
             else:
                 recordings_no_labels.append(recording_table.loc[i, "recording"])

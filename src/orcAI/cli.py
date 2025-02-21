@@ -4,6 +4,7 @@ from importlib.resources import files
 from .train import train
 from .predict import predict
 from .spectrogram import create_spectrograms
+from .annotation import make_label_arrays
 
 ClickDirPathR = click.Path(
     exists=True, file_okay=False, readable=True, resolve_path=True, path_type=Path
@@ -136,8 +137,8 @@ def cli_train(**kwargs):
 @click.option(
     "--verbosity",
     "-v",
-    type=click.IntRange(0, 1),
-    default=1,
+    type=click.IntRange(0, 2),
+    default=2,
     show_default=True,
     help="Verbosity level.",
 )
@@ -168,9 +169,8 @@ def cli_predict(**kwargs):
     "--output_dir",
     "-o",
     type=ClickDirPathW,
-    default=None,
-    show_default="None",
-    help="Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.",
+    required=True,
+    help="Output directory for the spectrograms. Spectograms are stored in subdirectories named '<recording_name>/spectrogram'",
 )
 @click.option(
     "--spectrogram_parameter",
@@ -200,9 +200,63 @@ def cli_predict(**kwargs):
     "--verbosity",
     "-v",
     type=click.IntRange(0, 2),
-    default=1,
+    default=2,
     show_default=True,
     help="Verbosity level.",
 )
 def cli_create_spectrogram(**kwargs):
     create_spectrograms(**kwargs)
+
+
+@cli.command(
+    name="make-labels",
+    help="Makes label arrays for all files in csv at RECORDING_TABLE_PATH",
+    short_help="Makes label arrays for all files in recording_table",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+)
+@click.argument(
+    "recording_table_path",
+    type=ClickFilePathR,
+)
+@click.option(
+    "--base_dir",
+    "-bd",
+    type=ClickDirPathR,
+    default=None,
+    show_default="None",
+    help="Base directory for the recording files. If not None entries in the recording column are interpreted as filenames searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.",
+)
+@click.option(
+    "--output_dir",
+    "-o",
+    type=ClickDirPathW,
+    required=True,
+    help="Output directory for the labels. Labels are stored in subdirectories named '<recording>/labels'",
+)
+@click.option(
+    "--label_calls",
+    "-lc",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_calls.json"),
+    show_default="default_calls.json",
+    help="Path to a JSON file containing calls for labeling.",
+)
+@click.option(
+    "--call_equivalences",
+    "-ce",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 2),
+    default=2,
+    show_default=True,
+    help="Verbosity level.",
+)
+def cli_make_label_arrays(**kwargs):
+    make_label_arrays(**kwargs)

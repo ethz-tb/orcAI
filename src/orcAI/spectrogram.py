@@ -117,7 +117,7 @@ def save_spectrogram(
     output_dir,
     msgr=aux.Messenger(),
 ):
-    """Loads wavfile and saves spectrogram to disk according to parameters
+    """Saves spectrogram as zarr file and frequency and time vectors as json files in output_dir
 
     Parameters
     ----------
@@ -133,7 +133,9 @@ def save_spectrogram(
 
     msgr.part("Saving spectrogram")
     # Save spectrogram with Zarr
-    aux.save_as_zarr(spectrogram, filename=Path(output_dir, "zarr.spc"), msgr=msgr)
+    aux.save_as_zarr(
+        spectrogram, filename=Path(output_dir, "spectrogram.zarr"), msgr=msgr
+    )
 
     # save frequency and time vector into json files
     aux.write_vector_to_json(
@@ -149,8 +151,8 @@ def save_spectrogram(
 
 def create_spectrograms(
     recording_table_path,
-    base_dir=None,
     output_dir=None,
+    base_dir=None,
     spectrogram_parameter=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
     ),
@@ -168,7 +170,7 @@ def create_spectrograms(
         Base directory for the wav files. If not None entries in the recording column are interpreted as filenames
         searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.
     output_dir : Path
-        Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.
+        Output directory for the spectrograms. Spectograms are stored in subdirectories named '<recording>/spectrogram'
     spectrogram_parameter : (Path | str) | dict
         Path to the spectrogram parameter file or a dictionary with parameters for the spectrogram creation.
     label_calls : (Path | str) | dict
@@ -179,7 +181,7 @@ def create_spectrograms(
         Verbosity level.
     """
     msgr = aux.Messenger(verbosity=verbosity)
-
+    msgr.part("Reading recordings table")
     recording_table = pd.read_csv(recording_table_path)
 
     if exclude:
@@ -217,16 +219,10 @@ def create_spectrograms(
                 spectrogram_parameter,
                 msgr=silent_msgr,
             )
-            if output_dir is None:
-                recording_output_dir = (
-                    Path(recording_table.loc[i, "wav_file_path"])
-                    .with_suffix("")
-                    .joinpath("spectrogram")
-                )
-            else:
-                recording_output_dir = Path(output_dir).joinpath(
-                    recording_table.loc[i, "recording"], "spectrogram"
-                )
+
+            recording_output_dir = Path(output_dir).joinpath(
+                recording_table.loc[i, "recording"], "spectrogram"
+            )
 
             save_spectrogram(
                 spectrogram,
