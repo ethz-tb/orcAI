@@ -8,6 +8,14 @@ import glob
 import librosa
 from sklearn.metrics import confusion_matrix
 import click
+import zarr
+
+
+class JsonEncoderExt(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Path):
+            return str(obj)
+        return super().default(obj)
 
 
 class Messenger:
@@ -142,7 +150,7 @@ class Messenger:
 
     def dict_to_str(self, dictionary):
         """Convert a dictionary or list to a formatted string with indentation."""
-        json_string = json.dumps(dictionary, indent=4)
+        json_string = json.dumps(dictionary, indent=4, cls=JsonEncoderExt)
         indented_json = "\n".join(
             self.indent_str * self.n_indent + line for line in json_string.splitlines()
         )
