@@ -45,8 +45,20 @@ def cli():
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
-@click.argument("data_dir", type=ClickDirPathR)
-@click.argument("output_dir", type=ClickDirPathW)
+@click.option(
+    "--data_dir",
+    "-d",
+    help="Path to the directory containing the training, validation and test datasets",
+    required=True,
+    type=ClickDirPathR,
+)
+@click.option(
+    "--output_dir",
+    "-o",
+    help="Path to the output directory",
+    required=True,
+    type=ClickDirPathW,
+)
 @click.option(
     "-m",
     "--model_parameter",
