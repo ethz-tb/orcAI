@@ -147,15 +147,13 @@ def cli_predict(**kwargs):
 
 @cli.command(
     name="create_spectrograms",
-    help="Creates spectrograms for all files in spectrogram_table",
+    help="Creates spectrograms for all files in SPECTROGRAM_TABLE",
     short_help="Creates spectrograms for all files in spectrogram_table",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
-@click.option(
-    "--wav_table_path",
-    "-wt",
-    "wav_table_path",
+@click.argument(
+    "recording_table",
     type=ClickFilePathR,
     required=True,
     help="Path to .csv table with columns 'wav_file', 'channel' and columns corresponding to calls intendend for teaching indicating possibility of presence of calls.",
