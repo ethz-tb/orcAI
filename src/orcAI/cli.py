@@ -146,17 +146,15 @@ def cli_predict(**kwargs):
 
 
 @cli.command(
-    name="create_spectrograms",
-    help="Creates spectrograms for all files in SPECTROGRAM_TABLE",
+    name="create-spectrograms",
+    help="Creates spectrograms for all files in SPECTROGRAM_TABLE_PATH",
     short_help="Creates spectrograms for all files in spectrogram_table",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
 @click.argument(
-    "recording_table",
+    "recording_table_path",
     type=ClickFilePathR,
-    required=True,
-    help="Path to .csv table with columns 'wav_file', 'channel' and columns corresponding to calls intendend for teaching indicating possibility of presence of calls.",
 )
 @click.option(
     "--base_dir",
@@ -175,12 +173,28 @@ def cli_predict(**kwargs):
     help="Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.",
 )
 @click.option(
-    "--spectrogram_parameter_path",
+    "--spectrogram_parameter",
     "-sp",
     type=ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
     show_default="default_spectrogram_parameter.json",
     help="Path to the spectrogram parameter file.",
+)
+@click.option(
+    "--label_calls_path",
+    "-lc",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_calls.json"),
+    show_default="default_calls.json",
+    help="Path to a JSON file containing calls for labeling.",
+)
+@click.option(
+    "--exclude",
+    "-e",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Exclude recordings without possible annotations.",
 )
 @click.option(
     "--verbosity",
