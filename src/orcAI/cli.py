@@ -153,7 +153,7 @@ def cli_predict(**kwargs):
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
 )
 @click.argument(
-    "recording_table_path",
+    "recording_table",
     type=ClickFilePathR,
 )
 @click.option(
@@ -181,7 +181,7 @@ def cli_predict(**kwargs):
     help="Path to the spectrogram parameter file.",
 )
 @click.option(
-    "--label_calls_path",
+    "--label_calls",
     "-lc",
     type=ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_calls.json"),

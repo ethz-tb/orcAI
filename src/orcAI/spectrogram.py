@@ -148,13 +148,13 @@ def save_spectrogram(
 
 
 def create_spectrograms(
-    recording_table_path,
+    recording_table,
     base_dir=None,
     output_dir=None,
     spectrogram_parameter=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
     ),
-    label_calls_path=files("orcAI.defaults").joinpath("default_calls.json"),
+    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     exclude=True,
     verbosity=2,
 ):
@@ -162,7 +162,7 @@ def create_spectrograms(
 
     Parameters
     ----------
-    recording_table_path : Path
+    recording_table : (Path | str) | dict
         Path to .csv table with columns 'recording', 'channel' and columns indicating possibility of presence of calls (True/False). #TODO: clarify
     base_dir : Path
         Base directory for the wav files. If not None entries in the recording column are interpreted as filenames
@@ -171,8 +171,8 @@ def create_spectrograms(
         Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.
     spectrogram_parameter : (Path | str) | dict
         Path to the spectrogram parameter file or a dictionary with parameters for the spectrogram creation.
-    label_calls_path : Path
-        Path to a JSON file containing calls for labeling
+    label_calls : (Path | str) | dict
+        Path to a JSON file containing calls for labeling or a dict.
     exclude : bool
         Exclude recordings without possible annotations.
     verbosity : int
@@ -180,9 +180,12 @@ def create_spectrograms(
     """
     msgr = aux.Messenger(verbosity=verbosity)
 
-    recording_table = pd.read_csv(recording_table_path)
+    if isinstance(recording_table, (Path | str)):
+        recording_table = aux.read_json(recording_table)
+
     if exclude:
-        label_calls = aux.read_json(label_calls_path)
+        if isinstance(label_calls, (Path | str)):
+            label_calls = aux.read_json(label_calls)
         is_included = recording_table[label_calls].apply(lambda x: x.any(), axis=1)
         msgr.info(
             f"Excluded recordings because they lack any possible annotations:", indent=1

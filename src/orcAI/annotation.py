@@ -40,7 +40,7 @@ def convert_annotation(
     annotation_file_path,
     labels_present,
     labels_masked,
-    call_equivalences_path=None,
+    call_equivalences=None,
     msgr=aux.Messenger(),
 ):
     """transform annotation into array with 0 for absence and 1 for presence and -1 for masked (presence not possible) of each label at times t_vec"""
@@ -49,9 +49,10 @@ def convert_annotation(
     recording = Path(annotation_file_path).stem
     annotations = read_annotation_file(annotation_file_path)
 
-    if call_equivalences_path is not None:
+    if call_equivalences is not None:
         msgr.info("Applying call equivalences")
-        call_equivalences = aux.read_json(call_equivalences_path)
+        if isinstance(call_equivalences, (Path | str)):
+            call_equivalences = aux.read_json(call_equivalences)
         annotations = apply_label_equivalences(annotations, call_equivalences)
         all_orig_labels = set(annotations["origlabel"].unique())
         call_equivalences_keys = set(call_equivalences.keys())
@@ -109,37 +110,38 @@ def convert_annotation(
 
 
 def make_label_arrays(
-    recording_table_path,
+    recording_table,
     base_dir=None,
     output_dir=None,
-    label_calls_path=files("orcAI.defaults").joinpath("default_calls.json"),
-    call_equivalences_path=None,
+    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
+    call_equivalences=None,
     verbosity=2,
 ):
     """Makes label arrays for all files in recording_table_path
 
     Parameters
     ----------
-    recording_table_path : Path
+    recording_table : (Path | str) | dict
         Path to .csv table with columns 'recording', 'channel' and columns corresponding to calls intendend for
-        teaching (corresponding to calls in JSON file at label_calls_path) indicating possibility of presence of calls
+        teaching (corresponding to calls in label_call) indicating possibility of presence of calls
         (even if no instance of this call is annotated).
     base_dir : Path
         Base directory for the recording files. If not None entries in the recording column are interpreted as filenames
         searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.
     output_dir : Path
         Output directory for the labels. If None the labels are saved in the same directory as the wav files.
-    label_calls_path : Path
-        Path to a JSON file containing calls for labeling
-    call_equivalences_path : Path
-        Optional path to a call equivalences file. A dictionary associating original call labels with new call labels
+    label_calls : (Path | str) | dict
+        Path to a JSON file containing calls for labeling or a dictionary with calls for labeling.
+    call_equivalences : (Path | str) | dict
+        Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
         Verbosity level.
     """
     msgr = aux.Messenger(verbosity=verbosity)
     msgr.part("OrcAI - Making label arrays")
 
-    recording_table = pd.read_csv(recording_table_path)
+    if isinstance(recording_table, (Path | str)):
+        recording_table = aux.read_json(recording_table)
     if base_dir is not None:
         msgr.info(f"Resolving file paths...")
         recording_table["annotation_file"] = aux.resolve_file_paths(
@@ -156,7 +158,8 @@ def make_label_arrays(
         )
         recording_table = recording_table[~missing_annotations]
 
-    label_calls = aux.read_json(label_calls_path)
+    if isinstance(label_calls, (Path | str)):
+        label_calls = aux.read_json(label_calls)
     recordings_no_labels = []
     with progressbar(
         recording_table.index,
@@ -176,7 +179,7 @@ def make_label_arrays(
                     recording_table.loc[i, "annotation_file"],
                     labels_present,
                     labels_masked,
-                    call_equivalences_path=call_equivalences_path,
+                    call_equivalences=call_equivalences,
                     msgr=aux.Messenger(verbosity=0),
                 )
 
