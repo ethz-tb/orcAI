@@ -5,7 +5,7 @@ from importlib.resources import files
 import numpy as np
 import time
 import pandas as pd
-import click
+from click import progressbar
 
 # import local
 import orcAI.auxiliary as aux
@@ -40,20 +40,20 @@ def create_spectrogram(
     msgr.warning(f"using channel {spectrogram_parameter['channel']}")
 
     start_time = time.time()
-    recording, sr = librosa.load(
+    wav_file, _ = librosa.load(
         wav_file_path,
         sr=spectrogram_parameter["sampling_rate"],
         mono=False,
     )
-    if recording.ndim > 1:
-        recording = recording[spectrogram_parameter["channel"] - 1]
+    if wav_file.ndim > 1:
+        wav_file = wav_file[spectrogram_parameter["channel"] - 1]
 
     load_time = time.time()
     msgr.info(f"Time for loading wav file: {load_time - start_time:.2f} seconds")
 
     # create spectrogram
     spectrogram = librosa.stft(
-        recording,
+        wav_file,
         n_fft=spectrogram_parameter["nfft"],
         hop_length=spectrogram_parameter["n_overlap"],
         window="hann",
@@ -179,65 +179,70 @@ def save_spectrogram(
 
 
 def create_spectrograms(
-    wav_table_path,
+    recording_table_path,
     base_dir=None,
     output_dir=None,
     spectrogram_parameter_path=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
     ),
+    exclude=False,
+    label_calls_path=files("orcAI.defaults").joinpath("default_calls.json"),
     verbosity=2,
 ):
     """Creates spectrograms for all files in spectrogram_table
 
     Parameters
     ----------
-    wav_table_path : Path
-        Path to .csv table with columns 'wav_file', 'channel' and columns corresponding to calls intendend for
-        teaching indicating possibility of presence of calls.
+    recording_table_path : Path
+        Path to .csv table with columns 'recording', 'channel' and columns indicating possibility of presence of calls (True/False). #TODO: clarify
     base_dir : Path
-        Base directory for the wav files. If not None entries in the wav_file column are interpreted as filenames
+        Base directory for the wav files. If not None entries in the recording column are interpreted as filenames
         searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.
     output_dir : Path
         Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.
     spectrogram_parameter_path : Path
         Path to the spectrogram parameter file.
-    msgr : Messenger
-        Messenger object for logging.
+    exclude : bool
+        Exclude recordings without possible annotations.
+    label_calls_path : Path
+        Path to a JSON file containing calls for labeling
+    verbosity : int
+        Verbosity level.
     """
     msgr = aux.Messenger(verbosity=verbosity)
     msgr.part("OrcAI - Creating spectrograms")
-    spectrogram_table = pd.read_csv(wav_table_path)
+    recording_table = pd.read_csv(recording_table_path)
+    if exclude:
+        label_calls = aux.read_json(label_calls_path)
+        is_included = recording_table[label_calls].apply(lambda x: x.any(), axis=1)
+        msgr.info(
+            f"Excluded recordings because they lack any possible annotations:", indent=1
+        )
+        msgr.info(str(recording_table[~is_included]["recording"].values), indent=-1)
+        recording_table = recording_table[is_included]
+
     if base_dir is not None:
         msgr.info(f"Resolving file paths...")
-        spectrogram_table["wav_file"] = aux.resolve_file_paths(
-            base_dir, spectrogram_table["wav_file"], ".wav", msgr=msgr
+        recording_table["wav_file_path"] = aux.resolve_file_paths(
+            base_dir, recording_table["recording"], ".wav", msgr=msgr
         )
 
     spectrogram_parameter = aux.read_json(spectrogram_parameter_path)
 
-    with click.progressbar(
-        range(len(spectrogram_table["wav_file"])),
+    with progressbar(
+        recording_table.index,
         label="Creating spectrograms",
-        item_show_func=lambda i: _progress_show_func(i, spectrogram_table),
-    ) as spectrograms:
-        for i_wav_file in spectrograms:
-            spectrogram_parameter["channel"] = spectrogram_table["best.channel"][
-                i_wav_file
-            ]
+        item_show_func=lambda index: aux._recording_table_show_func(
+            index, recording_table
+        ),
+    ) as recording_indices:
+        for i in recording_indices:
+            spectrogram_parameter["channel"] = recording_table.loc[i, "channel"]
             save_spectrogram(
-                spectrogram_table["wav_file"][i_wav_file],
+                recording_table.loc[i, "wav_file_path"],
                 output_dir,
                 spectrogram_parameter,
                 msgr=aux.Messenger(verbosity=0),
             )
 
     return
-
-
-def _progress_show_func(i, spectrogram_table):
-    if i is not None:
-        return (
-            spectrogram_table["wav_file"][i].name
-            + ", Ch "
-            + str(spectrogram_table["best.channel"][i])
-        )
