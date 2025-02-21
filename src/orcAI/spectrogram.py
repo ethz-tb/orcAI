@@ -1,5 +1,4 @@
 import librosa
-import zarr
 from pathlib import Path
 from importlib.resources import files
 import numpy as np
@@ -112,68 +111,38 @@ def create_spectrogram(
 
 
 def save_spectrogram(
-    wav_file_path,
-    output_dir=None,
-    spectrogram_parameter=None,
-    spectrogram_parameter_path=str(
-        files("orcAI.defaults").joinpath("default_spectrogram_parameter.json")
-    ),
+    spectrogram,
+    frequencies,
+    times,
+    output_dir,
     msgr=aux.Messenger(),
 ):
     """Loads wavfile and saves spectrogram to disk according to parameters
 
     Parameters
     ----------
-    wav_file_path : Path
-        Path to the wav file.
-    output_dir : Path
-        Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.
-    spectrogram_parameter : dict
-        Dictionary with parameters for the spectrogram creation.
-    spectrogram_parameter_path : Path
-        Path to the spectrogram parameter file. Only used if spectrogram_parameter is None.
+    spectrogram : np.ndarray
+        Spectrogram to be saved.
+    frequencies : np.ndarray
+        Frequencies of the spectrogram.
+    times : np.ndarray
+        Times of the spectrogram.
     msgr : Messenger
         Messenger object for logging.
     """
 
-    if output_dir is None:
-        output_dir = Path(wav_file_path).parent
-
-    # allow for passing either a dict or path to json
-    if spectrogram_parameter is None:
-        spectrogram_parameter = aux.read_json(spectrogram_parameter_path)
-
-    # Create spectrogram
-    spectrogram, frequencies, times = create_spectrogram(
-        wav_file_path, spectrogram_parameter=spectrogram_parameter, msgr=msgr
-    )
-
-    msgr.part("OrcAI - saving spectrogram")
+    msgr.part("Saving spectrogram")
     # Save spectrogram with Zarr
-    start_time = time.time()
-    stem = Path(wav_file_path).stem
-    sub_dir = "spectrogram"
-    zarr_file_name = "zarr.spc"
-    zarr_file = zarr.open(
-        str(Path(output_dir, stem, sub_dir, zarr_file_name)),
-        mode="w",
-        shape=spectrogram.shape,
-        chunks=(2000, spectrogram.shape[1]),
-        dtype="float32",
-        compressor=zarr.Blosc(cname="zlib"),
-    )
-    zarr_file[:] = spectrogram
-    save_time = time.time()
-    msgr.info(f"Time for for saving to disk: {save_time - start_time:.2f} seconds")
+    aux.save_as_zarr(spectrogram, filename=Path(output_dir, "zarr.spc"), msgr=msgr)
 
     # save frequency and time vector into json files
     aux.write_vector_to_json(
         frequencies,
-        Path(output_dir, stem, sub_dir, "frequencies.json"),
+        Path(output_dir, "frequencies.json"),
     )
     aux.write_vector_to_json(
         times,
-        Path(output_dir, stem, sub_dir, "times.json"),
+        Path(output_dir, "times.json"),
     )
     return
 
@@ -182,11 +151,11 @@ def create_spectrograms(
     recording_table_path,
     base_dir=None,
     output_dir=None,
-    spectrogram_parameter_path=files("orcAI.defaults").joinpath(
+    spectrogram_parameter=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
     ),
-    exclude=False,
     label_calls_path=files("orcAI.defaults").joinpath("default_calls.json"),
+    exclude=True,
     verbosity=2,
 ):
     """Creates spectrograms for all files in spectrogram_table
@@ -200,17 +169,17 @@ def create_spectrograms(
         searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.
     output_dir : Path
         Output directory for the spectrograms. If None the spectrograms are saved in the same directory as the wav files.
-    spectrogram_parameter_path : Path
-        Path to the spectrogram parameter file.
-    exclude : bool
-        Exclude recordings without possible annotations.
+    spectrogram_parameter : (Path | str) | dict
+        Path to the spectrogram parameter file or a dictionary with parameters for the spectrogram creation.
     label_calls_path : Path
         Path to a JSON file containing calls for labeling
+    exclude : bool
+        Exclude recordings without possible annotations.
     verbosity : int
         Verbosity level.
     """
     msgr = aux.Messenger(verbosity=verbosity)
-    msgr.part("OrcAI - Creating spectrograms")
+
     recording_table = pd.read_csv(recording_table_path)
     if exclude:
         label_calls = aux.read_json(label_calls_path)
@@ -227,8 +196,10 @@ def create_spectrograms(
             base_dir, recording_table["recording"], ".wav", msgr=msgr
         )
 
-    spectrogram_parameter = aux.read_json(spectrogram_parameter_path)
+    if isinstance(spectrogram_parameter, (Path | str)):
+        spectrogram_parameter = aux.read_json(spectrogram_parameter)
 
+    msgr.part(f"Creating {len(recording_table)} spectrograms")
     with progressbar(
         recording_table.index,
         label="Creating spectrograms",
@@ -238,11 +209,29 @@ def create_spectrograms(
     ) as recording_indices:
         for i in recording_indices:
             spectrogram_parameter["channel"] = recording_table.loc[i, "channel"]
-            save_spectrogram(
+            silent_msgr = aux.Messenger(verbosity=0)
+            spectrogram, frequencies, times = create_spectrogram(
                 recording_table.loc[i, "wav_file_path"],
-                output_dir,
                 spectrogram_parameter,
-                msgr=aux.Messenger(verbosity=0),
+                msgr=silent_msgr,
+            )
+            if output_dir is None:
+                output_dir = (
+                    Path(recording_table.loc[i, "wav_file_path"])
+                    .with_suffix("")
+                    .joinpath("spectrogram")
+                )
+            else:
+                output_dir = Path(output_dir).joinpath(
+                    recording_table.loc[i, "recording"], "spectrogram"
+                )
+
+            save_spectrogram(
+                spectrogram,
+                frequencies,
+                times,
+                output_dir,
+                msgr=silent_msgr,
             )
 
     return
