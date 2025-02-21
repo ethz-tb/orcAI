@@ -9,6 +9,7 @@ import librosa
 from sklearn.metrics import confusion_matrix
 import click
 import zarr
+import time
 
 
 class JsonEncoderExt(json.JSONEncoder):
@@ -187,8 +188,9 @@ def write_json(dictionary, filename):
     return
 
 
-def save_as_zarr(obj, filename):
+def save_as_zarr(obj, filename, msgr=Messenger(verbosity=2)):
     """write object to zarr file"""
+    start_time = time.time()
     zarr_file = zarr.open(
         filename,
         mode="w",
@@ -198,6 +200,8 @@ def save_as_zarr(obj, filename):
         compressor=zarr.Blosc(cname="zlib"),
     )
     zarr_file[:] = obj
+    save_time = time.time()
+    msgr.info(f"Time for for saving to disk: {save_time - start_time:.2f} seconds")
     return
 
 
