@@ -187,6 +187,20 @@ def write_json(dictionary, filename):
     return
 
 
+def save_as_zarr(obj, filename):
+    """write object to zarr file"""
+    zarr_file = zarr.open(
+        filename,
+        mode="w",
+        shape=obj.shape,
+        chunks=(2000, obj.shape[1]),
+        dtype="float32",
+        compressor=zarr.Blosc(cname="zlib"),
+    )
+    zarr_file[:] = obj
+    return
+
+
 def get_all_files_with_ext(directory, extension):
     """
     Recursively get all ".ext" files from the specified directory.
