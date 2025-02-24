@@ -58,6 +58,8 @@ class Messenger:
 
         if isinstance(message, dict) or isinstance(message, list):
             message = self.dict_to_str(message)
+        elif isinstance(message, pd.DataFrame | pd.Series):
+            message = self.pd_to_str(message)
         else:
             message = self.indent_str * self.n_indent + prepend + message
 
@@ -156,6 +158,14 @@ class Messenger:
             self.indent_str * self.n_indent + line for line in json_string.splitlines()
         )
         return indented_json
+
+    def pd_to_str(self, obj):
+        """Convert a DataFrame to a formatted string with indentation."""
+        obj_string = obj.to_string()
+        indented_obj = "\n".join(
+            self.indent_str * self.n_indent + line for line in obj_string.splitlines()
+        )
+        return indented_obj
 
 
 def write_vector_to_json(vector, filename):
