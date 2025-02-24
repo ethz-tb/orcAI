@@ -109,7 +109,7 @@ def convert_annotation(
     return annotations_array, label_list
 
 
-def make_label_arrays(
+def create_label_arrays(
     recording_table_path,
     output_dir,
     base_dir=None,
@@ -163,7 +163,7 @@ def make_label_arrays(
     recordings_no_labels = []
     with progressbar(
         recording_table.index,
-        label="Converting annotation files...",
+        label="Converting annotation files",
         item_show_func=lambda index: aux._recording_table_show_func(
             index,
             recording_table,
