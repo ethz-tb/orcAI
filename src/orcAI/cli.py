@@ -4,7 +4,7 @@ from importlib.resources import files
 from .train import train
 from .predict import predict
 from .spectrogram import create_spectrograms
-from .annotation import make_label_arrays
+from .annotation import create_label_arrays
 
 ClickDirPathR = click.Path(
     exists=True, file_okay=False, readable=True, resolve_path=True, path_type=Path
@@ -259,4 +259,4 @@ def cli_create_spectrogram(**kwargs):
     help="Verbosity level.",
 )
 def cli_make_label_arrays(**kwargs):
-    make_label_arrays(**kwargs)
+    create_label_arrays(**kwargs)
