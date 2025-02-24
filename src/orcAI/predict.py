@@ -88,7 +88,7 @@ def predict(
     )
 
     # Generating spectrogram
-    spectrogram, frequencies, times = spec.create_spectrogram(
+    spectrogram, frequencies, times = spec.make_spectrogram(
         wav_file_path, spectrogram_parameters
     )
     if spectrogram.shape[1] != shape["input_shape"][1]:
