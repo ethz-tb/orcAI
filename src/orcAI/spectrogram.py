@@ -10,7 +10,7 @@ from click import progressbar
 import orcAI.auxiliary as aux
 
 
-def create_spectrogram(
+def make_spectrogram(
     wav_file_path,
     spectrogram_parameter=None,
     spectrogram_parameter_path=str(
@@ -18,7 +18,7 @@ def create_spectrogram(
     ),
     msgr=aux.Messenger(),
 ):
-    """Creates spectrogram from .wav file according to spectrogram_parameter
+    """Makes spectrogram from .wav file according to spectrogram_parameter
 
     Parameters
     ----------
@@ -30,6 +30,15 @@ def create_spectrogram(
         Path to the spectrogram parameter file. Only used if spectrogram_parameter is None.
     msgr : Messenger
         Messenger object for logging.
+
+    Returns
+    -------
+    np.ndarray
+        Spectrogram.
+    np.ndarray
+        Frequencies of the spectrogram.
+    np.ndarray
+        Times of the spectrogram.
     """
     msgr.part("Creating spectrogram")
     # allow for passing either a dict or path to json
@@ -214,7 +223,7 @@ def create_spectrograms(
         for i in recording_indices:
             spectrogram_parameter["channel"] = recording_table.loc[i, "channel"]
             silent_msgr = aux.Messenger(verbosity=0)
-            spectrogram, frequencies, times = create_spectrogram(
+            spectrogram, frequencies, times = make_spectrogram(
                 recording_table.loc[i, "wav_file_path"],
                 spectrogram_parameter,
                 msgr=silent_msgr,
