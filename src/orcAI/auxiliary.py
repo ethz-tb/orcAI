@@ -177,7 +177,7 @@ def write_vector_to_json(vector, filename):
 
 
 def read_json_to_vector(filename):
-    """read and generate equally spaced vector in short form from min, max and length and"""
+    """read and generate equally spaced vector in short form from min, max and length"""
     with open(filename, "r") as f:
         dictionary = json.load(f)
     return np.linspace(dictionary["min"], dictionary["max"], dictionary["length"])
@@ -253,25 +253,34 @@ def resolve_file_paths(
     file_paths = []
     if extension[0] != ".":
         extension = "." + extension
-    for wav_file in file_names:
-        results = sorted(Path(directory).rglob(wav_file + extension))
+    for file_name in file_names:
+        results = list(Path(directory).rglob(file_name + extension))
         if len(results) == 0:
-            msgr.warning(f"No {extension} file found for {wav_file}. Returning None.")
+            msgr.warning(f"No {extension} file found for {file_name}. Returning None.")
             results = [None]
         elif len(results) > 1:
-            msgr.warning(f"WARNING: Multiple files found for {wav_file}", indent=1)
+            msgr.warning(f"WARNING: Multiple files found for {file_name}", indent=1)
             msgr.info(results)
             msgr.warning(f"Returning the first path.", indent=-1)
         file_paths.append(results[0])
     return file_paths
 
 
-def filter_filenames(files, eliminate):
+def resolve_recording_data_dir(recording, recording_data_dir):
+    if Path(recording_data_dir, recording).exists():
+        return Path(recording_data_dir, recording)
+    else:
+        return None
+
+
+def filter_recordings(files, eliminate, msgr=Messenger(verbosity=2)):
     """remove filenames containing patterns in list eliminate"""
-    print("# of all files:", len(files))
+    msgr.info(f"Filtering {len(files)} files...")
     for e in eliminate:
-        files = [f for f in files if not e in f]
-        print("# after taking out files that contain", e, ":", len(files))
+        files = [f for f in files if not e in f.name]
+        msgr.info(
+            f"Remaining files after filtering files that contain {e}: {len(files)}"
+        )
     return files
 
 
@@ -294,8 +303,8 @@ def wav_and_annot_files(computer, directories, eliminate):
     all_txt_files = get_all_files_with_ext(root_dir_acoustics, ".txt")
     all_wav_files = get_all_files_with_ext(root_dir_acoustics, ".wav")
 
-    filtered_txt_files = filter_filenames(all_txt_files, eliminate)
-    filtered_wav_files = filter_filenames(all_wav_files, eliminate)
+    filtered_txt_files = filter_recordings(all_txt_files, eliminate)
+    filtered_wav_files = filter_recordings(all_wav_files, eliminate)
 
     fnstem_txt = [Path(f).stem for f in filtered_txt_files]
     fnstem_wav = [Path(f).stem for f in filtered_wav_files]
@@ -405,18 +414,22 @@ def calculate_total_duration(annotations):
     annotations["duration"] = annotations["stop"] - annotations["start"]
 
     # Group by 'fnstem' and 'label' and sum the durations
-    grouped = annotations.groupby(["fnstem", "label"])["duration"].sum().reset_index()
+    grouped = (
+        annotations.groupby(["recording", "label"])["duration"].sum().reset_index()
+    )
 
     # Pivot to wide format
     wide_format = grouped.pivot(
-        index="fnstem", columns="label", values="duration"
+        index="recording", columns="label", values="duration"
     ).fillna(0)
 
-    # Reset index to make 'fnstem' a column
+    # Reset index to make 'recording' a column
     wide_format.reset_index(inplace=True)
 
     # Rename columns to include 'label' prefix for clarity
-    wide_format.rename(columns=lambda x: f"{x}" if x != "fnstem" else x, inplace=True)
+    wide_format.rename(
+        columns=lambda x: f"{x}" if x != "recording" else x, inplace=True
+    )
 
     # Add a row for the column sums
     column_sums = wide_format.iloc[:, 1:].sum(axis=0)  # Sum durations for each label
