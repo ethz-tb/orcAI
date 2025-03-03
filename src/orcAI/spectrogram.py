@@ -7,7 +7,14 @@ import pandas as pd
 from click import progressbar
 
 # import local
-import orcAI.auxiliary as aux
+from orcAI.auxiliary import (
+    Messenger,
+    read_json,
+    save_as_zarr,
+    write_vector_to_json,
+    resolve_file_paths,
+    recording_table_show_func,
+)
 
 
 def make_spectrogram(
@@ -16,7 +23,7 @@ def make_spectrogram(
     spectrogram_parameter_path=str(
         files("orcAI.defaults").joinpath("default_spectrogram_parameter.json")
     ),
-    msgr=aux.Messenger(),
+    msgr=Messenger(),
 ):
     """Makes spectrogram from .wav file according to spectrogram_parameter
 
@@ -43,7 +50,7 @@ def make_spectrogram(
     msgr.part("Creating spectrogram")
     # allow for passing either a dict or path to json
     if spectrogram_parameter is None:
-        spectrogram_parameter = aux.read_json(spectrogram_parameter_path)
+        spectrogram_parameter = read_json(spectrogram_parameter_path)
     msgr.info(f"Loading wav file: {wav_file_path}")
     msgr.warning(f"using channel {spectrogram_parameter['channel']}")
 
@@ -124,7 +131,7 @@ def save_spectrogram(
     frequencies,
     times,
     output_dir,
-    msgr=aux.Messenger(),
+    msgr=Messenger(),
 ):
     """Saves spectrogram as zarr file and frequency and time vectors as json files in output_dir
 
@@ -142,16 +149,14 @@ def save_spectrogram(
 
     msgr.part("Saving spectrogram")
     # Save spectrogram with Zarr
-    aux.save_as_zarr(
-        spectrogram, filename=Path(output_dir, "spectrogram.zarr"), msgr=msgr
-    )
+    save_as_zarr(spectrogram, filename=Path(output_dir, "spectrogram.zarr"), msgr=msgr)
 
     # save frequency and time vector into json files
-    aux.write_vector_to_json(
+    write_vector_to_json(
         frequencies,
         Path(output_dir, "frequencies.json"),
     )
-    aux.write_vector_to_json(
+    write_vector_to_json(
         times,
         Path(output_dir, "times.json"),
     )
@@ -189,13 +194,13 @@ def create_spectrograms(
     verbosity : int
         Verbosity level.
     """
-    msgr = aux.Messenger(verbosity=verbosity)
+    msgr = Messenger(verbosity=verbosity)
     msgr.part("Reading recordings table")
     recording_table = pd.read_csv(recording_table_path)
 
     if exclude:
         if isinstance(label_calls, (Path | str)):
-            label_calls = aux.read_json(label_calls)
+            label_calls = read_json(label_calls)
         is_included = recording_table[label_calls].apply(lambda x: x.any(), axis=1)
         msgr.info(
             f"Excluded recordings because they lack any possible annotations:", indent=1
@@ -205,24 +210,22 @@ def create_spectrograms(
 
     if base_dir is not None:
         msgr.info(f"Resolving file paths...")
-        recording_table["wav_file_path"] = aux.resolve_file_paths(
+        recording_table["wav_file_path"] = resolve_file_paths(
             base_dir, recording_table["recording"], ".wav", msgr=msgr
         )
 
     if isinstance(spectrogram_parameter, (Path | str)):
-        spectrogram_parameter = aux.read_json(spectrogram_parameter)
+        spectrogram_parameter = read_json(spectrogram_parameter)
 
     msgr.part(f"Creating {len(recording_table)} spectrograms")
     with progressbar(
         recording_table.index,
         label="Creating spectrograms",
-        item_show_func=lambda index: aux._recording_table_show_func(
-            index, recording_table
-        ),
+        item_show_func=lambda index: recording_table_show_func(index, recording_table),
     ) as recording_indices:
         for i in recording_indices:
             spectrogram_parameter["channel"] = recording_table.loc[i, "channel"]
-            silent_msgr = aux.Messenger(verbosity=0)
+            silent_msgr = Messenger(verbosity=0)
             spectrogram, frequencies, times = make_spectrogram(
                 recording_table.loc[i, "wav_file_path"],
                 spectrogram_parameter,
