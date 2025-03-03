@@ -360,3 +360,78 @@ def create_tvt_snippet_tables(
     msgr.success("Train, val and test snippet tables created and saved to disk")
 
     return
+
+
+def create_tvt_data(
+    tvt_dir,
+    model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
+    verbosity=2,
+):
+    msgr = Messenger(verbosity=verbosity)
+    msgr.part("Creating train, validation and test data")
+    if isinstance(model_parameter, (Path | str)):
+        model_parameter = read_json(model_parameter)
+
+    csv_paths = [Path(tvt_dir, f"{itype}.csv.gz") for itype in ["train", "val", "test"]]
+
+    msgr.info("Reading in dataframes with snippets and generating loaders", indent=1)
+    start_time = time.time()
+    loaders, spectrogram_chunk_shape, label_chunk_shape = load_data_from_snippet_csv(
+        csv_paths, model_parameter, msgr=msgr
+    )
+    msgr.info(
+        f"Dataframes read and loaders generated in {seconds_to_hms(time.time() - start_time)}"
+    )
+    msgr.info(f"Spectrogram chunk shape: {spectrogram_chunk_shape}")
+    msgr.info(f"Original label chunk shape: {label_chunk_shape}")
+    msgr.print_memory_usage(indent=-1)
+
+    msgr.info("Data characteristics:", indent=1)
+    start_time = time.time()
+    spectrogram_batch, label_batch = loaders["train"][0]
+    msgr.info(f"Data loading time per batch: {time.time() - start_time:.2f} seconds")
+    msgr.info(f"Input spectrogram batch shape: {spectrogram_batch.shape}")
+    msgr.info(f"Input label batch shape: {label_batch.shape}", indent=-1)
+
+    msgr.info("Creating test, validation and training datasets", indent=1)
+    start_time = time.time()
+    dataset = {}
+    for itype in ["train", "val", "test"]:
+        dataset[itype] = tf.data.Dataset.from_generator(
+            lambda: data_generator(loaders[itype]),
+            output_signature=(
+                tf.TensorSpec(
+                    shape=(
+                        spectrogram_batch.shape[1],
+                        spectrogram_batch.shape[2],
+                        1,
+                    ),
+                    dtype=tf.float32,
+                ),
+                tf.TensorSpec(
+                    shape=(label_batch.shape[1], label_batch.shape[2]),
+                    dtype=tf.float32,
+                ),
+            ),
+        )
+        msgr.info(f"{itype.capitalize()} dataset created")
+    msgr.info(f"Datasets created in {seconds_to_hms(time.time() - start_time)}")
+    msgr.print_memory_usage(indent=-1)
+
+    msgr.info("Saving datasets to disk", indent=1)
+
+    # TODO: test saving
+    for itype in ["train", "val", "test"]:
+        start_time = time.time()
+        dataset_path = Path(tvt_dir, f"{itype}_dataset")
+        dataset[itype].save(
+            path=str(dataset_path)
+        )  # deadlocks silently on error https://github.com/tensorflow/tensorflow/issues/61736
+        msgr.info(
+            f"{itype.capitalize()} dataset saved to disk in {seconds_to_hms(time.time() - start_time)}"
+        )
+        msgr.print_directory_size(dataset_path)
+
+    msgr.success("Train, validation and test datasets created and saved to disk")
+
+    return
