@@ -1,44 +1,64 @@
-import os
+from pathlib import Path
 import zarr
-import time
 import random
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.utils import Sequence
 
+from orcAI.auxiliary import Messenger
+
 
 class ChunkedMultiZarrDataLoader(Sequence):
-    def __init__(self, dataframe, batch_size, n_filters, shuffle=True):
+    def __init__(
+        self, snippet_table, batch_size, n_filters, shuffle=True, msgr=Messenger()
+    ):
         """
         Data loader for extracting chunks from multiple Zarr files with reshaped labels and normalized spectrograms.
 
         Args:
-            dataframe (pd.DataFrame): DataFrame with columns ['fnstem_path', 'row_start', 'row_stop'].
+            snippet_table (pd.DataFrame): DataFrame with columns ['recording_data_dir', 'row_start', 'row_stop'].
             batch_size (int): Number of samples per batch.
             n_filters (int): Number of filters for reshaping labels.
             shuffle (bool): Whether to shuffle the data at the end of each epoch.
         """
-        self.dataframe = dataframe
+        self.snippet_table = snippet_table
         self.batch_size = batch_size
         self.n_filters = n_filters
         self.shuffle = shuffle
 
         # Preload Zarr files and JSON label names
         self.zarr_files = []
-        self.label_names = []
-        for idx, row in self.dataframe.iterrows():
-            spec_path = os.path.join(row["fnstem_path"], "spectrogram/zarr.spc")
-            lbl_path = os.path.join(row["fnstem_path"], "labels/zarr.lbl")
-            if not os.path.exists(lbl_path):
-                print(lbl_path)
-            spectrogram = zarr.open(spec_path, mode="r")
-            label = zarr.open(lbl_path, mode="r")
-            self.zarr_files.append((spectrogram, label))
+        # self.label_names = [] # TODO: not used?
+        for idx, row in self.snippet_table.iterrows():
+            spectrogram_zarr_path = Path(row["recording_data_dir"]).joinpath(
+                "spectrogram", "spectrogram.zarr"
+            )
+            labels_zarr_path = Path(row["recording_data_dir"]).joinpath(
+                "labels", "labels.zarr"
+            )
+
+            # zarr open doesn't work with try/except blocks
+            if labels_zarr_path.exists():
+                labels = zarr.open(labels_zarr_path, mode="r")
+            else:
+                msgr.error(f"File not found: {labels_zarr_path}")
+                msgr.error("Wrong path? Did you create the labels?")
+                raise FileNotFoundError
+
+            # zarr open doesn't work with try/except blocks
+            if spectrogram_zarr_path.exists():
+                spectrogram = zarr.open(spectrogram_zarr_path, mode="r")
+            else:
+                msgr.error(f"File not found: {spectrogram_zarr_path}")
+                msgr.error("Wrong path? Did you create the spectrogram?")
+                raise FileNotFoundError
+
+            self.zarr_files.append((spectrogram, labels))
 
         # Prepare indices for batches
         self.indices = [
             (idx, row["row_start"], row["row_stop"])
-            for idx, row in self.dataframe.iterrows()
+            for idx, row in self.snippet_table.iterrows()
         ]
         if self.shuffle:
             random.shuffle(self.indices)
@@ -91,13 +111,9 @@ class ChunkedMultiZarrDataLoader(Sequence):
 
         for df_index, start, stop in batch_indices:
             spectrogram, label = self.zarr_files[df_index]
-            # start_time = time.time()
             spectrogram_chunk = spectrogram[start:stop, :]
-            # spec_time = time.time()
-            # print(f"Time for spec chunk: {spec_time - start_time:.2f} seconds")
             label_chunk = label[start:stop, :]
-            label_time = time.time()
-            # print(f"Time for label chunk: {label_time - spec_time:.2f} seconds")
+
             if spectrogram_chunk.shape[0] == 0:
                 continue
             spectrogram_chunk = tf.expand_dims(spectrogram_chunk, axis=-1)
@@ -110,8 +126,6 @@ class ChunkedMultiZarrDataLoader(Sequence):
             )
             if label_chunk.shape[0] == 0:
                 continue
-            # reshape_time = time.time()
-            # print(f"Time for reshape: {reshape_time - label_time:.2f} seconds")
 
             # Append processed chunks to the batch
             spectrogram_batch.append(spectrogram_chunk)
@@ -138,67 +152,79 @@ def data_generator(loader):
 
 
 # load data from csv.gz files
-def load_data_from_csv(csv_list, model_dict, directories_dict, computer):
-    batch_size = model_dict["batch_size"]
-    n_filters = len(model_dict["filters"])
-    shuffle = model_dict["shuffle"]
-    df_list = []
-    loader_list = []
-    for i, file in enumerate(csv_list):
-        df = pd.read_csv(directories_dict[computer]["root_dir_tvtdata"] + file)
-        print("  - snippet file:", file, "length:", len(df))
-        df_list += [df]
+def load_data_from_snippet_csv(
+    csv_paths,
+    model_parameter,
+    msgr=Messenger(),
+):
+    msgr.part("Loading data from snippet csv files")
+    batch_size = model_parameter["batch_size"]
+    n_filters = len(model_parameter["filters"])
+    shuffle = model_parameter["shuffle"]
+    # snippet_tables = [] #TODO: not used?
+    loader_list = {}
+    for i, csv_path in enumerate(csv_paths):
+        snippet_table = pd.read_csv(csv_path)
+        msgr.info(f"snippet file: {csv_path.stem}, length: {len(snippet_table)}")
+        # snippet_tables += [snippet_table] #TODO: not used?
         if i == 0:
             spectrogram = zarr.open(
-                os.path.join(df.iloc[0]["fnstem_path"], "spectrogram/zarr.spc"),
+                Path(snippet_table.iloc[0]["recording_data_dir"]).joinpath(
+                    "spectrogram", "spectrogram.zarr"
+                ),
                 mode="r",
             )
             spectrogram_chunk = spectrogram[
-                df.iloc[0]["row_start"] : df.iloc[0]["row_stop"], :
+                snippet_table.iloc[0]["row_start"] : snippet_table.iloc[0]["row_stop"],
+                :,
             ]
-            spectrogram_chunk_shape = spectrogram_chunk.shape
             label = zarr.open(
-                os.path.join(df.iloc[0]["fnstem_path"], "labels/zarr.lbl"),
+                Path(snippet_table.iloc[0]["recording_data_dir"]).joinpath(
+                    "labels", "labels.zarr"
+                ),
                 mode="r",
             )
-            label_chunk = label[df.iloc[0]["row_start"] : df.iloc[0]["row_stop"], :]
-            label_chunk_shape = label_chunk.shape
-        loader_list += [
-            ChunkedMultiZarrDataLoader(
-                df_list[i],
-                batch_size=batch_size,
-                n_filters=n_filters,
-                shuffle=shuffle,
-            )
-        ]
-    return loader_list, spectrogram_chunk_shape, label_chunk_shape
+            label_chunk = label[
+                snippet_table.iloc[0]["row_start"] : snippet_table.iloc[0]["row_stop"],
+                :,
+            ]
+        loader_list[csv_path.with_suffix("").stem] = ChunkedMultiZarrDataLoader(
+            snippet_table,  # snippet_tables[i], #TODO: not used?
+            batch_size=batch_size,
+            n_filters=n_filters,
+            shuffle=shuffle,
+        )
+
+    return (
+        loader_list,
+        spectrogram_chunk.shape,
+        label_chunk.shape,
+    )  # TODO: spectrogram_chunk_shape, label_chunk_shape from first entry only. Can this be simplified?
 
 
-# create data set list
-def create_dataset_list(loader_list, model_dict, spectrogram_shape, label_shape):
-    dataset_list = []
-    for loader in loader_list:
-        dataset = tf.data.Dataset.from_generator(
-            lambda: data_generator(loader),
-            output_signature=(
-                tf.TensorSpec(
-                    shape=(spectrogram_shape[0], spectrogram_shape[1], 1),
-                    dtype=tf.float32,
-                ),  # Single spectrogram shape
-                tf.TensorSpec(
-                    shape=(label_shape[0], label_shape[1]), dtype=tf.float32
-                ),  # Single label shape
-            ),
-        )
-        dataset = (
-            dataset.shuffle(buffer_size=1000)
-            .batch(
-                model_dict["batch_size"], drop_remainder=True
-            )  # Batch size as defined in model_dict
-            .prefetch(buffer_size=tf.data.AUTOTUNE)
-        )
-        dataset_list.append(dataset)
-    return dataset_list
+# create data set list #TODO: not used?
+# def create_dataset_list(loader_list, model_parameter, spectrogram_shape, label_shape):
+#     dataset_list = []
+#     for loader in loader_list:
+#         dataset = tf.data.Dataset.from_generator(
+#             lambda: data_generator(loader),
+#             output_signature=(
+#                 tf.TensorSpec(
+#                     shape=(spectrogram_shape[0], spectrogram_shape[1], 1),
+#                     dtype=tf.float32,
+#                 ),  # Single spectrogram shape
+#                 tf.TensorSpec(
+#                     shape=(label_shape[0], label_shape[1]), dtype=tf.float32
+#                 ),  # Single label shape
+#             ),
+#         )
+#         dataset = (
+#             dataset.shuffle(buffer_size=1000)
+#             .batch(model_parameter["batch_size"], drop_remainder=True)
+#             .prefetch(buffer_size=tf.data.AUTOTUNE)
+#         )
+#         dataset_list.append(dataset)
+#     return dataset_list
 
 
 # reload tf dataset
@@ -206,23 +232,20 @@ def reload_dataset(file_path, batch_size):
     dataset = tf.data.Dataset.load(str(file_path))
     dataset = (
         dataset.shuffle(buffer_size=1000)
-        .batch(batch_size, drop_remainder=True)  # Batch size as defined in model_dict
+        .batch(
+            batch_size, drop_remainder=True
+        )  # Batch size as defined in model_parameter
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
     return dataset
 
 
 # save tf dataset
-def save_dataset(file_path, dataset):
+def save_dataset(file_path, dataset, msgr=Messenger()):
     import shutil
-    import os
 
-    start_time = time.time()
-    if os.path.exists(file_path):
+    if file_path.exists():
         shutil.rmtree(file_path)
-    tf.data.Dataset.save(dataset, file_path)
-    print(
-        f"   - time saving dataset {file_path}: {time.time() - start_time:.2f} seconds"
-    )
+    tf.data.Dataset.save(dataset, str(file_path))
 
     return
