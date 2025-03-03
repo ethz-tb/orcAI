@@ -202,31 +202,6 @@ def load_data_from_snippet_csv(
     )  # TODO: spectrogram_chunk_shape, label_chunk_shape from first entry only. Can this be simplified?
 
 
-# create data set list #TODO: not used?
-# def create_dataset_list(loader_list, model_parameter, spectrogram_shape, label_shape):
-#     dataset_list = []
-#     for loader in loader_list:
-#         dataset = tf.data.Dataset.from_generator(
-#             lambda: data_generator(loader),
-#             output_signature=(
-#                 tf.TensorSpec(
-#                     shape=(spectrogram_shape[0], spectrogram_shape[1], 1),
-#                     dtype=tf.float32,
-#                 ),  # Single spectrogram shape
-#                 tf.TensorSpec(
-#                     shape=(label_shape[0], label_shape[1]), dtype=tf.float32
-#                 ),  # Single label shape
-#             ),
-#         )
-#         dataset = (
-#             dataset.shuffle(buffer_size=1000)
-#             .batch(model_parameter["batch_size"], drop_remainder=True)
-#             .prefetch(buffer_size=tf.data.AUTOTUNE)
-#         )
-#         dataset_list.append(dataset)
-#     return dataset_list
-
-
 # reload tf dataset
 def reload_dataset(file_path, batch_size):
     dataset = tf.data.Dataset.load(str(file_path))
@@ -238,14 +213,3 @@ def reload_dataset(file_path, batch_size):
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
     return dataset
-
-
-# save tf dataset
-def save_dataset(file_path, dataset, msgr=Messenger()):
-    import shutil
-
-    if file_path.exists():
-        shutil.rmtree(file_path)
-    tf.data.Dataset.save(dataset, str(file_path))
-
-    return
