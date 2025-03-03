@@ -1,5 +1,5 @@
 from pathlib import Path
-from random import shuffle
+from random import shuffle as random_shuffle
 import zarr
 import pandas as pd
 import tensorflow as tf
@@ -61,7 +61,7 @@ class ChunkedMultiZarrDataLoader(Sequence):
             for idx, row in self.snippet_table.iterrows()
         ]
         if self.shuffle:
-            shuffle(self.indices)
+            random_shuffle(self.indices)
 
     def __len__(self):
         """
