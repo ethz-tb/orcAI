@@ -1,8 +1,9 @@
 from pathlib import Path
+from importlib.resources import files
 import numpy as np
 import pandas as pd
 from click import progressbar
-from importlib.resources import files
+
 
 # import local
 from orcAI.auxiliary import (
