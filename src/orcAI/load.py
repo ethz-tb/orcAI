@@ -1,22 +1,12 @@
-# %%
-# import
 import os
 import zarr
 import time
-import json
 import random
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.utils import Sequence
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
-import numpy as np
-
-# import local
-import orcAI.auxiliary as aux
-import orcAI.architectures as arch
 
 
-# Loader class
 class ChunkedMultiZarrDataLoader(Sequence):
     def __init__(self, dataframe, batch_size, n_filters, shuffle=True):
         """
