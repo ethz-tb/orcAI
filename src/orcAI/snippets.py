@@ -15,7 +15,7 @@ from orcAI.auxiliary import (
     resolve_recording_data_dir,
     recording_table_show_func,
 )
-from orcAI.load import load_data_from_snippet_csv, data_generator, save_dataset
+from orcAI.load import load_data_from_snippet_csv, data_generator
 
 
 def _make_snippet_table(
