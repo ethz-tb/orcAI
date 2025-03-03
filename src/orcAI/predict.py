@@ -19,7 +19,7 @@ from orcAI.spectrogram import make_spectrogram
 
 def predict(
     wav_file_path,
-    model_path=files("orcAI.defaults").joinpath("orcai_Orca_1_0_0"),
+    model_path=files("orcAI.models").joinpath("orcai_Orca_1_0_0"),
     output_file=None,
     spectrogram_parameters_path=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
