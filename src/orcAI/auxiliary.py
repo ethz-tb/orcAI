@@ -1,15 +1,12 @@
+import os
+import time
+from pathlib import Path
 import pandas as pd
 import numpy as np
-import librosa
-import os
-from pathlib import Path
 import json
-import glob
-import librosa
 from sklearn.metrics import confusion_matrix
 import click
 import zarr
-import time
 
 
 class JsonEncoderExt(json.JSONEncoder):
