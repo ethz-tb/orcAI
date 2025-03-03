@@ -165,7 +165,7 @@ def save_spectrogram(
 
 def create_spectrograms(
     recording_table_path,
-    output_dir=None,
+    output_dir,
     base_dir=None,
     spectrogram_parameter=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
