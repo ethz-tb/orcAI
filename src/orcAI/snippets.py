@@ -1,8 +1,8 @@
-import numpy as np
-import pandas as pd
 import time
 from pathlib import Path
 from importlib.resources import files
+import numpy as np
+import pandas as pd
 from click import progressbar
 import zarr
 import tensorflow as tf
