@@ -5,13 +5,16 @@ import numpy as np
 from pathlib import Path
 from importlib.resources import files
 import time
-import click
 import tensorflow as tf
 
 
-import orcAI.auxiliary as aux
-import orcAI.architectures as arch
-import orcAI.spectrogram as spec
+from orcAI.auxiliary import Messenger, read_json, find_consecutive_ones
+from orcAI.architectures import (
+    build_cnn_res_lstm_arch,
+    masked_binary_accuracy,
+    masked_binary_crossentropy,
+)
+from orcAI.spectrogram import make_spectrogram
 
 
 def predict(
@@ -21,7 +24,7 @@ def predict(
     spectrogram_parameters_path=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
     ),
-    verbosity=1,
+    verbosity=2,
 ):
     """
     Predicts annotations for a given wav file and saves them in an output file.
@@ -37,7 +40,7 @@ def predict(
     verbosity : int
         Verbosity level.
     """
-    msgr = aux.Messenger(verbosity=verbosity)
+    msgr = Messenger(verbosity=verbosity)
     msgr.part(f"Predicting annotations for wav file: {wav_file_path}")
     if output_file is None:
         output_file = Path(wav_file_path).with_suffix(".txt")
@@ -48,47 +51,47 @@ def predict(
     msgr.info(f"Model: {model_path.stem}")
     msgr.info(f"Output file: {output_file}")
 
-    label_calls = aux.read_json(model_path.joinpath("trained_calls.json"))
+    label_calls = read_json(model_path.joinpath("trained_calls.json"))
     msgr.info("Calls for labeling:")
     msgr.info(label_calls)
 
-    shape = aux.read_json(model_path.joinpath("shape.json"))
+    shape = read_json(model_path.joinpath("shape.json"))
     msgr.info(f"Input shape:")
     msgr.info(shape)
 
-    model_parameter = aux.read_json(model_path.joinpath("model_parameter.json"))
+    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
     msgr.info(f"Model parameter:")
     msgr.info(model_parameter)
 
-    spectrogram_parameters = aux.read_json(spectrogram_parameters_path)
+    spectrogram_parameters = read_json(spectrogram_parameters_path)
     msgr.info(f"Spectrogram parameters:")
     msgr.info(spectrogram_parameters)
 
     msgr.part(f"Loading model: {model_path.stem}")
 
     msgr.info("Building model architecture")
-    model = arch.build_cnn_res_lstm_arch(**shape, **model_parameter)
+    model = build_cnn_res_lstm_arch(**shape, **model_parameter)
 
     msgr.info("Loading model weights")
     model.load_weights(model_path)
 
     msgr.info("Compiling model")
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: arch.masked_binary_accuracy(
+        fn=lambda y_true, y_pred: masked_binary_accuracy(
             y_true, y_pred, mask_value=-1.0
         ),
         name="masked_binary_accuracy",
     )
     model.compile(
         optimizer="adam",
-        loss=lambda y_true, y_pred: arch.masked_binary_crossentropy(
+        loss=lambda y_true, y_pred: masked_binary_crossentropy(
             y_true, y_pred, mask_value=-1.0
         ),
         metrics=[masked_binary_accuracy_metric],
     )
 
     # Generating spectrogram
-    spectrogram, frequencies, times = spec.make_spectrogram(
+    spectrogram, frequencies, times = make_spectrogram(
         wav_file_path, spectrogram_parameters
     )
     if spectrogram.shape[1] != shape["input_shape"][1]:
@@ -160,7 +163,7 @@ def predict(
     label_names = []
     for i, label_name in enumerate(label_calls):
         if sum(binary_prediction[:, i]) > 0:
-            row_start, row_stop = aux.find_consecutive_ones(binary_prediction[:, i])
+            row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
             row_starts += list(row_start)
             row_stops += list(row_stop)
             label_names += [label_name] * len(row_start)
