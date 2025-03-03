@@ -105,7 +105,7 @@ def train(
 
     model = arch.build_model(input_shape, num_labels, model_parameter, msgr=msgr)
 
-    # TODO: is this necessary?
+    # TODO: is this necessary? if yes, rename to something more descriptive than fix
     # TRANSFORMER MODEL FIX
     if transformer_parallel:
         if model_name == "cnn_res_transformer_model":
