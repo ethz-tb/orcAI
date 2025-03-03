@@ -423,7 +423,7 @@ def create_tvt_snippet_tables(
 
 
 def create_tvt_data(
-    tvt_dir,
+    output_dir,
     model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
     verbosity=2,
 ):
@@ -447,7 +447,9 @@ def create_tvt_data(
     if isinstance(model_parameter, (Path | str)):
         model_parameter = read_json(model_parameter)
 
-    csv_paths = [Path(tvt_dir, f"{itype}.csv.gz") for itype in ["train", "val", "test"]]
+    csv_paths = [
+        Path(output_dir, f"{itype}.csv.gz") for itype in ["train", "val", "test"]
+    ]
 
     msgr.info("Reading in dataframes with snippets and generating loaders", indent=1)
     start_time = time.time()
@@ -498,7 +500,7 @@ def create_tvt_data(
     # TODO: test saving
     for itype in ["train", "val", "test"]:
         start_time = time.time()
-        dataset_path = Path(tvt_dir, f"{itype}_dataset")
+        dataset_path = Path(output_dir, f"{itype}_dataset")
         dataset[itype].save(
             path=str(dataset_path)
         )  # deadlocks silently on error https://github.com/tensorflow/tensorflow/issues/61736
