@@ -208,6 +208,7 @@ def create_label_arrays(
                 recordings_no_labels.append(recording_table.loc[i, "recording"])
 
     msgr.warning(f"No labels present in {recordings_no_labels}")
+    msgr.success("Finished making label arrays")
     return
 
 
