@@ -1,6 +1,7 @@
-import click
 from pathlib import Path
 from importlib.resources import files
+import click
+
 from orcAI.train import train
 from orcAI.predict import predict
 from orcAI.spectrogram import create_spectrograms
