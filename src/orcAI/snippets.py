@@ -423,7 +423,7 @@ def create_tvt_snippet_tables(
 
 
 def create_tvt_data(
-    output_dir,
+    tvt_dir,
     model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
     verbosity=2,
 ):
@@ -432,7 +432,7 @@ def create_tvt_data(
     Parameters
     ----------
     tvt_dir : (str | Path)
-        Path to the directory to save the training, validation and test datasets in
+        Path to the directory containing the training, validation and test snippet tables
     model_parameter : dict | (str | Path)
         Dict containing model specifications or path to json containing the same, by default files("orcAI.defaults").joinpath("default_model_parameter.json")
     verbosity : int
@@ -440,16 +440,14 @@ def create_tvt_data(
 
     Returns
     -------
-    None. Writes train, val and test datasets to disk
+    None. Writes train, val and test datasets to tvt_dir
     """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Creating train, validation and test data")
     if isinstance(model_parameter, (Path | str)):
         model_parameter = read_json(model_parameter)
 
-    csv_paths = [
-        Path(output_dir, f"{itype}.csv.gz") for itype in ["train", "val", "test"]
-    ]
+    csv_paths = [Path(tvt_dir, f"{itype}.csv.gz") for itype in ["train", "val", "test"]]
 
     msgr.info("Reading in dataframes with snippets and generating loaders", indent=1)
     start_time = time.time()
@@ -500,7 +498,7 @@ def create_tvt_data(
     # TODO: test saving
     for itype in ["train", "val", "test"]:
         start_time = time.time()
-        dataset_path = Path(output_dir, f"{itype}_dataset")
+        dataset_path = Path(tvt_dir, f"{itype}_dataset")
         dataset[itype].save(
             path=str(dataset_path)
         )  # deadlocks silently on error https://github.com/tensorflow/tensorflow/issues/61736

@@ -313,18 +313,16 @@ def cli_create_tvt_snippet_tables(**kwargs):
 
 @cli.command(
     name="create-tvt-data",
-    help="Creates training, validation and test data from snippet tables",
+    help="Creates training, validation and test data from snippet tables in TVT_DIR",
     short_help="Creates training, validation and test data from snippet tables",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
     help_priority=4,
 )
-@click.option(
-    "--output_dir",
-    "-o",
+@click.argument(
+    "tvt_dir",
     type=ClickDirPathW,
     required=True,
-    help="Path to the output directory.",
 )
 @click.option(
     "-m",
