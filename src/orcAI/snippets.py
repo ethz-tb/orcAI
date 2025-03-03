@@ -1,340 +1,362 @@
 import numpy as np
 import pandas as pd
+import time
 from pathlib import Path
+from importlib.resources import files
+from click import progressbar
 import zarr
-import os
-import sys
-
-import orcAI.auxiliary as aux
-import orcAI.annotation as ann
-
-# import load as load
+import tensorflow as tf
 
 
-# %%
-# Read command line if interactive
-interactive = aux.check_interactive()
-if not interactive:
-    print("Command-line call:", " ".join(sys.argv))
-    computer, project_dir, model_name, mode = aux.create_snippets_commandline_parse()
-else:
-    computer = "laptop"
-    model_name = "cnn_res_lstm_model"
-    project_dir = "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/"
-    mode = "read_in_existing_snippets"
+from orcAI.auxiliary import (
+    Messenger,
+    read_json,
+    seconds_to_hms,
+    resolve_recording_data_dir,
+    recording_table_show_func,
+)
+from orcAI.load import load_data_from_snippet_csv, data_generator, save_dataset
 
 
-# %%
-# Read parameters
-print("Project directory:", project_dir)
-os.chdir(project_dir)
-
-print("READ IN PARAMETERS")
-dicts = {
-    "directories_dict": "GenericParameters/directories.dict",
-    "call_dict": "GenericParameters/call.dict",
-    "spectrogram_dict": "GenericParameters/spectrogram.dict",
-    "segments_dict": "GenericParameters/segments.dict",
-    "model_dict": project_dir + "Results/" + model_name + "/model.dict",
-    "calls_for_labeling_list": "GenericParameters/calls_for_labeling.list",
-    "extract_snippets_dict": "GenericParameters/extract_snippets.dict",
-}
-for key, value in dicts.items():
-    print("  - reading", key)
-    globals()[key] = aux.read_json(value, True)
-
-
-# %%
-# Functions to extract snippets
-def list_extract_snippets(
-    fnstem, n_segments, segments_dict, directories_dict, model_dict
+def _make_snippet_table(
+    recording_data_dir,
+    snippet_parameter=files("orcAI.defaults").joinpath(
+        "default_snippet_parameter.json"
+    ),
+    model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
+    msgr=Messenger(verbosity=2),
 ):
-    """generates times for snippets to be extracted from fnstem
-    returns pandas dataframe with fnstem, type, start, stop and duration for each label names
-    """
+    """Generates times for snippets to be extracted from labels
 
-    fnlabel = (
-        directories_dict[computer]["root_dir_spectrograms"]
-        + fnstem
-        + "/labels/zarr.lbl"
+    returns pd.DataFrame with recording, data_type, start, stop and duration for each label
+
+    Parameters
+    ----------
+    recording_data_dir : str
+        Path to the recording data directory
+    snippet_parameter : (str | Path)
+        Path to a JSON file containing segment specifications, by default files("orcAI.defaults").joinpath("default_snippet_parameter.json")
+    model_parameter : (str | Path)
+        Path to a JSON file containing model specifications, by default files("orcAI.defaults").joinpath("default_model_parameter.json")
+    msgr : Messenger
+        Messenger object for messages
+    Returns
+    -------
+    pd.DataFrame
+        snippet table with columns recording, data_type, row_start, row_stop and call names
+    Int
+        recording duration
+    """
+    recording = Path(recording_data_dir).stem
+    label_zarr_path = Path(recording_data_dir).joinpath("labels", "labels.zarr")
+    label_list_path = Path(recording_data_dir).joinpath("labels", "label_list.json")
+    spectrogram_times_path = Path(recording_data_dir).joinpath(
+        "spectrogram", "times.json"
     )
+
     try:
-        label_filepointer = zarr.open(fnlabel, mode="r")
-        fnlabel_list = (
-            directories_dict[computer]["root_dir_spectrograms"]
-            + fnstem
-            + "/labels/label_list.json"
-        )
-        label_list_dict = aux.read_json(fnlabel_list, print_out=False)
-        label_names = list(label_list_dict.keys())
-        fn_times = (
-            directories_dict[computer]["root_dir_spectrograms"]
-            + fnstem
-            + "/spectrogram/times.json"
-        )
-        t_vector = aux.read_json_to_vector(fn_times)
-        delta_t = t_vector[1] - t_vector[0]
-        n_filters = len(model_dict["filters"])
-        i_duration = int(
-            (2**n_filters) * ((segments_dict["duration"] / delta_t) // (2**n_filters))
-        )  # to make time axis divisible by 2 ** n_filters
-        print(" - i_duration", i_duration)
-        label_duration_snippets = []
-        for i_segment in range(n_segments):  # iterate over all segments
-            print(" - segment", i_segment + 1, "of", n_segments)
-            slice = (0, 0)
-            for type in list(["train", "val", "test"]):  # iterate over type of snippet
-                slice = (slice[1], slice[1] + model_dict[type])
-                t_min = (i_segment + slice[0]) * segments_dict["length"]
-                for j in range(
-                    int(
-                        model_dict[type]
-                        * segments_dict["length"]
-                        * segments_dict["per_sec"]
-                    )
-                ):  # iterate over number of snippets per segment and type
-                    t_max = (i_segment + slice[1]) * segments_dict[
-                        "length"
-                    ] - segments_dict["duration"]
-                    t_start = np.random.uniform(low=t_min, high=t_max, size=1)[0]
+        spectrogram_times = read_json(spectrogram_times_path)
+    except FileNotFoundError as e:
+        msgr.error(f"File not found: {spectrogram_times_path}")
+        msgr.error("Did you create the spectrogram?")
+        raise
 
-                    # Find the max index where entries are smaller than t_start
-                    index_t_start = np.searchsorted(t_vector, t_start, side="left") - 1
-                    # Find the min index where entries are smaller or equal to t_stop
-                    index_t_stop = index_t_start + i_duration
-                    label_chunk = label_filepointer[index_t_start:index_t_stop, :]
-                    label_duration_snippet = label_chunk.sum(axis=0) * delta_t
-                    label_duration_snippet[label_duration_snippet < 0] = np.nan
-                    label_duration_snippets += [
-                        list([fnstem, type, index_t_start, index_t_stop])
-                        + list(label_duration_snippet)
-                    ]
-        return pd.DataFrame(
-            label_duration_snippets,
-            columns=["fnstem", "type", "row_start", "row_stop"] + label_names,
+    if isinstance(snippet_parameter, (Path | str)):
+        snippet_parameter = read_json(snippet_parameter)
+
+    recording_duration = spectrogram_times["max"]
+    n_segments = int(recording_duration // snippet_parameter["length"])
+    if n_segments <= 0:
+        msgr.warning(
+            f"Duration of recording ({spectrogram_times['max']}) is shorter than segment length ({snippet_parameter['length']}). Skipping recording."
         )
-    except:
-        print("WARNING: cannot open label zarr file linked to", fnstem)
+        return pd.DataFrame()
 
+    # zarr open doesn't work with try/except blocks
+    if label_zarr_path.exists() & label_list_path.exists():
+        label_filepointer = zarr.open(label_zarr_path, mode="r")
+        label_list = read_json(label_list_path)
+        label_names = list(label_list.keys())
+    else:
+        msgr.error(f"File not found: {label_zarr_path}")
+        msgr.error("Wrong path? Did you create the labels?")
+        raise FileNotFoundError
 
-def compute_snippet_stats(es):
-    """input: pandas dataframe with extracted snippets"""
-    total_seconds_per_call_from_snippets = es[calls_for_labeling_list].sum()
-    equalizing_factor = (
-        1
-        / total_seconds_per_call_from_snippets
-        * total_seconds_per_call_from_snippets.max()
+    if isinstance(model_parameter, (Path | str)):
+        model_parameter = read_json(model_parameter)
+
+    times = np.linspace(
+        spectrogram_times["min"],
+        spectrogram_times["max"],
+        spectrogram_times["length"],
     )
-    snippet_stats = pd.DataFrame(total_seconds_per_call_from_snippets)
-    snippet_stats.rename(columns={0: "total(s)"}, inplace=True)
-    snippet_stats["equalizing_factor"] = equalizing_factor
-    return snippet_stats
+    delta_t = times[1] - times[0]
+    n_filters = len(model_parameter["filters"])
+    i_duration = int(
+        (2**n_filters) * ((snippet_parameter["duration"] / delta_t) // (2**n_filters))
+    )  # to make time axis divisible by 2 ** n_filters
+    msgr.info(f"i_duration: {i_duration}")  # TODO: clarify
+    snippet_table_raw = []
+    for i_segment in range(n_segments):  # iterate over all segments
+        msgr.info("Segment", i_segment + 1, "of", n_segments)
+        slice = (0, 0)
+        for type in list(["train", "val", "test"]):  # iterate over type of snippet
+            slice = (slice[1], slice[1] + model_parameter[type])
+            t_min = (i_segment + slice[0]) * snippet_parameter["length"]
+            for j in range(
+                int(
+                    model_parameter[type]
+                    * snippet_parameter["length"]
+                    * snippet_parameter["per_sec"]
+                )
+            ):  # iterate over number of snippets per segment and type
+                t_max = (i_segment + slice[1]) * snippet_parameter[
+                    "length"
+                ] - snippet_parameter["duration"]
+                t_start = np.random.uniform(low=t_min, high=t_max, size=1)[0]
+
+                # Find the max index where entries are smaller than t_start
+                index_t_start = np.searchsorted(times, t_start, side="left") - 1
+                # Find the min index where entries are smaller or equal to t_stop
+                index_t_stop = index_t_start + i_duration
+                label_chunk = label_filepointer[index_t_start:index_t_stop, :]
+                label_duration_snippet = label_chunk.sum(axis=0) * delta_t
+                label_duration_snippet[label_duration_snippet < 0] = np.nan
+                snippet_table_raw += [
+                    list(
+                        [
+                            recording,
+                            recording_data_dir,
+                            type,
+                            index_t_start,
+                            index_t_stop,
+                        ]
+                    )
+                    + list(label_duration_snippet)
+                ]
+    snippet_table = pd.DataFrame(
+        snippet_table_raw,
+        columns=[
+            "recording",
+            "recording_data_dir",
+            "data_type",
+            "row_start",
+            "row_stop",
+        ]
+        + label_names,
+    )
+    return (snippet_table, recording_duration, n_segments)
 
 
-def filter_no_label_snippets(es, fraction_removal, indices_no_label):
+def _compute_snippet_stats(snippet_table, for_calls):
+    """Compute snippet stats for calls
+
+    Parameters
+    ----------
+    snippet_table : pd.DataFrame
+        snippet_table with columns recording, data_type, row_start, row_stop and call names
+    for_calls : list
+        list of call names to compute stats for
     """
-    input:
-        es: extracted_snippets (pandas dataframe)
-        fraction_removal: fraction of no_label snippets to be removed
-        indices_no_label: list of indices of extracted_snippets without any label
-    return:
-        extracted_snippets with corresponding fraction of no_label snippets removed
-    """
+
+    snippet_stats = snippet_table.groupby("data_type")[for_calls].sum().T
+    snippet_stats["total"] = snippet_stats.sum(axis=1)
+
+    equalizing_factors = snippet_stats.apply(lambda x: 1 / x * x.max(), axis=0)
+    equalizing_factors.columns = equalizing_factors.columns + "_ef"
+
+    return pd.merge(
+        snippet_stats, equalizing_factors, left_index=True, right_index=True
+    )
+
+
+def create_snippet_table(
+    recording_table_path,
+    recording_data_dir,
+    snippet_parameter=files("orcAI.defaults").joinpath(
+        "default_snippet_parameter.json"
+    ),
+    model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
+    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
+    save_snippet_table=True,
+    verbosity=2,
+):
+    """Generates snippet table for all recordings"""
+    msgr = Messenger(verbosity=verbosity)
+    msgr.part("Making snippet table")
+
+    if isinstance(label_calls, (Path | str)):
+        label_calls = read_json(label_calls)
+
+    if isinstance(snippet_parameter, (Path | str)):
+        snippet_parameter = read_json(snippet_parameter)
+
+    recording_table = pd.read_csv(recording_table_path)
+    recording_table["recording_data_dir"] = recording_table.apply(
+        lambda row: resolve_recording_data_dir(row["recording"], recording_data_dir),
+        axis=1,
+    )
+
+    missing_recording_data_dir = pd.isna(recording_table["recording_data_dir"])
+    if any(missing_recording_data_dir):
+        msgr.warning(
+            f"Missing recording data directories for {sum(missing_recording_data_dir)} recordings. Skipping these recordings."
+        )
+        recording_table = recording_table[~missing_recording_data_dir]
+
+    recording_lengths = []
+    segments = []
+    all_snippet_tables = []
+
+    with progressbar(
+        recording_table.index,
+        label="Making snippet tables",
+        item_show_func=lambda index: recording_table_show_func(
+            index,
+            recording_table,
+        ),
+    ) as recording_indices:
+        for i in recording_indices:
+            snippet_table, recording_length, n_segments = _make_snippet_table(
+                recording_table.loc[i, "recording_data_dir"],
+                snippet_parameter=snippet_parameter,
+                model_parameter=model_parameter,
+                msgr=Messenger(verbosity=0),
+            )
+            all_snippet_tables.append(snippet_table)
+            recording_lengths.append(recording_length)
+            segments.append(n_segments)
+
+    snippet_table = pd.concat(all_snippet_tables).reset_index(drop=True)
+    msgr.info(
+        f"Created snippet table for {len(recording_table)} recordings. "
+        + f"Total recording duration: {seconds_to_hms(np.sum(recording_lengths))}. "
+        + f"Total number of snippets: {len(snippet_table)}. "
+        + f"Total number of segments: {np.sum(segments)}"
+    )
+
+    if save_snippet_table:
+        snippet_table.to_csv(
+            Path(recording_data_dir).joinpath("all_snippets.csv.gz"),
+            compression="gzip",
+            index=False,
+        )
+        msgr.success(
+            f"Snippet table saved to {Path(recording_data_dir).joinpath('all_snippets.csv.gz')}"
+        )
+
+    return snippet_table
+
+
+def _filter_snippet_table(
+    snippet_table,
+    snippet_parameter=files("orcAI.defaults").joinpath(
+        "default_snippet_parameter.json"
+    ),
+    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
+    msgr=Messenger(verbosity=2),
+):
+    msgr.part("Filtering snippet table")
+
+    snippet_stats = _compute_snippet_stats(snippet_table, for_calls=label_calls)
+    snippet_stats_duration = snippet_stats.filter(regex=".*(?<!_ef)$", axis=1).map(
+        seconds_to_hms
+    )
+    msgr.info("Snippet stats [HMS]:")
+    msgr.info(snippet_stats_duration)
+
+    indices_no_label = np.where(snippet_table[label_calls].sum(axis=1) <= 0.0000001)[0]
+    p_no_label_before = np.around(
+        100 * len(indices_no_label) / snippet_table.shape[0], 2
+    )
+    msgr.info(
+        f"Percentage of snippets containing no label before selection: {str(p_no_label_before)} %"
+    )
+
+    # removing rows from extracted_snippets where there is no label present
+    msgr.info(
+        f"removing {np.around(snippet_parameter['fraction_removal'] * 100, 2)}% of snippets without label"
+    )
     indices_to_drop = np.random.choice(
         indices_no_label,
-        size=int(fraction_removal * len(indices_no_label)),
+        size=int(snippet_parameter["fraction_removal"] * len(indices_no_label)),
         replace=False,
     )
-    indices_to_drop.sort()
-    es = es.reset_index(drop=True)
-    es = es[~es.index.isin(indices_to_drop)]
-    indices_no_label = np.where(es[calls_for_labeling_list].sum(axis=1) <= 0.0000001)[0]
-    print(
-        "After selection: percentage of snippets containing no label:",
-        np.around(100 * len(indices_no_label) / es.shape[0], 2),
-        "%",
+    # indices_to_drop.sort()
+    # snippet_table = snippet_table.reset_index(drop=True)
+    # TODO: this will change the indices essentially dropping different rows than selected. still random, i guess?
+
+    snippet_table = snippet_table[~snippet_table.index.isin(indices_to_drop)]
+    indices_no_label = np.where(snippet_table[label_calls].sum(axis=1) <= 0.0000001)[0]
+    p_no_label_after = np.around(
+        100 * len(indices_no_label) / snippet_table.shape[0], 2
     )
-    return es.reset_index(drop=True)
+    msgr.info(
+        f"Percentage of snippets containing no label after selection: {str(p_no_label_after)} %"
+    )
+    snippet_table = snippet_table.reset_index(drop=True)
+
+    msgr.info("Number of train, val, test snippets:")
+    msgr.info(snippet_table.groupby("data_type").size())
+
+    return snippet_table
 
 
-# %%
-# reading in or generating new snippets
-if mode == "read_in_existing_snippets":
-    extracted_snippets = pd.read_csv(
-        project_dir + "Results/" + "extracted_snippets.csv.gz"
+def create_tvt_snippet_tables(
+    recording_data_dir,
+    output_dir,
+    snippet_table=None,
+    snippet_parameter=files("orcAI.defaults").joinpath(
+        "default_snippet_parameter.json"
+    ),
+    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
+    verbosity=2,
+):
+    """Creates snippet tables and saves them to disk"""
+    msgr = Messenger(verbosity=verbosity)
+
+    if not Path(output_dir).exists():
+        Path(output_dir).mkdir(parents=True)
+
+    msgr.part("Extracting snippets")
+
+    if isinstance(snippet_parameter, (Path | str)):
+        msgr.info(f"Reading snippet parameter from {snippet_parameter}")
+        snippet_parameter = read_json(snippet_parameter)
+
+    if snippet_table is None:
+        snippet_table = Path(recording_data_dir).joinpath("all_snippets.csv.gz")
+    if isinstance(snippet_table, (Path | str)):
+        snippet_table = pd.read_csv(snippet_table)
+
+    if isinstance(label_calls, (Path | str)):
+        label_calls = read_json(label_calls)
+
+    msgr.info("Filtering snippet table")
+    snippet_table_filtered = _filter_snippet_table(
+        snippet_table,
+        snippet_parameter=snippet_parameter,
+        label_calls=label_calls,
+        msgr=msgr,
     )
 
-if mode == "generate_new_snippets":
-    # get all valid wav and annotation files on the computer
-    eliminate = [
-        "._",
-        "_ChB",
-        "_Chb",
-        "Movie",
-        "Norway",
-        "_acceleration",
-        "_depthtemp",
-        "_H.",
-        "_orig",
-        "_old",
-    ]
-    all_annot_files, fnstem_annotfile_dict, all_wav_files, fnstem_wavfile_dict = (
-        aux.wav_and_annot_files(computer, directories_dict, eliminate)
-    )
-
-    annotations = ann.read_annotation_files(all_annot_files)
-    annotations = ann.apply_label_dict(annotations, call_dict)
-    annotation_statistics = aux.calculate_total_duration(annotations)
-    print("Annotation statistics:")
-    print(annotation_statistics.to_string())
-
-    all_annotated_wav_files = [x.replace(".txt", ".wav") for x in all_annot_files]
-    fnstem_duration = aux.get_wav_duration(all_annotated_wav_files)
-    total_recording_time = fnstem_duration["duration"].sum()
-    print(
-        "total duration of annotated wav files:",
-        np.around(total_recording_time / 3600, 1),
-        "h",
-    )
-    # add column n_segments to fnstem_duration
-    fnstem_duration["n_segments"] = (
-        fnstem_duration["duration"] // segments_dict["length"]
-    ).astype(int)
-
-# %%
-# Generating new snippets
-if mode == "generate_new_snippets":
-
-    # generating snippets for all fnstem
-    len_iter = len(fnstem_duration)
-    for iter in range(len_iter):
-        print(
-            " extracting from fnstem:",
-            fnstem_duration.iloc[iter]["fnstem"],
-            "(",
-            iter,
-            "of",
-            len_iter,
-            ")",
+    for itype in ["train", "val", "test"]:
+        n_snippets = snippet_parameter[f"n_{itype}"]
+        msgr.info(f"Extracting {n_snippets} {itype} snippets")
+        snippet_table_i = snippet_table_filtered[
+            snippet_table_filtered["data_type"] == itype
+        ]
+        try:
+            snippets_itype = snippet_table_i.sample(n=n_snippets, replace=False)
+        except ValueError as e:
+            msgr.error(
+                f"Number of {itype} snippets ({n_snippets}) larger than available snippets ({len(snippet_table_i)})."
+            )
+            raise e
+        snippets_itype[["recording_data_dir", "row_start", "row_stop"]].to_csv(
+            Path(output_dir, f"{itype}.csv.gz"), compression="gzip", index=False
         )
-        if fnstem_duration.iloc[iter]["n_segments"] > 0:
-            es = list_extract_snippets(
-                fnstem_duration.iloc[iter]["fnstem"],
-                fnstem_duration.iloc[iter]["n_segments"],
-                segments_dict,
-                directories_dict,
-                model_dict,
-            )
-            first_es_created = True
-        else:
-            print(
-                "duration (",
-                fnstem_duration.iloc[iter]["duration"],
-                ") shorter than segment length (",
-                segments_dict["length"],
-                ") in fnstem (",
-                fnstem_duration.iloc[iter]["fnstem"],
-                ")",
-            )
-        if iter == 0 and first_es_created:
-            extracted_snippets = es
-        else:
-            extracted_snippets = pd.concat([extracted_snippets, es])
-    extracted_snippets.reset_index()
 
-    print("These fnstems are not used in extracted_snippets")
-    print(set(fnstem_duration["fnstem"]) - set(extracted_snippets["fnstem"].unique()))
+    msgr.success("Train, val and test snippet tables created and saved to disk")
 
-    # write extracted_snippets to disk
-    extracted_snippets.to_csv(
-        project_dir + "Results/" "extracted_snippets.csv.gz",
-        compression="gzip",
-        index=False,
-    )
-
-
-# %%
-# statistics
-
-print("Statistics snippets: all extracted snippets")
-snippet_stats = {}
-for type in ["train", "val", "test"]:
-    snippet_stats[type] = compute_snippet_stats(
-        extracted_snippets[extracted_snippets["type"] == type]
-    )["total(s)"]
-index = list(pd.DataFrame(snippet_stats).index)
-for key, value in snippet_stats.items():
-    ll = []
-    for l in value:
-        ll += [aux.seconds_to_hms(l)]
-    snippet_stats[key] = ll
-snippet_stats = pd.DataFrame(snippet_stats)
-snippet_stats.index = index
-print(pd.DataFrame(snippet_stats).to_latex())
-indices_no_label = np.where(
-    extracted_snippets[calls_for_labeling_list].sum(axis=1) <= 0.0000001
-)[0]
-print(
-    "Before selection: percentage of snippets containing no label:",
-    np.around(100 * len(indices_no_label) / extracted_snippets.shape[0], 2),
-    "%",
-)
-# removing rows from extracted_snippets where there is no label present
-fraction_removal = extract_snippets_dict["fraction_removal"]
-print("  - removing ", np.around(fraction_removal * 100, 2), "% of no_label")
-es = filter_no_label_snippets(extracted_snippets, fraction_removal, indices_no_label)
-print(
-    "number of train, val, test, snippets:",
-    len(es[es["type"] == "train"]),
-    len(es[es["type"] == "val"]),
-    len(es[es["type"] == "test"]),
-)
-
-
-# %%
-# extract and save train_df, val_df and test_df
-def extract_data_set(es, type, n, directories_dict):
-    """extracts from es['type'==type] randomly n rows"""
-    root_dir_spectrograms = directories_dict[computer]["root_dir_spectrograms"]
-    root_dir_tvtdata = directories_dict[computer]["root_dir_tvtdata"]
-    df = es[es["type"] == type].sample(n=n, replace=False)
-    fnstem_path = [root_dir_spectrograms + x + "/" for x in list(df["fnstem"])]
-    df["fnstem_path"] = fnstem_path
-    if not os.path.exists(root_dir_tvtdata):
-        os.makedirs(root_dir_tvtdata)
-    fn_name = root_dir_tvtdata + type + ".csv.gz"
-    df = df[["fnstem_path", "row_start", "row_stop"]]
-    print("saving", n, type, "snippets to ", fn_name)
-    df.to_csv(fn_name, compression="gzip", index=False)
-    return df
-
-
-# generating train_df
-if len(es[es["type"] == "train"]) < extract_snippets_dict["n_train"]:
-    n = len(es[es["type"] == "train"])
-    print('WARNING: extract_snippets_dict["n_train"] larger than available snippets')
-else:
-    n = extract_snippets_dict["n_train"]
-train_df = extract_data_set(es, "train", n, directories_dict)
-
-# generating val_df
-if len(es[es["type"] == "val"]) < extract_snippets_dict["n_val"]:
-    n = len(es[es["type"] == "val"])
-    print('WARNING: extract_snippets_dict["n_val"] larger than available snippets')
-else:
-    n = extract_snippets_dict["n_val"]
-val_df = extract_data_set(es, "val", n, directories_dict)
-
-# generating test_df
-if len(es[es["type"] == "test"]) < extract_snippets_dict["n_test"]:
-    n = len(es[es["type"] == "test"])
-    print('WARNING: extract_snippets_dict["n_test"] larger than available snippets')
-else:
-    n = extract_snippets_dict["n_test"]
-test_df = extract_data_set(es, "test", n, directories_dict)
-
-
-# %%
-print("PROGRAM COMPLETED")
-
-# %%
+    return
