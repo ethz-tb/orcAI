@@ -1,16 +1,23 @@
-import click
 import time
-import numpy as np
-import tensorflow as tf
 from pathlib import Path
 from importlib.resources import files
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from tensorflow.keras.backend import count_params
+import numpy as np
+import click
+
+import tensorflow as tf
+from keras.src.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from keras.src.backend import count_params
 
 # import local
-import orcAI.auxiliary as aux
-import orcAI.architectures as arch
-import orcAI.load as load
+from orcAI.auxiliary import Messenger, read_json, write_json, compute_confusion_matrix
+from orcAI.architectures import (
+    build_model,
+    masked_binary_accuracy,
+    masked_binary_crossentropy,
+    masked_f1_score,
+    build_cnn_res_transformer_arch,
+)
+from orcAI.load import reload_dataset
 
 
 # model parameters
@@ -47,7 +54,7 @@ def train(
         Verbosity level.
     """
     # Initialize messenger
-    msgr = aux.Messenger(verbosity=verbosity)
+    msgr = Messenger(verbosity=verbosity)
 
     msgr.part("OrcAI - training model")
     msgr.info(f"Output directory: {output_dir}")
@@ -56,13 +63,13 @@ def train(
     msgr.info("Loading parameter and data...", indent=1)
     msgr.info("Model parameter")
     if isinstance(model_parameter, (Path | str)):
-        model_parameter = aux.read_json(model_parameter)
+        model_parameter = read_json(model_parameter)
 
     msgr.info(model_parameter)
     model_name = model_parameter["name"]
 
     if isinstance(label_calls, (Path | str)):
-        label_calls = aux.read_json(label_calls)
+        label_calls = read_json(label_calls)
 
     msgr.info("Calls for labeling")
     msgr.info(label_calls, indent=-1)
@@ -83,13 +90,13 @@ def train(
     msgr.info(f"Loading train, val and test datasets from {data_dir}", indent=1)
     tf.config.set_soft_device_placement(True)
     start_time = time.time()
-    train_dataset = load.reload_dataset(
+    train_dataset = reload_dataset(
         file_paths["training_data"], model_parameter["batch_size"]
     )
-    val_dataset = load.reload_dataset(
+    val_dataset = reload_dataset(
         file_paths["validation_data"], model_parameter["batch_size"]
     )
-    test_dataset = load.reload_dataset(
+    test_dataset = reload_dataset(
         file_paths["test_data"], model_parameter["batch_size"]
     )
     msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")
@@ -103,7 +110,7 @@ def train(
     input_shape = tuple(spectrogram.shape[1:])  # shape
     num_labels = labels.shape[2]  # Number of sound types
 
-    model = arch.build_model(input_shape, num_labels, model_parameter, msgr=msgr)
+    model = build_model(input_shape, num_labels, model_parameter, msgr=msgr)
 
     # TODO: is this necessary? if yes, rename to something more descriptive than fix
     # TRANSFORMER MODEL FIX
@@ -113,17 +120,17 @@ def train(
             strategy = tf.distribute.MirroredStrategy()
             with strategy.scope():
                 masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-                    fn=lambda y_true, y_pred: arch.masked_binary_accuracy(
+                    fn=lambda y_true, y_pred: masked_binary_accuracy(
                         y_true, y_pred, mask_value=-1.0
                     ),
                     name="masked_binary_accuracy",
                 )
-                model = arch.build_cnn_res_transformer_model(
+                model = build_cnn_res_transformer_arch(
                     input_shape, num_labels, **model_parameter
                 )
                 model.compile(
                     optimizer="adam",
-                    loss=lambda y_true, y_pred: arch.masked_binary_crossentropy(
+                    loss=lambda y_true, y_pred: masked_binary_crossentropy(
                         y_true, y_pred, mask_value=-1.0
                     ),
                     metrics=[masked_binary_accuracy_metric],
@@ -140,13 +147,13 @@ def train(
 
     # Metrics
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: arch.masked_binary_accuracy(
+        fn=lambda y_true, y_pred: masked_binary_accuracy(
             y_true, y_pred, **model_parameter["masked_binary_accuracy_metric"]
         ),
         name="masked_binary_accuracy",
     )
     masked_f1_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: arch.masked_f1_score(
+        fn=lambda y_true, y_pred: masked_f1_score(
             y_true, y_pred, **model_parameter["masked_f1_metric"]
         ),
         name="masked_f1_score",
@@ -184,7 +191,7 @@ def train(
     )
     model.compile(
         optimizer="adam",
-        loss=lambda y_true, y_pred: arch.masked_binary_crossentropy(
+        loss=lambda y_true, y_pred: masked_binary_crossentropy(
             y_true, y_pred, mask_value=-1.0
         ),
         metrics=[masked_binary_accuracy_metric, masked_f1_metric],
@@ -236,20 +243,20 @@ def train(
 
     y_true_batch = np.concatenate(y_true_batch, axis=0)
     y_pred_batch = np.concatenate(y_pred_batch, axis=0)
-    confusion_matrices = aux.compute_confusion_matrix(
+    confusion_matrices = compute_confusion_matrix(
         y_true_batch, y_pred_batch, label_calls, mask_value=-1
     )
     msgr.info(f"confusion matrices:", indent=1)
     msgr.print_confusion_matrices(confusion_matrices)
-    arch.masked_binary_accuracy(y_true_batch, y_pred_batch, mask_value=-1.0)
-    aux.write_json(confusion_matrices, file_paths["confusion_matrices"])
+    masked_binary_accuracy(y_true_batch, y_pred_batch, mask_value=-1.0)
+    write_json(confusion_matrices, file_paths["confusion_matrices"])
     msgr.print_dict(confusion_matrices)
 
-    aux.write_json(
+    write_json(
         model_parameter, file_paths["model_dir"].joinpath("model_parameter.json")
     )
-    aux.write_json(label_calls, file_paths["model_dir"].joinpath("trained_calls.json"))
-    aux.write_json(
+    write_json(label_calls, file_paths["model_dir"].joinpath("trained_calls.json"))
+    write_json(
         {"input_shape": input_shape, "num_labels": num_labels},
         file_paths["model_dir"].joinpath("shape.json"),
     )
