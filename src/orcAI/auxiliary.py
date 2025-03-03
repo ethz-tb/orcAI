@@ -133,6 +133,27 @@ class Messenger:
             indent=indent,
             set_indent=set_indent,
             severity=severity,
+            **kwargs,
+        )
+
+    def print_directory_size(
+        self, directory, indent=0, set_indent=None, severity=2, **kwargs
+    ):
+        """print size of directory"""
+
+        if self.verbosity < severity:
+            return
+        from humanize import naturalsize
+
+        total_size = sum(
+            f.stat().st_size for f in Path(directory).rglob("*") if f.is_file()
+        )
+        self.info(
+            f"Size on disk of {Path(directory).stem}: {naturalsize(total_size, format='%.2f')}",
+            indent=indent,
+            set_indent=set_indent,
+            severity=severity,
+            **kwargs,
         )
 
     def confusion_matrices_to_str(self, confusion_matrices):
@@ -678,7 +699,7 @@ def find_consecutive_ones(binary_vector):
     return starts, stops
 
 
-def _recording_table_show_func(index, recording_table):
+def recording_table_show_func(index, recording_table):
     if index is not None:
         return (
             recording_table.loc[index, "recording"]
