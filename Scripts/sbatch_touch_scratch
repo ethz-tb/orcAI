@@ -1,3 +1,0 @@
-#!/bin/bash
-sbatch --time 239 --begin=now --wrap="find /cluster/scratch/sbonhoef/tvtdata/ \( -type f -o -type d \) -exec touch {} +"
-sbatch --time 239 --begin=now --wrap="find /cluster/scratch/sbonhoef/spectrograms/ \( -type f -o -type d \) -exec touch {} +"
