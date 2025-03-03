@@ -5,7 +5,15 @@ from click import progressbar
 from importlib.resources import files
 
 # import local
-import orcAI.auxiliary as aux
+from orcAI.auxiliary import (
+    Messenger,
+    read_json,
+    read_json_to_vector,
+    resolve_file_paths,
+    recording_table_show_func,
+    save_as_zarr,
+    write_json,
+)
 
 
 def read_annotation_file(annotation_file_path):
@@ -41,7 +49,7 @@ def convert_annotation(
     labels_present,
     labels_masked,
     call_equivalences=None,
-    msgr=aux.Messenger(),
+    msgr=Messenger(),
 ):
     """transform annotation into array with 0 for absence and 1 for presence and -1 for masked (presence not possible) of each label at times t_vec"""
     msgr.part("Converting annotation to label array")
@@ -52,7 +60,7 @@ def convert_annotation(
     if call_equivalences is not None:
         msgr.info("Applying call equivalences")
         if isinstance(call_equivalences, (Path | str)):
-            call_equivalences = aux.read_json(call_equivalences)
+            call_equivalences = read_json(call_equivalences)
         annotations = apply_label_equivalences(annotations, call_equivalences)
         all_orig_labels = set(annotations["origlabel"].unique())
         call_equivalences_keys = set(call_equivalences.keys())
@@ -67,7 +75,7 @@ def convert_annotation(
 
     # load t_vec of spectrogram
     try:
-        t_vec = aux.read_json_to_vector(spectrogram_dir.joinpath("times.json"))
+        t_vec = read_json_to_vector(spectrogram_dir.joinpath("times.json"))
     except FileNotFoundError as e:
         msgr.error(f"File not found: {spectrogram_dir.joinpath('times.json')}")
         msgr.error("Did you create the spectrogram?")
@@ -137,14 +145,14 @@ def create_label_arrays(
     verbosity : int
         Verbosity level.
     """
-    msgr = aux.Messenger(verbosity=verbosity)
+    msgr = Messenger(verbosity=verbosity)
     msgr.part("Making label arrays")
 
     recording_table = pd.read_csv(recording_table_path)
 
     if base_dir is not None:
         msgr.info(f"Resolving file paths...")
-        recording_table["annotation_file"] = aux.resolve_file_paths(
+        recording_table["annotation_file"] = resolve_file_paths(
             base_dir,
             recording_table["recording"],
             ".txt",
@@ -159,12 +167,12 @@ def create_label_arrays(
         recording_table = recording_table[~missing_annotations]
 
     if isinstance(label_calls, (Path | str)):
-        label_calls = aux.read_json(label_calls)
+        label_calls = read_json(label_calls)
     recordings_no_labels = []
     with progressbar(
         recording_table.index,
         label="Converting annotation files",
-        item_show_func=lambda index: aux._recording_table_show_func(
+        item_show_func=lambda index: recording_table_show_func(
             index,
             recording_table,
         ),
@@ -180,7 +188,7 @@ def create_label_arrays(
                     labels_present,
                     labels_masked,
                     call_equivalences=call_equivalences,
-                    msgr=aux.Messenger(verbosity=0),
+                    msgr=Messenger(verbosity=0),
                 )
 
                 # save
@@ -188,14 +196,12 @@ def create_label_arrays(
                     recording_table.loc[i, "recording"], "labels"
                 )
 
-                aux.save_as_zarr(
+                save_as_zarr(
                     annotations_array.to_numpy(),
                     recording_output_dir.joinpath("labels.zarr"),
-                    msgr=aux.Messenger(verbosity=0),
+                    msgr=Messenger(verbosity=0),
                 )
-                aux.write_json(
-                    label_list, recording_output_dir.joinpath("label_list.json")
-                )
+                write_json(label_list, recording_output_dir.joinpath("label_list.json"))
 
             else:
                 recordings_no_labels.append(recording_table.loc[i, "recording"])
