@@ -14,10 +14,10 @@ readme = "README.md"
 requires-python = ">=3.11, <4.0"
 license = { text = "CC-BY-SA-4.0" } # TODO: Check license
 dependencies = [
-    "zarr>=2, <3",      # TODO: update version?
+    "zarr>=2, <3", # TODO: update version?
     "pandas",
-    "tensorflow",       # TODO: version?
-    "tensorflow.keras", # TODO: version?
+    "tensorflow",  # TODO: version?
+    "keras",       # TODO: version?
     "librosa",
     "psutil",
     "matplotlib",
