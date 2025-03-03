@@ -1,10 +1,10 @@
 import click
 from pathlib import Path
 from importlib.resources import files
-from .train import train
-from .predict import predict
-from .spectrogram import create_spectrograms
-from .annotation import create_label_arrays
+from orcAI.train import train
+from orcAI.predict import predict
+from orcAI.spectrogram import create_spectrograms
+from orcAI.annotation import create_label_arrays
 
 ClickDirPathR = click.Path(
     exists=True, file_okay=False, readable=True, resolve_path=True, path_type=Path
