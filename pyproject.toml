@@ -22,6 +22,7 @@ dependencies = [
     "psutil",
     "matplotlib",
     "click",
+    "humanize",
 ]
 
 [project.urls]
