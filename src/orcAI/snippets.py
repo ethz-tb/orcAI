@@ -34,12 +34,13 @@ def _make_snippet_table(
     ----------
     recording_data_dir : str
         Path to the recording data directory
-    snippet_parameter : (str | Path)
-        Path to a JSON file containing segment specifications, by default files("orcAI.defaults").joinpath("default_snippet_parameter.json")
-    model_parameter : (str | Path)
-        Path to a JSON file containing model specifications, by default files("orcAI.defaults").joinpath("default_model_parameter.json")
+    snippet_parameter : dict | (str | Path)
+        dict containing snippet parameter or path to path to a JSON file containing the same, by default files("orcAI.defaults").joinpath("default_snippet_parameter.json")
+    model_parameter : dict | (str | Path)
+        dict containing model specifications or path to path to a JSON file containing the same, by default files("orcAI.defaults").joinpath("default_model_parameter.json")
     msgr : Messenger
         Messenger object for messages
+
     Returns
     -------
     pd.DataFrame
@@ -61,6 +62,9 @@ def _make_snippet_table(
         msgr.error("Did you create the spectrogram?")
         raise
 
+    if isinstance(model_parameter, (Path | str)):
+        model_parameter = read_json(model_parameter)
+
     if isinstance(snippet_parameter, (Path | str)):
         snippet_parameter = read_json(snippet_parameter)
 
@@ -81,9 +85,6 @@ def _make_snippet_table(
         msgr.error(f"File not found: {label_zarr_path}")
         msgr.error("Wrong path? Did you create the labels?")
         raise FileNotFoundError
-
-    if isinstance(model_parameter, (Path | str)):
-        model_parameter = read_json(model_parameter)
 
     times = np.linspace(
         spectrogram_times["min"],
@@ -157,6 +158,11 @@ def _compute_snippet_stats(snippet_table, for_calls):
         snippet_table with columns recording, data_type, row_start, row_stop and call names
     for_calls : list
         list of call names to compute stats for
+
+    Returns
+    -------
+    pd.DataFrame
+        snippet stats with columns for_calls, total and for_calls_ef
     """
 
     snippet_stats = snippet_table.groupby("data_type")[for_calls].sum().T
@@ -178,10 +184,29 @@ def create_snippet_table(
     ),
     model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
     label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
-    save_snippet_table=True,
     verbosity=2,
 ):
-    """Generates snippet table for all recordings"""
+    """Generates snippet table for all recordings in recording_table and saves it to disk
+
+    Parameters
+    ----------
+    recording_table_path : (str | Path)
+        Path to the recording table
+    recording_data_dir : (str | Path)
+        Path to the recording data directory
+    snippet_parameter : dict | (str | Path)
+        Dict containing snippet parameter or path to json containing the same, by default files("orcAI.defaults").joinpath("default_snippet_parameter.json")
+    model_parameter : dict | (str | Path)
+        Dict containing model specifications or path to json containing the same, by default files("orcAI.defaults").joinpath("default_model_parameter.json")
+    label_calls : dict | (str | Path)
+        Dict containing calls for labeling or path to json containing the same, by default files("orcAI.defaults").joinpath("default_calls.json")
+    verbosity : int
+        Verbosity level [0, 1, 2]
+
+    Returns
+    -------
+    None. Writes snippet table to disk
+    """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Making snippet table")
 
@@ -235,27 +260,42 @@ def create_snippet_table(
         + f"Total number of segments: {np.sum(segments)}"
     )
 
-    if save_snippet_table:
-        snippet_table.to_csv(
-            Path(recording_data_dir).joinpath("all_snippets.csv.gz"),
-            compression="gzip",
-            index=False,
-        )
-        msgr.success(
-            f"Snippet table saved to {Path(recording_data_dir).joinpath('all_snippets.csv.gz')}"
-        )
+    snippet_table.to_csv(
+        Path(recording_data_dir).joinpath("all_snippets.csv.gz"),
+        compression="gzip",
+        index=False,
+    )
+    msgr.success(
+        f"Snippet table saved to {Path(recording_data_dir).joinpath('all_snippets.csv.gz')}"
+    )
 
-    return snippet_table
+    return
 
 
 def _filter_snippet_table(
     snippet_table,
-    snippet_parameter=files("orcAI.defaults").joinpath(
-        "default_snippet_parameter.json"
-    ),
-    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
+    snippet_parameter,
+    label_calls,
     msgr=Messenger(verbosity=2),
 ):
+    """Filters snippet table based on snippet parameter and label calls
+
+    Parameters
+    ----------
+    snippet_table : pd.DataFrame
+        snippet_table with columns recording, data_type, row_start, row_stop and call names
+    snippet_parameter : dict
+        dict containing snippet parameter
+    label_calls : dict
+        dict containing calls for labeling
+    msgr : Messenger
+        Messenger object for messages
+
+    Returns
+    -------
+    pd.DataFrame
+        filtered snippet table
+    """
     msgr.part("Filtering snippet table")
 
     snippet_stats = _compute_snippet_stats(snippet_table, for_calls=label_calls)
@@ -312,7 +352,27 @@ def create_tvt_snippet_tables(
     label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     verbosity=2,
 ):
-    """Creates snippet tables and saves them to disk"""
+    """Creates snippet tables for training, validation and test datasets and saves them to disk
+
+    Parameters
+    ----------
+    recording_data_dir : (str | Path)
+        Path to the recording data directory
+    output_dir : (str | Path)
+        Path to the output directory
+    snippet_table : (str | Path) | pd.DataFrame | None
+        Path to the snippet table csv or the snippet table itself. None if the snippet table should be read from recording_data_dir/all_snippets.csv.gz
+    snippet_parameter : dict | (str | Path)
+        Dict containing snippet parameter or path to json containing the same, by default files("orcAI.defaults").joinpath("default_snippet_parameter.json")
+    label_calls : dict | (str | Path)
+        Dict containing calls for labeling or path to json containing the same, by default files("orcAI.defaults").joinpath("default_calls.json")
+    verbosity : int
+        Verbosity level [0, 1, 2]
+
+    Returns
+    -------
+    None. Writes train, val and test snippet tables to disk
+    """
     msgr = Messenger(verbosity=verbosity)
 
     if not Path(output_dir).exists():
@@ -367,6 +427,21 @@ def create_tvt_data(
     model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
     verbosity=2,
 ):
+    """Creates train, validation and test datasets from snippet tables and saves them to disk
+
+    Parameters
+    ----------
+    tvt_dir : (str | Path)
+        Path to the directory to save the training, validation and test datasets in
+    model_parameter : dict | (str | Path)
+        Dict containing model specifications or path to json containing the same, by default files("orcAI.defaults").joinpath("default_model_parameter.json")
+    verbosity : int
+        Verbosity level [0, 1, 2]
+
+    Returns
+    -------
+    None. Writes train, val and test datasets to disk
+    """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Creating train, validation and test data")
     if isinstance(model_parameter, (Path | str)):
