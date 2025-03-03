@@ -1,9 +1,9 @@
 from pathlib import Path
+from random import shuffle
 import zarr
-import random
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras.utils import Sequence
+from keras.src.utils import Sequence
 
 from orcAI.auxiliary import Messenger
 
@@ -61,7 +61,7 @@ class ChunkedMultiZarrDataLoader(Sequence):
             for idx, row in self.snippet_table.iterrows()
         ]
         if self.shuffle:
-            random.shuffle(self.indices)
+            shuffle(self.indices)
 
     def __len__(self):
         """
@@ -141,7 +141,7 @@ class ChunkedMultiZarrDataLoader(Sequence):
         Shuffle indices at the end of each epoch if needed.
         """
         if self.shuffle:
-            random.shuffle(self.indices)
+            shuffle(self.indices)
 
 
 # data generator
