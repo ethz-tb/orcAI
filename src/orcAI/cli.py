@@ -223,7 +223,8 @@ def cli_create_label_arrays(**kwargs):
     "--snippet_parameter",
     "-sp",
     type=ClickFilePathR,
-    required=True,
+    default=files("orcAI.defaults").joinpath("default_snippet_parameter.json"),
+    show_default="default_snippet_parameter.json",
     help="Path to a JSON file containing snippet parameter.",
 )
 @click.option(
@@ -281,14 +282,15 @@ def cli_create_snippet_table(**kwargs):
     "-st",
     type=ClickFilePathR,
     default=None,
-    show_default="None",
-    help="Path to the snippet table csv. If None, the snippet table is read from the recording_data_dir/all_snippets.csv.gz.",
+    show_default="<recording_data_dir>/all_snippets.csv.gz",
+    help="Path to the snippet table csv. If None, the snippet table is read from the <recording_data_dir>/all_snippets.csv.gz.",
 )
 @click.option(
     "--snippet_parameter",
     "-sp",
     type=ClickFilePathR,
-    required=True,
+    default=files("orcAI.defaults").joinpath("default_snippet_parameter.json"),
+    show_default="default_snippet_parameter.json",
     help="Path to a JSON file containing snippet parameter.",
 )
 @click.option(
