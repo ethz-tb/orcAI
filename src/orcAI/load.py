@@ -132,64 +132,6 @@ class ChunkedMultiZarrDataLoader(Sequence):
             tf.stack(label_batch, axis=0),
         )
 
-    # def __getitem__(self, batch_index):
-    #     """
-    #     Retrieve a single batch, ensuring all chunks have exactly the correct length.
-    #     """
-
-    #     batch_start = batch_index * self.batch_size
-    #     batch_end = batch_start + self.batch_size
-    #     batch_indices = self.indices[batch_start:batch_end]
-
-    #     spectrogram_batch, label_batch = [], []
-
-    #     for df_index, start, stop in batch_indices:
-    #         spectrogram, label = self.zarr_files[df_index]
-
-    #         spectrogram_chunk = spectrogram[start:stop, :]
-    #         label_chunk = label[start:stop, :]
-
-    #         # Ensure correct shape before adding
-    #         if spectrogram_chunk.shape[0] != (stop - start) or label_chunk.shape[0] != (
-    #             stop - start
-    #         ):
-    #             print(
-    #                 f"Skipping chunk (1) {stop}, {start}: Expected {stop - start}, but got {spectrogram_chunk.shape[0]} spectrogram and {label_chunk.shape[0]} labels",
-    #                 flush=True,
-    #             )
-    #             continue  # Skip this chunk if dimensions are incorrect
-
-    #         # Expand spectrogram for CNN input
-    #         spectrogram_chunk = tf.expand_dims(spectrogram_chunk, axis=-1)
-
-    #         # Reshape labels
-    #         label_chunk = self.reshape_labels(
-    #             tf.convert_to_tensor(label_chunk, dtype=tf.float32)
-    #         )
-
-    #         # Final shape check (after label transformation)
-    #         if label_chunk.shape[0] != (stop - start) // (2**self.n_filters):
-    #             print(
-    #                 f"Skipping reshaped label chunk: Expected {stop - start}, but got {label_chunk.shape[0]}",
-    #                 flush=True,
-    #             )
-    #             continue  # Skip if label reshape caused mismatching length
-
-    #         # Append processed chunks to the batch
-    #         spectrogram_batch.append(spectrogram_chunk)
-    #         label_batch.append(label_chunk)
-
-    #     # Ensure non-empty batch before stacking
-    #     if not spectrogram_batch or not label_batch:
-    #         raise ValueError(
-    #             f"Batch {batch_index} is empty after filtering invalid chunks."
-    #         )
-
-    #     return (
-    #         tf.stack(spectrogram_batch, axis=0),
-    #         tf.stack(label_batch, axis=0),
-    #     )
-
     def on_epoch_end(self):
         """
         Shuffle indices at the end of each epoch if needed.
