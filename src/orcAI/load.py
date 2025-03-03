@@ -3,7 +3,7 @@ from random import shuffle
 import zarr
 import pandas as pd
 import tensorflow as tf
-from keras.src.utils import Sequence
+from keras.utils import Sequence
 
 from orcAI.auxiliary import Messenger
 

@@ -5,8 +5,8 @@ import numpy as np
 import click
 
 import tensorflow as tf
-from keras.src.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from keras.src.backend import count_params
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+
 
 # import local
 from orcAI.auxiliary import Messenger, read_json, write_json, compute_confusion_matrix
