@@ -123,9 +123,11 @@ class Messenger:
 
     def print_memory_usage(self, indent=0, set_indent=None, severity=2, **kwargs):
         """print memory usage"""
-        import psutil
+        if self.verbosity < severity:
+            return
+        from psutil import Process
 
-        process = psutil.Process(os.getpid())
+        process = Process(os.getpid())
         self.info(
             f"memory usage: {process.memory_info().rss / 1024 ** 2} MB",
             indent=indent,
