@@ -9,17 +9,39 @@ OrcAI uses audio recordings together with annotations of the above sound types t
 
 The package contains code to perform to distinct two distinct sets of tasks. The first set of task is to produce data for training, validation and testing of the machine learning models from the raw audio files and accompanying annotations. The second set of tasks it to use the generated training, validation and test data to develop and train models for prediction and apply these models to predict annotation in as of yet unannotated recordings.
 
-## Create data
+## Installation
 
-The programs need to be executed in this order
+orcAI can be installed using pip:
 
-- create_spectrogram.py: Generates spectrograms from wav files
-- create_labels.py: Generates labels from corresponding annotation files
-- create_snippets.py: Create list of paired snippets of spectrograms and labels
-- create_tvt_data: Uses the list of paired snippets of spectrograms and labels to generate training, validation and test data sets for training
+```bash
+pip install git+https://gitlab.ethz.ch/tb/orcai.git
+```
 
-# Train models
+## Command Line Interface
 
-- train_model.py: trains (depending on input) different types of models (cnn_res, dnn_res_lstm, or cnn_res_transformer) based on parameters provided
-- hyperparameter_search.py: Performs a hyperparameter search for a specified model with given sets of parameters
-- test_model.py: Runs model on test data
+The command line interface is available through the `orcai` and subcommands. The following subcommands are available:
+
+- `orcai predict` - Predict annotations in unannotated recordings based on a trained model. A trained model is included in the package.
+- `orcai filter-annotations` - Filter annotations based on minimum and maximum duration
+
+### Predict
+
+Example usage:
+
+```bash
+orcai predict path/to/input.wav
+```
+
+This will use the included model `orcai-V1` to predict annotations in the input file `path/to/input.wav`. The output will be saved in the same directory as the input file with the same name but with the extension `_orcai-V1_predicted.txt` and is compatible with Audacity.
+See `orcai predict --help` for more options.
+
+### Filter predictions
+
+Example usage:
+
+```bash
+orcai filter-predictions path/to/annotations.txt
+```
+
+This will filter the annotations in the input file `path/to/annotations.txt` based on the minimum and maximum duration specified in the default configuration file. The output will be saved in the same directory as the input file with the same name but with the extension `_filtered.txt`. To pass a custom configuration file, use the `--call_duration_limits` option.
+See `orcai filter-predictions --help` for more options.
