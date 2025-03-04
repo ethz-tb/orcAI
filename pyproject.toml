@@ -33,4 +33,4 @@ orcAI = "orcAI.cli:cli"
 
 [tool.setuptools.package-data]
 "orcAI.defaults" = ["*.json"]
-"orcAI.models" = ["*.*"]      # TODO: update
+"orcAI.models" = ["*.*", "*/*.*"] # TODO: update
