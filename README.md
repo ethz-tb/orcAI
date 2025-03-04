@@ -1,6 +1,8 @@
 
 # OrcAI
 
+**THIS IS A WORK IN PROGRESS. ALL FUNCTIONALITY IS SUBJECT TO CHANGE**
+
 ## Summary
 
 OrcAI is a software package to detect acoustic signals in spectrograms generated from audio recordings. It is trained on audio recordings of killer whales producing a variety of intentional acoustic signals produced for communication (such as calls, whistles, herding calls, and buzzes) as well as sounds not intended for communication (such as prey handling sounds, breathing or tailslaps).
