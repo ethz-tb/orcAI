@@ -4,6 +4,7 @@
 # Development
 dev/
 Results/
+AnalyseData/
 
 # Python
 __pycache__/
