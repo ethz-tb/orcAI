@@ -20,7 +20,7 @@ def predict(
     wav_file_path,
     model_path=files("orcAI.models").joinpath("orcai_Orca_1_0_0"),
     output_file=None,
-    spectrogram_parameters_path=files("orcAI.defaults").joinpath(
+    spectrogram_parameter_path=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
     ),
     verbosity=2,
@@ -34,7 +34,7 @@ def predict(
         Path to the wav file.
     output_file : Path
         Path to the output file or None if the output file should be saved in the same directory as the wav file.
-    spectrogram_parameters_path : Path
+    spectrogram_parameter_path : Path
         Path to the spectrogram parameter file.
     verbosity : int
         Verbosity level.
@@ -62,7 +62,7 @@ def predict(
     msgr.info(f"Model parameter:")
     msgr.info(model_parameter)
 
-    spectrogram_parameters = read_json(spectrogram_parameters_path)
+    spectrogram_parameters = read_json(spectrogram_parameter_path)
     msgr.info(f"Spectrogram parameters:")
     msgr.info(spectrogram_parameters)
 
@@ -72,7 +72,7 @@ def predict(
     model = build_cnn_res_lstm_arch(**shape, **model_parameter)
 
     msgr.info("Loading model weights")
-    model.load_weights(model_path)
+    model.load_weights(model_path.joinpath("model_weights.h5"))
 
     msgr.info("Compiling model")
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
@@ -101,7 +101,7 @@ def predict(
         exit
 
     # Prediction
-    msgr.part("Prediction of annotations for wav_file:", wav_file_path)
+    msgr.part(f"Prediction of annotations for wav_file: {wav_file_path}")
     start_time = time.time()
     # Parameters
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
@@ -178,7 +178,8 @@ def predict(
         f"time for prediction and preparing annotation file: {time.time()-start_time:.2f}"
     )
 
-    minimal_duration = 0.1
+    minimal_duration = 0.1  # TODO: MAGIC NUMBER move to second fn postprocessing
+    # TODO: General rename label_orcai_v1000, seperate minimal duration and max duration per label, eliminate labels = <0
     tmp = df_predicted_labels[
         (df_predicted_labels["stop"] - df_predicted_labels["start"]) < minimal_duration
     ]

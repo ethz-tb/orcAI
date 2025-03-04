@@ -428,7 +428,7 @@ def cli_train(**kwargs):
     "-m",
     "model_path",
     type=ClickDirPathR,
-    default=files("orcAI.defaults").joinpath("orcai_Orca_1_0_0"),
+    default=files("orcAI.models").joinpath("orcai_Orca_1_0_0"),
     show_default="orcai_Orca_1_0_0",
     help="Path to the model directory.",
 )
@@ -441,7 +441,7 @@ def cli_train(**kwargs):
     help="Path to the output file or None if the output file should be saved in the same directory as the wav file.",
 )
 @click.option(
-    "--spectrogram_parameter",
+    "--spectrogram_parameter_path",
     "-sp",
     type=ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
