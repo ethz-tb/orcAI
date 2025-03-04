@@ -6,31 +6,33 @@ build-backend = "setuptools.build_meta"
 name = "orcAI"
 version = "0.1.0"
 authors = [
-    { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" }, #TODO: add more authors
+    { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
+    { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
+    { name = "Nicholas Ochsner", email = "nicolas.bonhoeffer@env.ethz.ch" },       #TODO: add more authors
 ]
 description = "A software package to detect acoustic signals in spectrograms generated from audio recordings"
-keywords = ["bioaccoustics", "Orca"] # TODO: update
+keywords = ["Bioaccoustics", "Orca", "classification"] # TODO: update
 readme = "README.md"
 requires-python = ">=3.11, <4.0"
-license = { text = "CC-BY-SA-4.0" } # TODO: Check license
+license = { text = "CC-BY-SA-4.0" }
 dependencies = [
-    "zarr>=2, <3", # TODO: update version?
-    "pandas",
-    "tensorflow",  # TODO: version?
-    "keras",       # TODO: version?
+    "zarr<3",
+    "numpy<3",
+    "pandas<3",
+    "tensorflow<3",
+    "keras<4",
     "librosa",
-    "psutil",
-    "matplotlib",
-    "click",
-    "humanize",
+    "psutil<8",
+    "click<9",
+    "humanize<5",
 ]
 
 [project.urls]
-Repository = "https://github.com/me/spam.git" # TODO: update
+Repository = "https://gitlab.ethz.ch/tb/orcai"
 
 [project.scripts]
 orcAI = "orcAI.cli:cli"
 
 [tool.setuptools.package-data]
 "orcAI.defaults" = ["*.json"]
-"orcAI.models" = ["*.*", "*/*.*"] # TODO: update
+"orcAI.models" = ["*.*", "*/*.*"]
