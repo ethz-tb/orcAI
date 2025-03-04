@@ -70,7 +70,7 @@ ClickFilePathW = click.Path(
     + "███ ███   ████████ " + "  a tool for \n"
     + "  ████  ████░██░░░ " + "  training, testing & applying AI models \n"
     + "    ██████████░░░  " + "  to detect acoustic signals in spectrograms generated from audio recordings.\n"
-    + "     ░░██░░░░      " + "Version: "+version("orcAI")+"\n"
+    + "     ░░██░░░░      " + "Version: " + version("orcAI") + "\n"
     + "      ███ ██       " + "Reference: " + click.style("in preparation", italic=True) + "\n",
     # TODO: Add reference
     # fmt: on
