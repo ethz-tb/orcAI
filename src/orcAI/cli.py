@@ -428,8 +428,8 @@ def cli_train(**kwargs):
     "-m",
     "model_path",
     type=ClickDirPathR,
-    default=files("orcAI.models").joinpath("orcai_Orca_1_0_0"),
-    show_default="orcai_Orca_1_0_0",
+    default=files("orcAI.models").joinpath("orcai-V1"),
+    show_default="orcai-V1",
     help="Path to the model directory.",
 )
 @click.option(

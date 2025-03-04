@@ -18,7 +18,7 @@ from orcAI.spectrogram import make_spectrogram
 
 def predict(
     wav_file_path,
-    model_path=files("orcAI.models").joinpath("orcai_Orca_1_0_0"),
+    model_path=files("orcAI.models").joinpath("orcai-V1"),
     output_file=None,
     spectrogram_parameter_path=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
@@ -32,29 +32,37 @@ def predict(
     ----------
     wav_file_path : Path
         Path to the wav file.
+    model_path : Path
+        Path to the model directory.
     output_file : Path
         Path to the output file or None if the output file should be saved in the same directory as the wav file.
     spectrogram_parameter_path : Path
         Path to the spectrogram parameter file.
     verbosity : int
         Verbosity level.
+
+    Returns
+    -------
+    None. Saves predictions to output file.
     """
     msgr = Messenger(verbosity=verbosity)
     msgr.part(f"Predicting annotations for wav file: {wav_file_path}")
-    if output_file is None:
-        output_file = Path(wav_file_path).with_suffix(".txt")
-    if output_file.exists():
-        msgr.error(f"Annotation file already exists: {output_file}")
-        sys.exit()
 
     msgr.info(f"Model: {model_path.stem}")
     msgr.info(f"Output file: {output_file}")
+    if output_file is None:
+        filename = Path(wav_file_path).stem + "_" + model_path.stem + "_predicted.txt"
+        output_file = Path(wav_file_path).with_name(filename)
+
+    if output_file.exists():
+        msgr.error(f"Annotation file already exists: {output_file}")
+        sys.exit()
 
     label_calls = read_json(model_path.joinpath("trained_calls.json"))
     msgr.info("Calls for labeling:")
     msgr.info(label_calls)
 
-    shape = read_json(model_path.joinpath("shape.json"))
+    shape = read_json(model_path.joinpath("model_shape.json"))
     msgr.info(f"Input shape:")
     msgr.info(shape)
 
@@ -179,7 +187,7 @@ def predict(
     )
 
     minimal_duration = 0.1  # TODO: MAGIC NUMBER move to second fn postprocessing
-    # TODO: General rename label_orcai_v1000, seperate minimal duration and max duration per label, eliminate labels = <0
+    # TODO: General rename, seperate minimal duration and max duration per label, eliminate labels = <0, suffix of choice for label e.g. TAILSLAP_orcai_v1000
     tmp = df_predicted_labels[
         (df_predicted_labels["stop"] - df_predicted_labels["start"]) < minimal_duration
     ]

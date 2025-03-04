@@ -258,7 +258,7 @@ def train(
     write_json(label_calls, file_paths["model_dir"].joinpath("trained_calls.json"))
     write_json(
         {"input_shape": input_shape, "num_labels": num_labels},
-        file_paths["model_dir"].joinpath("shape.json"),
+        file_paths["model_dir"].joinpath("model_shape.json"),
     )
     # TODO: Save model?
     model.save(file_paths["model"])
