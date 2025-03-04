@@ -1,5 +1,6 @@
 from pathlib import Path
 from importlib.resources import files
+from importlib.metadata import version
 import click
 
 from orcAI.spectrogram import create_spectrograms
@@ -69,15 +70,16 @@ ClickFilePathW = click.Path(
     + "███ ███   ████████ " + "  a tool for \n"
     + "  ████  ████░██░░░ " + "  training, testing & applying AI models \n"
     + "    ██████████░░░  " + "  to detect acoustic signals in spectrograms generated from audio recordings.\n"
-    + "     ░░██░░░░      \n"
-    + "      ███ ██       " + "  Reference:" +"\n",
+    + "     ░░██░░░░      " + "Version: "+version("orcAI")+"\n"
+    + "      ███ ██       " + "Reference: " + click.style("in preparation", italic=True) + "\n",
     # TODO: Add reference
     # fmt: on
     epilog="For further information see the help pages of the individual subcommands (e.g. "
     + click.style("orcai train --help", italic=True)
-    + ") and/or visit: https://gitlab.ethz.ch/seb/orcai_test",
+    + ") and/or visit: https://gitlab.ethz.ch/tb/orcai",
     cls=SpecialHelpOrder,
 )
+@click.version_option()
 def cli():
     pass
 
@@ -87,7 +89,7 @@ def cli():
     help="Creates spectrograms for all files in RECORDING_TABLE_PATH",
     short_help="Creates spectrograms for all files in recording table",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=0,
 )
 @click.argument(
@@ -150,7 +152,7 @@ def cli_create_spectrogram(**kwargs):
     help="Makes label arrays for all files in csv at RECORDING_TABLE_PATH",
     short_help="Makes label arrays for all files in recording table",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=1,
 )
 @click.argument(
@@ -205,7 +207,7 @@ def cli_create_label_arrays(**kwargs):
     help="Creates snippet tables for all files in RECORDING_TABLE_PATH",
     short_help="Creates snippet tables for all files in recording table",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=2,
 )
 @click.argument(
@@ -260,7 +262,7 @@ def cli_create_snippet_table(**kwargs):
     name="create-tvt-snippets",
     help="Creates training, validation and test snippet tables",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=3,
 )
 @click.option(
@@ -318,7 +320,7 @@ def cli_create_tvt_snippet_tables(**kwargs):
     help="Creates training, validation and test data from snippet tables in TVT_DIR",
     short_help="Creates training, validation and test data from snippet tables",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=4,
 )
 @click.argument(
@@ -352,7 +354,7 @@ def cli_create_tvt_data(**kwargs):
     help="Train a model on training, validation and test data",
     short_help="Train a model on data",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=5,
 )
 @click.option(
@@ -419,7 +421,7 @@ def cli_train(**kwargs):
     help="Predicts call annotations in the wav file at WAV_FILE_PATH.",
     short_help="Predicts call annotations.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=6,
 )
 @click.argument("wav_file_path", type=ClickFilePathR)
@@ -473,15 +475,16 @@ def cli_train(**kwargs):
 def cli_predict(**kwargs):
     predict(**kwargs)
 
+
 @cli.command(
     name="filter-predictions",
-    help="Filters predictions in the predictions file file at PREDICTION_FILE_PATH.",
+    help="Filters predictions in the predictions file at PREDICTION_FILE_PATH.",
     short_help="Filters predictions.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=7,
 )
-@click.argument("prediction_file_path", type=ClickFilePathR)
+@click.argument("predicted_labels", type=ClickFilePathR)
 @click.option(
     "--call_duration_limits",
     "-cdl",
@@ -495,7 +498,7 @@ def cli_predict(**kwargs):
     "-o",
     default="default",
     show_default="default",
-    help="Path to the output file or 'default' to save in the same directory as the prediction file."",
+    help="Path to the output file or 'default' to save in the same directory as the prediction file.",
 )
 @click.option(
     "--label_suffix",
