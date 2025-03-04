@@ -10,7 +10,7 @@ from orcAI.snippets import (
     create_tvt_data,
 )
 from orcAI.train import train
-from orcAI.predict import predict
+from orcAI.predict import predict, filter_predictions
 
 
 class SpecialHelpOrder(click.Group):
@@ -136,10 +136,10 @@ def cli():
 @click.option(
     "--verbosity",
     "-v",
-    type=click.IntRange(0, 2),
+    type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level.",
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_spectrogram(**kwargs):
     create_spectrograms(**kwargs)
@@ -191,10 +191,10 @@ def cli_create_spectrogram(**kwargs):
 @click.option(
     "--verbosity",
     "-v",
-    type=click.IntRange(0, 2),
+    type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level.",
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_label_arrays(**kwargs):
     create_label_arrays(**kwargs)
@@ -247,10 +247,10 @@ def cli_create_label_arrays(**kwargs):
 @click.option(
     "--verbosity",
     "-v",
-    type=click.IntRange(0, 2),
+    type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level.",
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_snippet_table(**kwargs):
     create_snippet_table(**kwargs)
@@ -304,10 +304,10 @@ def cli_create_snippet_table(**kwargs):
 @click.option(
     "--verbosity",
     "-v",
-    type=click.IntRange(0, 2),
+    type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level.",
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_tvt_snippet_tables(**kwargs):
     create_tvt_snippet_tables(**kwargs)
@@ -338,10 +338,10 @@ def cli_create_tvt_snippet_tables(**kwargs):
 @click.option(
     "--verbosity",
     "-v",
-    type=click.IntRange(0, 2),
+    type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level.",
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_tvt_data(**kwargs):
     create_tvt_data(**kwargs)
@@ -405,10 +405,10 @@ def cli_create_tvt_data(**kwargs):
 @click.option(
     "--verbosity",
     "-v",
-    type=click.IntRange(0, 2),
+    type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level.",
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_train(**kwargs):
     train(**kwargs)
@@ -435,13 +435,12 @@ def cli_train(**kwargs):
 @click.option(
     "--output_file",
     "-o",
-    type=ClickFilePathW,
-    default=None,
-    show_default="None",
-    help="Path to the output file or None if the output file should be saved in the same directory as the wav file.",
+    default="default",
+    show_default="default",
+    help="Path to the output file or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
 )
 @click.option(
-    "--spectrogram_parameter_path",
+    "--spectrogram_parameter",
     "-sp",
     type=ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
@@ -449,12 +448,69 @@ def cli_train(**kwargs):
     help="Path to a JSON file containing spectrogram parameter.",
 )
 @click.option(
+    "--channel",
+    "-c",
+    type=int,
+    default=None,
+    show_default="None",
+    help="Overwrite channel to use for prediction. If None, channel from spectrogram_parameter is used.",
+)
+@click.option(
+    "--label_suffix",
+    "-ls",
+    default="orcai-V1",
+    show_default="orcai-V1",
+    help="Suffix to add to the label names.",
+)
+@click.option(
     "--verbosity",
     "-v",
-    type=click.IntRange(0, 2),
+    type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level.",
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_predict(**kwargs):
     predict(**kwargs)
+
+@cli.command(
+    name="filter-predictions",
+    help="Filters predictions in the predictions file file at PREDICTION_FILE_PATH.",
+    short_help="Filters predictions.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/seb/orcai_test",
+    help_priority=7,
+)
+@click.argument("prediction_file_path", type=ClickFilePathR)
+@click.option(
+    "--call_duration_limits",
+    "-cdl",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_call_duration_limits.json"),
+    show_default="default_call_duration_limits.json",
+    help="Path to a JSON file containing call duration limits.",
+)
+@click.option(
+    "--output_file",
+    "-o",
+    default="default",
+    show_default="default",
+    help="Path to the output file or 'default' to save in the same directory as the prediction file."",
+)
+@click.option(
+    "--label_suffix",
+    "-ls",
+    default="orcai-V1",
+    show_default="orcai-V1",
+    help="Suffix to add to the label names.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_filter_predictions(**kwargs):
+    filter_predictions(**kwargs)
