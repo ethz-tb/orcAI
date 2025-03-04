@@ -19,8 +19,7 @@ from orcAI.auxiliary import (
 
 def make_spectrogram(
     wav_file_path,
-    spectrogram_parameter=None,
-    spectrogram_parameter_path=str(
+    spectrogram_parameter=str(
         files("orcAI.defaults").joinpath("default_spectrogram_parameter.json")
     ),
     msgr=Messenger(),
@@ -29,12 +28,10 @@ def make_spectrogram(
 
     Parameters
     ----------
-    wav_file_path : Path
+    wav_file_path : (Path | Str)
         Path to the wav file.
-    spectrogram_parameter : dict
-        Dictionary with parameters for the spectrogram creation.
-    spectrogram_parameter_path : Path
-        Path to the spectrogram parameter file. Only used if spectrogram_parameter is None.
+    spectrogram_parameter : dict | (str | Path)
+        Dictionary with parameters for the spectrogram creation or path to JSON containing the same. Defaults to default_spectrogram_parameter.json.
     msgr : Messenger
         Messenger object for logging.
 
@@ -48,11 +45,11 @@ def make_spectrogram(
         Times of the spectrogram.
     """
     msgr.part("Creating spectrogram")
-    # allow for passing either a dict or path to json
-    if spectrogram_parameter is None:
-        spectrogram_parameter = read_json(spectrogram_parameter_path)
-    msgr.info(f"Loading wav file: {wav_file_path}")
-    msgr.warning(f"using channel {spectrogram_parameter['channel']}")
+
+    if isinstance(spectrogram_parameter, (Path | str)):
+        spectrogram_parameter = read_json(spectrogram_parameter)
+
+    msgr.info(f"Loading wav file: {wav_file_path.name}")
 
     start_time = time.time()
     wav_file, _ = librosa.load(
@@ -61,6 +58,9 @@ def make_spectrogram(
         mono=False,
     )
     if wav_file.ndim > 1:
+        msgr.info(
+            f"Multiple channels found, using channel {spectrogram_parameter['channel']}"
+        )
         wav_file = wav_file[spectrogram_parameter["channel"] - 1]
 
     load_time = time.time()
