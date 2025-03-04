@@ -66,11 +66,15 @@ class Messenger:
 
         self.n_indent = self.n_indent + indent
 
+    def debug(self, message, indent=0, set_indent=None, severity=3, **kwargs):
+        """Print a message."""
+        self.print(message, indent, set_indent, severity=severity, **kwargs)
+
     def info(self, message, indent=0, set_indent=None, severity=2, **kwargs):
         """Print a message."""
         self.print(message, indent, set_indent, severity=severity, **kwargs)
 
-    def part(self, message, indent=1, set_indent=0, severity=1, **kwargs):
+    def part(self, message, indent=1, set_indent=0, severity=2, **kwargs):
         """Print a message in bold at indent 0 to indicate a new part"""
         self.print(
             message,
@@ -82,7 +86,7 @@ class Messenger:
             **kwargs,
         )
 
-    def success(self, message, indent=0, set_indent=0, severity=1, **kwargs):
+    def success(self, message, indent=0, set_indent=0, severity=2, **kwargs):
         """Print a success message."""
         self.print(
             message,
