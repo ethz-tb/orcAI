@@ -94,6 +94,14 @@ def cli():
 )
 @click.argument("wav_file_path", type=ClickFilePathR)
 @click.option(
+    "--channel",
+    "-c",
+    type=int,
+    default=1,
+    show_default=1,
+    help="Channel to use for prediction.",
+)
+@click.option(
     "--model",
     "-m",
     "model_path",
@@ -116,14 +124,6 @@ def cli():
     default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
     show_default="default_spectrogram_parameter.json",
     help="Path to a JSON file containing spectrogram parameter.",
-)
-@click.option(
-    "--channel",
-    "-c",
-    type=int,
-    default=None,
-    show_default="None",
-    help="Overwrite channel to use for prediction. If None, channel from spectrogram_parameter is used.",
 )
 @click.option(
     "--label_suffix",

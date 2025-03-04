@@ -19,6 +19,7 @@ from orcAI.auxiliary import (
 
 def make_spectrogram(
     wav_file_path,
+    channel=1,
     spectrogram_parameter=str(
         files("orcAI.defaults").joinpath("default_spectrogram_parameter.json")
     ),
@@ -30,6 +31,8 @@ def make_spectrogram(
     ----------
     wav_file_path : (Path | Str)
         Path to the wav file.
+    channel : int
+        Channel of wav_file to use for the spectrogram.
     spectrogram_parameter : dict | (str | Path)
         Dictionary with parameters for the spectrogram creation or path to JSON containing the same. Defaults to default_spectrogram_parameter.json.
     msgr : Messenger
@@ -44,6 +47,8 @@ def make_spectrogram(
     np.ndarray
         Times of the spectrogram.
     """
+
+    # TODO: remove channel from spectrogram_parameter and add it as an argument
     msgr.part("Creating spectrogram")
 
     if isinstance(spectrogram_parameter, (Path | str)):
@@ -58,10 +63,8 @@ def make_spectrogram(
         mono=False,
     )
     if wav_file.ndim > 1:
-        msgr.info(
-            f"Multiple channels found, using channel {spectrogram_parameter['channel']}"
-        )
-        wav_file = wav_file[spectrogram_parameter["channel"] - 1]
+        msgr.info(f"Multiple channels found, using channel {channel}")
+        wav_file = wav_file[channel - 1]
 
     load_time = time.time()
     msgr.info(f"Time for loading wav file: {load_time - start_time:.2f} seconds")
@@ -224,10 +227,10 @@ def create_spectrograms(
         item_show_func=lambda index: recording_table_show_func(index, recording_table),
     ) as recording_indices:
         for i in recording_indices:
-            spectrogram_parameter["channel"] = recording_table.loc[i, "channel"]
             silent_msgr = Messenger(verbosity=0)
             spectrogram, frequencies, times = make_spectrogram(
                 recording_table.loc[i, "wav_file_path"],
+                recording_table.loc[i, "channel"],
                 spectrogram_parameter,
                 msgr=silent_msgr,
             )

@@ -2,8 +2,13 @@
     "sampling_rate": 48000,
     "nfft": 512,
     "n_overlap": 256,
-    "freq_range": [0, 16000],
-    "quantiles": [0.01, 0.999],
-    "duration": 4,
-    "channel": 1
+    "freq_range": [
+        0,
+        16000
+    ],
+    "quantiles": [
+        0.01,
+        0.999
+    ],
+    "duration": 4
 }
