@@ -8,7 +8,12 @@ version = "0.1.0"
 authors = [
     { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
     { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
-    { name = "Nicholas Ochsner", email = "nicolas.bonhoeffer@env.ethz.ch" },       #TODO: add more authors
+    { name = "Nicholas Ochsner", email = "nicolas.ochsner@env.ethz.ch" },
+    { name = "Daniel Angst", email = "daniel.angst@env.ethz.ch" },
+    { name = "Anna Selbmann" },
+    { name = "Patrick Miller" },
+    { name = "Volker Deecke" },
+    { name = "Filipa Samara" },
 ]
 description = "A software package to detect acoustic signals in spectrograms generated from audio recordings"
 keywords = ["Bioaccoustics", "Orca", "classification"] # TODO: update
