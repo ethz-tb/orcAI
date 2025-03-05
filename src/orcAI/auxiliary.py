@@ -297,10 +297,10 @@ def resolve_recording_data_dir(recording, recording_data_dir):
         return None
 
 
-def filter_recordings(files, eliminate, msgr=Messenger(verbosity=2)):
-    """remove filenames containing patterns in list eliminate"""
+def filter_recordings(files, exclude, msgr=Messenger(verbosity=2)):
+    """remove filenames containing patterns in list exclude"""
     msgr.info(f"Filtering {len(files)} files...")
-    for e in eliminate:
+    for e in exclude:
         files = [f for f in files if not e in f.name]
         msgr.info(
             f"Remaining files after filtering files that contain {e}: {len(files)}"
