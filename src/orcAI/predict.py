@@ -23,7 +23,7 @@ def predict(
     spectrogram_parameter=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
     ),
-    channel=None,
+    channel=1,
     label_suffix="orcai-V1",
     verbosity=2,
 ):
