@@ -239,27 +239,6 @@ def save_as_zarr(obj, filename, msgr=Messenger(verbosity=2)):
     return
 
 
-def get_all_files_with_ext(directory, extension):
-    """
-    Recursively get all ".ext" files from the specified directory.
-
-    Args:
-        directory (str): The root directory to search in.
-
-    Returns:
-        list: A list of full file paths to all files with extension found.
-    """
-    all_files = []
-
-    # Walk through the directory recursively
-    for root, _, files in os.walk(directory):
-        for file in files:
-            if file.lower().endswith(extension):
-                all_files.append(os.path.join(root, file))
-
-    return all_files
-
-
 def resolve_file_paths(
     directory, file_names, extension="", msgr=Messenger(verbosity=2)
 ):
@@ -297,15 +276,32 @@ def resolve_recording_data_dir(recording, recording_data_dir):
         return None
 
 
-def filter_recordings(files, exclude, msgr=Messenger(verbosity=2)):
-    """remove filenames containing patterns in list exclude"""
-    msgr.info(f"Filtering {len(files)} files...")
-    for e in exclude:
-        files = [f for f in files if not e in f.name]
+def filter_filepaths(
+    filepaths: list[Path], exclude_pattern: list[str], msgr=Messenger(verbosity=2)
+):
+    """Remove file paths that contain any of the specified patterns.
+
+    Args:
+        filepaths (list[Path]): A list of Path objects representing the file paths to be filtered.
+        exclude_pattern (list[str]): A list of strings, where each string is a pattern to be excluded from the file paths.
+        msgr (Messenger, optional): An instance of the Messenger class used for logging messages with different verbosity levels. Defaults to Messenger(verbosity=2).
+
+    Returns:
+        list[Path]: A list of Path objects representing the filtered file paths.
+
+    Example:
+        filepaths = [Path("/path/to/file1.txt"), Path("/path/to/file2.log"), Path("/path/to/file3.txt")]
+        exclude_pattern = [".log"]
+        filtered_filepaths = filter_filepaths(filepaths, exclude_pattern)
+        # filtered_filepaths will be [Path("/path/to/file1.txt"), Path("/path/to/file3.txt")]
+    """
+    msgr.info(f"Filtering {len(filepaths)} files...")
+    for e in exclude_pattern:
+        filepaths = [f for f in filepaths if e not in str(f)]
         msgr.info(
-            f"Remaining files after filtering files that contain {e}: {len(files)}"
+            f"Remaining files after filtering files that contain {e}: {len(filepaths)}"
         )
-    return files
+    return filepaths
 
 
 def compute_confusion_matrix(y_true_batch, y_pred_batch, label_names, mask_value=-1):
