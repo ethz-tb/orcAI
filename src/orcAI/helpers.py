@@ -2,7 +2,7 @@ from pathlib import Path
 from importlib.resources import files
 import pandas as pd
 
-from orcAI.auxiliary import Messenger, filter_filepaths, read_json, resolve_file_paths
+from orcAI.auxiliary import Messenger, filter_filepaths, read_json
 
 
 def create_recordings_table(
@@ -37,6 +37,11 @@ def create_recordings_table(
         Path to a JSON file containing filenames to exclude from the table or an array containing the same.
 
     Returns
+    -------
+    recordings_table : pd.DataFrame
+        Table of recordings with columns: "channel", "duplicate", "base_dir_recording", "rel_recording_path",
+        "base_dir_annotation", "rel_annotation_path", and columns for each call in label_calls. If updating a table
+        (ie. update_table is not None), additional columns from the previous table are also included.
 
     """
     msgr = Messenger(verbosity=verbosity)
@@ -47,12 +52,12 @@ def create_recordings_table(
         base_dir_annotations = base_dir_recordings
     annotation_files = list(Path(base_dir_annotations).glob("**/*.txt"))
 
-    if exclude_pattern is not None:
-        if isinstance(exclude_pattern, (Path | str)):
-            exclude_pattern = read_json(exclude_pattern)
-        wav_files = filter_filepaths(wav_files, exclude_pattern, msgr=msgr)
+    if exclude_patterns is not None:
+        if isinstance(exclude_patterns, (Path | str)):
+            exclude_patterns = read_json(exclude_patterns)
+        wav_files = filter_filepaths(wav_files, exclude_patterns, msgr=msgr)
         annotation_files = filter_filepaths(
-            annotation_files, exclude_pattern, msgr=msgr
+            annotation_files, exclude_patterns, msgr=msgr
         )
 
     if isinstance(label_calls, (Path | str)):
