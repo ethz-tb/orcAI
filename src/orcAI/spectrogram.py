@@ -1,10 +1,10 @@
-import librosa
 from pathlib import Path
 from importlib.resources import files
 import numpy as np
 import time
 import pandas as pd
 from click import progressbar
+from librosa import load, stft, fft_frequencies, frames_to_time, amplitude_to_db
 
 # import local
 from orcAI.auxiliary import (
@@ -19,6 +19,7 @@ from orcAI.auxiliary import (
 
 def make_spectrogram(
     wav_file_path,
+    channel=1,
     spectrogram_parameter=str(
         files("orcAI.defaults").joinpath("default_spectrogram_parameter.json")
     ),
@@ -30,6 +31,8 @@ def make_spectrogram(
     ----------
     wav_file_path : (Path | Str)
         Path to the wav file.
+    channel : int
+        Channel of wav_file to use for the spectrogram.
     spectrogram_parameter : dict | (str | Path)
         Dictionary with parameters for the spectrogram creation or path to JSON containing the same. Defaults to default_spectrogram_parameter.json.
     msgr : Messenger
@@ -44,6 +47,8 @@ def make_spectrogram(
     np.ndarray
         Times of the spectrogram.
     """
+
+    # TODO: remove channel from spectrogram_parameter and add it as an argument
     msgr.part("Creating spectrogram")
 
     if isinstance(spectrogram_parameter, (Path | str)):
@@ -52,40 +57,38 @@ def make_spectrogram(
     msgr.info(f"Loading wav file: {wav_file_path.name}")
 
     start_time = time.time()
-    wav_file, _ = librosa.load(
+    wav_file, _ = load(
         wav_file_path,
         sr=spectrogram_parameter["sampling_rate"],
         mono=False,
     )
     if wav_file.ndim > 1:
-        msgr.info(
-            f"Multiple channels found, using channel {spectrogram_parameter['channel']}"
-        )
-        wav_file = wav_file[spectrogram_parameter["channel"] - 1]
+        msgr.info(f"Multiple channels found, using channel {channel}")
+        wav_file = wav_file[channel - 1]
 
     load_time = time.time()
     msgr.info(f"Time for loading wav file: {load_time - start_time:.2f} seconds")
 
     # create spectrogram
-    spectrogram = librosa.stft(
+    spectrogram = stft(
         wav_file,
         n_fft=spectrogram_parameter["nfft"],
         hop_length=spectrogram_parameter["n_overlap"],
         window="hann",
     )
 
-    frequencies = librosa.fft_frequencies(
+    frequencies = fft_frequencies(
         sr=spectrogram_parameter["sampling_rate"], n_fft=spectrogram_parameter["nfft"]
     )
 
-    times = librosa.frames_to_time(
+    times = frames_to_time(
         range(spectrogram.shape[1]),
         sr=spectrogram_parameter["sampling_rate"],
         hop_length=spectrogram_parameter["n_overlap"],
     )
     msgr.info(f"Duration of wav file: {times[-1]:.2f} seconds")
 
-    spectrogram = librosa.amplitude_to_db(
+    spectrogram = amplitude_to_db(
         np.abs(spectrogram), ref=np.max
     )  # Convert to power spectrogram (magnitude squared)
     spec_time = time.time()
@@ -224,10 +227,10 @@ def create_spectrograms(
         item_show_func=lambda index: recording_table_show_func(index, recording_table),
     ) as recording_indices:
         for i in recording_indices:
-            spectrogram_parameter["channel"] = recording_table.loc[i, "channel"]
             silent_msgr = Messenger(verbosity=0)
             spectrogram, frequencies, times = make_spectrogram(
                 recording_table.loc[i, "wav_file_path"],
+                recording_table.loc[i, "channel"],
                 spectrogram_parameter,
                 msgr=silent_msgr,
             )

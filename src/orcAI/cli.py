@@ -1,52 +1,23 @@
 from pathlib import Path
 from importlib.resources import files
 from importlib.metadata import version
-import click
+import rich_click as click
 
-from orcAI.spectrogram import create_spectrograms
-from orcAI.annotation import create_label_arrays
-from orcAI.snippets import (
-    create_snippet_table,
-    create_tvt_snippet_tables,
-    create_tvt_data,
-)
-from orcAI.train import train
 from orcAI.predict import predict, filter_predictions
+from orcAI.helpers import create_recording_table
 
-
-class SpecialHelpOrder(click.Group):
-
-    def __init__(self, *args, **kwargs):
-        self.help_priorities = {}
-        super(SpecialHelpOrder, self).__init__(*args, **kwargs)
-
-    def get_help(self, ctx):
-        self.list_commands = self.list_commands_for_help
-        return super(SpecialHelpOrder, self).get_help(ctx)
-
-    def list_commands_for_help(self, ctx):
-        """reorder the list of commands when listing the help"""
-        commands = super(SpecialHelpOrder, self).list_commands(ctx)
-        return (
-            c[1]
-            for c in sorted(
-                (self.help_priorities.get(command, 1), command) for command in commands
-            )
-        )
-
-    def command(self, *args, **kwargs):
-        """Behaves the same as `click.Group.command()` except capture
-        a priority for listing command names in help.
-        """
-        help_priority = kwargs.pop("help_priority", 1)
-        help_priorities = self.help_priorities
-
-        def decorator(f):
-            cmd = super(SpecialHelpOrder, self).command(*args, **kwargs)(f)
-            help_priorities[cmd.name] = help_priority
-            return cmd
-
-        return decorator
+click.rich_click.COMMAND_GROUPS = {
+    "orcai": [
+        {
+            "name": "Predicting calls",
+            "commands": ["predict", "filter-predictions"],
+        },
+        {
+            "name": "Helpers",
+            "commands": ["create-recording-table"],
+        },
+    ]
+}
 
 
 ClickDirPathR = click.Path(
@@ -70,14 +41,13 @@ ClickFilePathW = click.Path(
     + "███ ███   ████████ " + "  a tool for \n"
     + "  ████  ████░██░░░ " + "  training, testing & applying AI models \n"
     + "    ██████████░░░  " + "  to detect acoustic signals in spectrograms generated from audio recordings.\n"
-    + "     ░░██░░░░      " + "Version: "+version("orcAI")+"\n"
+    + "     ░░██░░░░      " + "Version: " + version("orcAI") + "\n"
     + "      ███ ██       " + "Reference: " + click.style("in preparation", italic=True) + "\n",
     # TODO: Add reference
     # fmt: on
     epilog="For further information see the help pages of the individual subcommands (e.g. "
-    + click.style("orcai train --help", italic=True)
+    + click.style("orcai predict --help", italic=True)
     + ") and/or visit: https://gitlab.ethz.ch/tb/orcai",
-    cls=SpecialHelpOrder,
 )
 @click.version_option()
 def cli():
@@ -85,346 +55,21 @@ def cli():
 
 
 @cli.command(
-    name="create-spectrograms",
-    help="Creates spectrograms for all files in RECORDING_TABLE_PATH",
-    short_help="Creates spectrograms for all files in recording table",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-    help_priority=0,
-)
-@click.argument(
-    "recording_table_path",
-    type=ClickFilePathR,
-)
-@click.option(
-    "--base_dir",
-    "-bd",
-    type=ClickDirPathR,
-    default=None,
-    show_default="None",
-    help="Base directory for the wav files. If not None entries in the wav_file column are interpreted as filenames searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.",
-)
-@click.option(
-    "--output_dir",
-    "-o",
-    type=ClickDirPathW,
-    required=True,
-    help="Output directory for the spectrograms. Spectograms are stored in subdirectories named '<recording_name>/spectrogram'",
-)
-@click.option(
-    "--spectrogram_parameter",
-    "-sp",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
-    show_default="default_spectrogram_parameter.json",
-    help="Path to a JSON file containing spectrogram parameter.",
-)
-@click.option(
-    "--label_calls",
-    "-lc",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_calls.json"),
-    show_default="default_calls.json",
-    help="Path to a JSON file containing calls for labeling.",
-)
-@click.option(
-    "--exclude",
-    "-e",
-    is_flag=True,
-    default=True,
-    show_default=True,
-    help="Exclude recordings without possible annotations.",
-)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 3),
-    default=2,
-    show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
-)
-def cli_create_spectrogram(**kwargs):
-    create_spectrograms(**kwargs)
-
-
-@cli.command(
-    name="create-labels",
-    help="Makes label arrays for all files in csv at RECORDING_TABLE_PATH",
-    short_help="Makes label arrays for all files in recording table",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-    help_priority=1,
-)
-@click.argument(
-    "recording_table_path",
-    type=ClickFilePathR,
-)
-@click.option(
-    "--base_dir",
-    "-bd",
-    type=ClickDirPathR,
-    default=None,
-    show_default="None",
-    help="Base directory for the recording files. If not None entries in the recording column are interpreted as filenames searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.",
-)
-@click.option(
-    "--output_dir",
-    "-o",
-    type=ClickDirPathW,
-    required=True,
-    help="Output directory for the labels. Labels are stored in subdirectories named '<recording>/labels'",
-)
-@click.option(
-    "--label_calls",
-    "-lc",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_calls.json"),
-    show_default="default_calls.json",
-    help="Path to a JSON file containing calls for labeling.",
-)
-@click.option(
-    "--call_equivalences",
-    "-ce",
-    type=ClickFilePathR,
-    default=None,
-    show_default="None",
-    help="Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels.",
-)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 3),
-    default=2,
-    show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
-)
-def cli_create_label_arrays(**kwargs):
-    create_label_arrays(**kwargs)
-
-
-@cli.command(
-    name="create-snippets",
-    help="Creates snippet tables for all files in RECORDING_TABLE_PATH",
-    short_help="Creates snippet tables for all files in recording table",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-    help_priority=2,
-)
-@click.argument(
-    "recording_table_path",
-    type=ClickFilePathR,
-)
-@click.option(
-    "--recording_data_dir",
-    "-rd",
-    type=ClickDirPathR,
-    required=True,
-    help="Path to the directory containing the recording data.",
-)
-@click.option(
-    "--snippet_parameter",
-    "-sp",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_snippet_parameter.json"),
-    show_default="default_snippet_parameter.json",
-    help="Path to a JSON file containing snippet parameter.",
-)
-@click.option(
-    "-m",
-    "--model_parameter",
-    "model_parameter",
-    help="Path to a JSON file containing model specifications",
-    type=ClickFilePathR,
-    default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
-    show_default="default_model_parameter.json",
-)
-@click.option(
-    "--label_calls",
-    "-lc",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_calls.json"),
-    show_default="default_calls.json",
-    help="Path to a JSON file containing calls for labeling.",
-)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 3),
-    default=2,
-    show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
-)
-def cli_create_snippet_table(**kwargs):
-    create_snippet_table(**kwargs)
-
-
-@cli.command(
-    name="create-tvt-snippets",
-    help="Creates training, validation and test snippet tables",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-    help_priority=3,
-)
-@click.option(
-    "--recording_data_dir",
-    "-rd",
-    type=ClickDirPathR,
-    required=True,
-    help="Path to the directory containing the recording data.",
-)
-@click.option(
-    "--output_dir",
-    "-o",
-    type=ClickDirPathW,
-    required=True,
-    help="Path to the output directory.",
-)
-@click.option(
-    "--snippet_table",
-    "-st",
-    type=ClickFilePathR,
-    default=None,
-    show_default="<recording_data_dir>/all_snippets.csv.gz",
-    help="Path to the snippet table csv. If None, the snippet table is read from the <recording_data_dir>/all_snippets.csv.gz.",
-)
-@click.option(
-    "--snippet_parameter",
-    "-sp",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_snippet_parameter.json"),
-    show_default="default_snippet_parameter.json",
-    help="Path to a JSON file containing snippet parameter.",
-)
-@click.option(
-    "--label_calls",
-    "-lc",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_calls.json"),
-    show_default="default_calls.json",
-    help="Path to a JSON file containing calls for labeling.",
-)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 3),
-    default=2,
-    show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
-)
-def cli_create_tvt_snippet_tables(**kwargs):
-    create_tvt_snippet_tables(**kwargs)
-
-
-@cli.command(
-    name="create-tvt-data",
-    help="Creates training, validation and test data from snippet tables in TVT_DIR",
-    short_help="Creates training, validation and test data from snippet tables",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-    help_priority=4,
-)
-@click.argument(
-    "tvt_dir",
-    type=ClickDirPathW,
-    required=True,
-)
-@click.option(
-    "-m",
-    "--model_parameter",
-    "model_parameter",
-    help="Path to a JSON file containing model specifications",
-    type=ClickFilePathR,
-    default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
-    show_default="default_model_parameter.json",
-)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 3),
-    default=2,
-    show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
-)
-def cli_create_tvt_data(**kwargs):
-    create_tvt_data(**kwargs)
-
-
-@cli.command(
-    name="train",
-    help="Train a model on training, validation and test data",
-    short_help="Train a model on data",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-    help_priority=5,
-)
-@click.option(
-    "--data_dir",
-    "-d",
-    help="Path to the directory containing the training, validation and test datasets",
-    required=True,
-    type=ClickDirPathR,
-)
-@click.option(
-    "--output_dir",
-    "-o",
-    help="Path to the output directory",
-    required=True,
-    type=ClickDirPathW,
-)
-@click.option(
-    "-m",
-    "--model_parameter",
-    "model_parameter",
-    help="Path to a JSON file containing model specifications",
-    type=ClickFilePathR,
-    default=str(files("orcAI.defaults").joinpath("default_model_parameter.json")),
-    show_default="default_model_parameter.json",
-)
-@click.option(
-    "--label_calls",
-    "-lc",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_calls.json"),
-    show_default="default_calls.json",
-    help="Path to a JSON file containing calls for labeling.",
-)
-@click.option(
-    "-lw",
-    "--load_weights",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Load weights and continue fitting",
-)
-@click.option(
-    "-tp",
-    "--transformer_parallel",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Use transformer parallelization",
-)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 3),
-    default=2,
-    show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
-)
-def cli_train(**kwargs):
-    train(**kwargs)
-
-
-@cli.command(
     name="predict",
-    help="Predicts call annotations in the wav file at WAV_FILE_PATH.",
+    help="Predicts call annotations from RECORDING_PATH. This can either be a path to a wav file or a recording table (created with create-recording-table) as .csv.",
     short_help="Predicts call annotations.",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-    help_priority=6,
 )
-@click.argument("wav_file_path", type=ClickFilePathR)
+@click.argument("recording_path", type=ClickFilePathR)
+@click.option(
+    "--channel",
+    "-c",
+    type=int,
+    default=1,
+    show_default=1,
+    help="Channel to use for prediction if running predicitons for a single file.",
+)
 @click.option(
     "--model",
     "-m",
@@ -435,33 +80,41 @@ def cli_train(**kwargs):
     help="Path to the model directory.",
 )
 @click.option(
-    "--output_file",
+    "--output_path",
     "-o",
     default="default",
     show_default="default",
-    help="Path to the output file or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
+    help="Path to the output file/folder or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
 )
 @click.option(
-    "--spectrogram_parameter",
-    "-sp",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
-    show_default="default_spectrogram_parameter.json",
-    help="Path to a JSON file containing spectrogram parameter.",
-)
-@click.option(
-    "--channel",
-    "-c",
+    "--num_processes",
+    "-np",
     type=int,
+    default=3,
+    show_default=True,
+    help="Number of processes to use for prediction. None for all available cores.",
+)
+@click.option(
+    "--base_dir_recording",
+    "-bdr",
+    type=ClickDirPathW,
     default=None,
     show_default="None",
-    help="Overwrite channel to use for prediction. If None, channel from spectrogram_parameter is used.",
+    help="Alternative base directory containing the recordings (possibly in subdirectories). If None the base directory is taken from the recording_table.",
+)
+@click.option(
+    "--call_duration_limits",
+    "-cdl",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to a JSON file containing call duration limits. None for no filtering based on call duration.",
 )
 @click.option(
     "--label_suffix",
     "-ls",
-    default="orcai-V1",
-    show_default="orcai-V1",
+    default="*",
+    show_default=True,
     help="Suffix to add to the label names.",
 )
 @click.option(
@@ -482,7 +135,6 @@ def cli_predict(**kwargs):
     short_help="Filters predictions.",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-    help_priority=7,
 )
 @click.argument("predicted_labels", type=ClickFilePathR)
 @click.option(
@@ -517,3 +169,75 @@ def cli_predict(**kwargs):
 )
 def cli_filter_predictions(**kwargs):
     filter_predictions(**kwargs)
+
+
+@cli.command(
+    name="create-recording-table",
+    help="Create a table of recordings in BASE_DIR_RECORDING for use with other orcAI functions.",
+    short_help="Create a table of recordings.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("base_dir_recording", type=ClickDirPathR)
+@click.option(
+    "--output_path",
+    "-o",
+    type=ClickFilePathW,
+    default=None,
+    show_default="BASE_DIR_RECORDING/recording_table.csv",
+    help="Path to save the table of recordings. If none it is saved as recording_table.csv in base_dir_recording.",
+)
+@click.option(
+    "--base_dir_annotation",
+    "-bda",
+    type=ClickDirPathR,
+    default=None,
+    show_default="None",
+    help="Base directory containing the annotations (if different from base_dir_recording).",
+)
+@click.option(
+    "--default_channel",
+    "-dc",
+    type=int,
+    default=1,
+    show_default=1,
+    help="Default channel number for the recordings.",
+)
+@click.option(
+    "--update_table",
+    "-ut",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to a .csv file with a previous table of recordings to update.",
+)
+@click.option(
+    "--update_paths",
+    "-up",
+    is_flag=True,
+    help="If True the paths in the table to update are updated with the new paths. Only valid if update_table is not None.",
+)
+@click.option(
+    "--exclude_patterns",
+    "-ep",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to a JSON file containing filenames to exclude from the table or an array containing the same.",
+)
+@click.option(
+    "--remove_duplicate_filenames",
+    "-rdf",
+    is_flag=True,
+    help="Remove duplicate filenames from the table.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_create_recordings_table(**kwargs):
+    create_recording_table(**kwargs)
