@@ -26,21 +26,37 @@ pipx install git+https://gitlab.ethz.ch/tb/orcai.git --version python3.11
 
 The command line interface is available through the `orcai` and subcommands. The following subcommands are available:
 
-- `orcai predict` - Predict annotations in unannotated recordings based on a trained model. A trained model is included in the package.
-- `orcai filter-annotations` - Filter annotations based on minimum and maximum duration
+- Prediction
+  - `orcai predict` - Predict annotations in unannotated recordings based on a trained model. A trained model is included in the package.
+  - `orcai filter-annotations` - Filter annotations based on minimum and maximum duration
+- Helpers
+  - `orcai create-recording-table` - Create a recording table from a directory of recordings
 
-### Predict
+### Prediction
 
-Example usage:
+#### `orcai predict`
+
+Basic usage:
 
 ```bash
 orcai predict path/to/input.wav
 ```
 
 This will use the included model `orcai-V1` to predict annotations in the input file `path/to/input.wav`. The output will be saved in the same directory as the input file with the same name but with the extension `_orcai-V1_predicted.txt` and is compatible with Audacity.
+
+Advanced usage e.g. for predicting multiple recordings in parallel:
+
+```bash
+orcai predict path/to/recording_table.csv -o path/to/output_dir -np 4
+```
+
+This will use the included model `orcai-V1` to predict annotations in the recordings listed in the recording table `path/to/recording_table.csv`. The output will be saved in the directory `path/to/output_dir` with the same name as the input file but with the extension `_orcai-V1_predicted.txt` and is compatible with Audacity. The predictions will be done in parallel using 4 processes.
+
+A appropriate recording table can be created using the `orcai create-recording-table` command, described below.
+
 See `orcai predict --help` for more options.
 
-### Filter predictions
+#### `orcai filter-predictions`
 
 Example usage:
 
@@ -50,3 +66,25 @@ orcai filter-predictions path/to/annotations.txt
 
 This will filter the annotations in the input file `path/to/annotations.txt` based on the minimum and maximum duration specified in the default configuration file. The output will be saved in the same directory as the input file with the same name but with the extension `_filtered.txt`. To pass a custom configuration file, use the `--call_duration_limits` option.
 See `orcai filter-predictions --help` for more options.
+
+### Helpers
+
+#### `orcai create-recording-table`
+
+Basic usage:
+
+```bash
+orcai create-recording-table path/to/recordings
+```
+
+This will create a recording table from the recordings in the directory `path/to/recordings`. The recording table will be saved in the same directory as the input directory with the name `recording_table.csv`.
+
+Advanced usage:
+
+```bash
+orcai create-recording-table path/to/recordings -o path/to/output_dir/my_recordings_table.csv -remove_duplicate_filenames
+```
+
+This will create a recording table from the recordings in the directory `path/to/recordings`. The recording table will be saved in the directory `path/to/output_dir` with the name `my_recordings_table.csv`. If the `-remove_duplicate_filenames` flag is set, the function will remove duplicate filenames from the recording table.
+
+For more options see `orcai create-recording-table --help`.
