@@ -28,7 +28,7 @@ dependencies = [
     "keras<4",
     "librosa",
     "psutil<8",
-    "click<9",
+    "rich-click<2",
     "humanize<5",
     "tqdm>=4.42.0, <5",
 ]
