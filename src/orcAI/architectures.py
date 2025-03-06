@@ -3,7 +3,7 @@ from keras import layers
 
 from orcAI.auxiliary import Messenger
 
-# TODO: docstrings for functions
+# TODO: docstrings for functions, try pyment
 
 
 # CNN model with residual connection (corresponds to old model)
