@@ -205,6 +205,7 @@ def predict(
     msgr.info(
         f"time for prediction and preparing annotation file: {time.time()-start_time:.2f}"
     )
+    # TODO: sort by start time, np.around
     if output_file is not None:
         predicted_labels[["start", "stop", "label"]].to_csv(
             output_file, sep="\t", index=False
