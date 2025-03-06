@@ -4,7 +4,7 @@ from importlib.metadata import version
 import rich_click as click
 
 from orcAI.predict import predict, filter_predictions
-from orcAI.helpers import create_recordings_table
+from orcAI.helpers import create_recording_table
 
 click.rich_click.COMMAND_GROUPS = {
     "orcai": [
@@ -14,7 +14,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Helpers",
-            "commands": ["create-recordings-table"],
+            "commands": ["create-recording-table"],
         },
     ]
 }
@@ -172,7 +172,7 @@ def cli_filter_predictions(**kwargs):
 
 
 @cli.command(
-    name="create-recordings-table",
+    name="create-recording-table",
     help="Create a table of recordings in BASE_DIR_RECORDING for use with other orcAI functions.",
     short_help="Create a table of recordings.",
     no_args_is_help=True,
@@ -240,4 +240,4 @@ def cli_filter_predictions(**kwargs):
     help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_recordings_table(**kwargs):
-    create_recordings_table(**kwargs)
+    create_recording_table(**kwargs)

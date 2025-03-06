@@ -6,7 +6,7 @@ import pandas as pd
 from orcAI.auxiliary import Messenger, filter_filepaths, read_json
 
 
-def create_recordings_table(
+def create_recording_table(
     base_dir_recording,
     output_path=None,
     base_dir_annotation=None,
