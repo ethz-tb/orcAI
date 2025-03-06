@@ -6,10 +6,9 @@ from orcAI.auxiliary import Messenger, filter_filepaths, read_json
 
 
 def create_recordings_table(
-    base_dir_recordings,
-    base_dir_annotations=None,
+    base_dir_recording,
+    base_dir_annotation=None,
     default_channel=1,
-    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     update_table=None,
     update_paths=True,
     exclude_patterns=None,
@@ -21,14 +20,12 @@ def create_recordings_table(
 
     Parameters
     ----------
-    base_dir_recordings : Path | str
+    base_dir_recording : Path | str
         Base directory containing the recordings (possibly in subdirectories).
-    base_dir_annotations : (Path | str) | None
-        Base directory containing the annotations (if different from base_dir_recordings).
+    base_dir_annotation : (Path | str) | None
+        Base directory containing the annotations (if different from base_dir_recording).
     default_channel : int
         Default channel number for the recordings.
-    label_calls : (Path | str) | dict
-        Path to a JSON file containing calls for labeling or a dictionary with calls for labeling.
     update_table : (Path | str) | None
         Path to a .csv file with a previous table of recordings to update.
     update_paths : bool
@@ -47,10 +44,10 @@ def create_recordings_table(
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Creating list of wav files for prediction")
 
-    wav_files = list(Path(base_dir_recordings).glob("**/*.wav"))
-    if base_dir_annotations is None:
-        base_dir_annotations = base_dir_recordings
-    annotation_files = list(Path(base_dir_annotations).glob("**/*.txt"))
+    wav_files = list(Path(base_dir_recording).glob("**/*.wav"))
+    if base_dir_annotation is None:
+        base_dir_annotation = base_dir_recording
+    annotation_files = list(Path(base_dir_annotation).glob("**/*.txt"))
 
     if exclude_patterns is not None:
         if isinstance(exclude_patterns, (Path | str)):
@@ -60,19 +57,15 @@ def create_recordings_table(
             annotation_files, exclude_patterns, msgr=msgr
         )
 
-    if isinstance(label_calls, (Path | str)):
-        label_calls = read_json(label_calls)
-
     recordings_table = pd.DataFrame(
         data={
             "recording": [path.stem for path in wav_files],
             "recording_type": "unknown",
             "channel": default_channel,
-            "base_dir_recording": base_dir_recordings,
+            "base_dir_recording": base_dir_recording,
             "rel_recording_path": [
-                path.relative_to(base_dir_recordings) for path in wav_files
+                path.relative_to(base_dir_recording) for path in wav_files
             ],
-            **dict.fromkeys(label_calls, pd.NA),
         },
     ).set_index("recording")
 
@@ -80,9 +73,9 @@ def create_recordings_table(
         pd.DataFrame(
             {
                 "recording": [path.stem for path in annotation_files],
-                "base_dir_annotation": base_dir_annotations,
+                "base_dir_annotation": base_dir_annotation,
                 "rel_annotation_path": [
-                    path.relative_to(base_dir_annotations) for path in annotation_files
+                    path.relative_to(base_dir_annotation) for path in annotation_files
                 ],
             }
         )
@@ -127,7 +120,6 @@ def create_recordings_table(
             "base_dir_annotation",
             "rel_annotation_path",
             *additional_columns,
-            *label_calls,
         ]
     ]
 
