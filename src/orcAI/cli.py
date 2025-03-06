@@ -169,3 +169,75 @@ def cli_predict(**kwargs):
 )
 def cli_filter_predictions(**kwargs):
     filter_predictions(**kwargs)
+
+
+@cli.command(
+    name="create-recordings-table",
+    help="Create a table of recordings in BASE_DIR_RECORDING for use with other orcAI functions.",
+    short_help="Create a table of recordings.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("base_dir_recording", type=ClickDirPathR)
+@click.option(
+    "--output_path",
+    "-o",
+    type=ClickFilePathW,
+    default=None,
+    show_default="BASE_DIR_RECORDING/recording_table.csv",
+    help="Path to save the table of recordings. If none it is saved as recording_table.csv in base_dir_recording.",
+)
+@click.option(
+    "--base_dir_annotation",
+    "-bda",
+    type=ClickDirPathR,
+    default=None,
+    show_default="None",
+    help="Base directory containing the annotations (if different from base_dir_recording).",
+)
+@click.option(
+    "--default_channel",
+    "-dc",
+    type=int,
+    default=1,
+    show_default=1,
+    help="Default channel number for the recordings.",
+)
+@click.option(
+    "--update_table",
+    "-ut",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to a .csv file with a previous table of recordings to update.",
+)
+@click.option(
+    "--update_paths",
+    "-up",
+    is_flag=True,
+    help="If True the paths in the table to update are updated with the new paths. Only valid if update_table is not None.",
+)
+@click.option(
+    "--exclude_patterns",
+    "-ep",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to a JSON file containing filenames to exclude from the table or an array containing the same.",
+)
+@click.option(
+    "--remove_duplicate_filenames",
+    "-rdf",
+    is_flag=True,
+    help="Remove duplicate filenames from the table.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_create_recordings_table(**kwargs):
+    create_recordings_table(**kwargs)
