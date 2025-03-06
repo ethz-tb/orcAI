@@ -13,7 +13,10 @@ The package contains code to perform to distinct two distinct sets of tasks. The
 
 ## Installation
 
-orcAI can be installed using pipx:
+orcAI can be installed using [pipx](https://pipx.pypa.io/stable/).
+orcAI requires Python 3.11 and should work on all platforms supported by Python.
+
+To install the latest version of orcAI, run the following command:
 
 ```bash
 pipx install git+https://gitlab.ethz.ch/tb/orcai.git --version python3.11
