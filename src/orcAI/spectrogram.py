@@ -1,10 +1,10 @@
-import librosa
 from pathlib import Path
 from importlib.resources import files
 import numpy as np
 import time
 import pandas as pd
 from click import progressbar
+from librosa import load, stft, fft_frequencies, frames_to_time, amplitude_to_db
 
 # import local
 from orcAI.auxiliary import (
@@ -57,7 +57,7 @@ def make_spectrogram(
     msgr.info(f"Loading wav file: {wav_file_path.name}")
 
     start_time = time.time()
-    wav_file, _ = librosa.load(
+    wav_file, _ = load(
         wav_file_path,
         sr=spectrogram_parameter["sampling_rate"],
         mono=False,
@@ -70,25 +70,25 @@ def make_spectrogram(
     msgr.info(f"Time for loading wav file: {load_time - start_time:.2f} seconds")
 
     # create spectrogram
-    spectrogram = librosa.stft(
+    spectrogram = stft(
         wav_file,
         n_fft=spectrogram_parameter["nfft"],
         hop_length=spectrogram_parameter["n_overlap"],
         window="hann",
     )
 
-    frequencies = librosa.fft_frequencies(
+    frequencies = fft_frequencies(
         sr=spectrogram_parameter["sampling_rate"], n_fft=spectrogram_parameter["nfft"]
     )
 
-    times = librosa.frames_to_time(
+    times = frames_to_time(
         range(spectrogram.shape[1]),
         sr=spectrogram_parameter["sampling_rate"],
         hop_length=spectrogram_parameter["n_overlap"],
     )
     msgr.info(f"Duration of wav file: {times[-1]:.2f} seconds")
 
-    spectrogram = librosa.amplitude_to_db(
+    spectrogram = amplitude_to_db(
         np.abs(spectrogram), ref=np.max
     )  # Convert to power spectrogram (magnitude squared)
     spec_time = time.time()
