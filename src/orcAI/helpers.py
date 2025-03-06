@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from importlib.resources import files
 import pandas as pd
@@ -7,6 +8,7 @@ from orcAI.auxiliary import Messenger, filter_filepaths, read_json
 
 def create_recordings_table(
     base_dir_recording,
+    output_path=None,
     base_dir_annotation=None,
     default_channel=1,
     update_table=None,
@@ -22,6 +24,8 @@ def create_recordings_table(
     ----------
     base_dir_recording : Path | str
         Base directory containing the recordings (possibly in subdirectories).
+    output_path : (Path | str) | None
+        Path to save the table of recordings. If none it is saved as recording_table.csv in base_dir_recording.
     base_dir_annotation : (Path | str) | None
         Base directory containing the annotations (if different from base_dir_recording).
     default_channel : int
@@ -42,6 +46,13 @@ def create_recordings_table(
 
     """
     msgr = Messenger(verbosity=verbosity)
+    if output_path is None:
+        output_path = Path(base_dir_recording).joinpath("recording_table.csv")
+    else:
+        output_path = Path(output_path)
+    if output_path.exists():
+        msgr.error(f"Output path {output_path} already exists!")
+        sys.exit()
     msgr.part("Creating list of wav files for prediction")
 
     wav_files = list(Path(base_dir_recording).glob("**/*.wav"))
@@ -123,9 +134,7 @@ def create_recordings_table(
         ]
     ]
 
-    recordings_table.to_csv(
-        "/Users/daniel/polybox/work/projects/orcai_project/test/test_recordings_table.csv"
-    )
+    recordings_table.to_csv(output_path)
 
     msgr.success("Recordings table created.")
     msgr.info(f"Total number of recordings: {len(recordings_table)}")
