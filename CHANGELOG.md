@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.1] - 2025-03-05
+## [0.2.0] - 2025-03-05
 
 ### Added
 
@@ -12,6 +12,7 @@
 - renamed `predict` to `predict_wav`
 - changed predict cli to accept a recording table
 - `predict` now accepts a `call_duration_limits` file. If one is given predictions are filtered using `filter_predictions`
+- cli now uses rich_click, mainly for grouping & sorting subcommands
 
 ## [0.1.0] - 2025-03-04
 
@@ -19,4 +20,5 @@ _First prerelease._
 
 
 [0.1.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.1.0
-[0.1.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.1.1
+[0.2.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.0
+
