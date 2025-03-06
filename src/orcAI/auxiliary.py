@@ -86,7 +86,7 @@ class Messenger:
             **kwargs,
         )
 
-    def success(self, message, indent=0, set_indent=0, severity=2, **kwargs):
+    def success(self, message, indent=0, set_indent=0, severity=1, **kwargs):
         """Print a success message."""
         self.print(
             message,
