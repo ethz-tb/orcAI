@@ -16,7 +16,7 @@ The package contains code to perform to distinct two distinct sets of tasks. The
 orcAI can be installed using pipx:
 
 ```bash
-pip install -U git+https://gitlab.ethz.ch/tb/orcai.git
+pipx install git+https://gitlab.ethz.ch/tb/orcai.git --version python3.11
 ```
 
 ## Command Line Interface
