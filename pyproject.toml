@@ -30,6 +30,7 @@ dependencies = [
     "psutil<8",
     "click<9",
     "humanize<5",
+    "tqdm>=4.42.0, <5",
 ]
 
 [project.urls]

@@ -5,7 +5,8 @@ from pathlib import Path
 from importlib.resources import files
 import time
 import tensorflow as tf
-
+from tqdm.contrib.concurrent import process_map
+from functools import partial
 
 from orcAI.auxiliary import Messenger, read_json, find_consecutive_ones
 from orcAI.architectures import (
@@ -14,205 +15,6 @@ from orcAI.architectures import (
     masked_binary_crossentropy,
 )
 from orcAI.spectrogram import make_spectrogram
-
-
-def predict(
-    wav_file_path,
-    model_path=files("orcAI.models").joinpath("orcai-V1"),
-    output_file="default",
-    spectrogram_parameter=files("orcAI.defaults").joinpath(
-        "default_spectrogram_parameter.json"
-    ),
-    channel=None,
-    label_suffix="orcai-V1",
-    verbosity=2,
-):
-    """
-    Predicts annotations for a given wav file and saves them in an output file.
-
-    Parameters
-    ----------
-    wav_file_path : (Path | Str)
-        Path to the wav file.
-    model_path : (Path | Str)
-        Path to the model directory.
-    output_file : (Path | Str) | "default" | None
-        Path to the output file or "default" to save in the same directory as the wav file. None to not save predictions to disk.
-    spectrogram_parameter : dict | (Path | Str)
-        Dict containing spectrogram parameter or path to json containing the same. Defaults to default_spectrogram_parameter.json.
-    channel : int
-        Overwrite channel to use for prediction. If None, channel from spectrogram_parameter is used.
-    label_suffix : str
-        Suffix to add to the label names.
-    verbosity : int
-        Verbosity level.
-
-    Returns
-    -------
-    df_predicted_labels : pd.DataFrame
-        DataFrame with predicted labels
-
-    """
-    msgr = Messenger(verbosity=verbosity)
-    msgr.part(f"Predicting annotations for wav file: {wav_file_path}")
-
-    model_path = Path(model_path)
-    msgr.info(f"Model: {model_path.stem}")
-    msgr.info(f"Wav file: {wav_file_path}")
-
-    if output_file is not None:
-        if output_file == "default":
-            filename = (
-                Path(wav_file_path).stem + "_" + model_path.stem + "_predicted.txt"
-            )
-            output_file = Path(wav_file_path).with_name(filename)
-        else:
-            output_file = Path(output_file)
-        msgr.info(f"Output file: {output_file}")
-        if output_file.exists():
-            msgr.error(f"Annotation file already exists: {output_file}")
-            sys.exit()
-
-    label_calls = read_json(model_path.joinpath("trained_calls.json"))
-    msgr.debug("Calls for labeling:")
-    msgr.debug(label_calls)
-
-    shape = read_json(model_path.joinpath("model_shape.json"))
-    msgr.debug(f"Input shape:")
-    msgr.debug(shape)
-
-    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
-    msgr.debug(f"Model parameter:")
-    msgr.debug(model_parameter)
-
-    if isinstance(spectrogram_parameter, (Path | str)):
-        spectrogram_parameter = read_json(spectrogram_parameter)
-    if channel is not None:
-        spectrogram_parameter["channel"] = channel
-    msgr.debug(f"Spectrogram parameters:")
-    msgr.debug(spectrogram_parameter)
-
-    msgr.part(f"Loading model: {model_path.stem}")
-
-    msgr.info("Building model architecture")
-    model = build_cnn_res_lstm_arch(**shape, **model_parameter)
-
-    msgr.info("Loading model weights")
-    model.load_weights(model_path.joinpath("model_weights.h5"))
-
-    msgr.info("Compiling model")
-    masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: masked_binary_accuracy(
-            y_true, y_pred, mask_value=-1.0
-        ),
-        name="masked_binary_accuracy",
-    )
-    model.compile(
-        optimizer="adam",
-        loss=lambda y_true, y_pred: masked_binary_crossentropy(
-            y_true, y_pred, mask_value=-1.0
-        ),
-        metrics=[masked_binary_accuracy_metric],
-    )
-
-    # Generating spectrogram
-    spectrogram, _, times = make_spectrogram(wav_file_path, spectrogram_parameter)
-    if spectrogram.shape[1] != shape["input_shape"][1]:
-        msgr.error(
-            f"Frequency dimensions of spectrogram shape ({spectrogram.shape[1]}) "
-            + f"not equal to frequency dimension of input shape ({shape['input_shape'][1]})"
-        )
-        exit
-
-    # Prediction
-    msgr.part(f"Prediction of annotations for wav_file: {wav_file_path.stem}")
-    start_time = time.time()
-    # Parameters
-    snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
-    shift = snippet_length // 2  # Shift time steps for overlapping windows
-    time_steps_per_output_step = 2**4  # TODO: MAGIC NUMBER
-    prediction_length = (
-        snippet_length // time_steps_per_output_step
-    )  # Output time steps per prediction
-
-    # Step 1: Create overlapping spectrogram snippets
-    num_snippets = (spectrogram.shape[0] - snippet_length) // shift + 1
-    msgr.info(f"slicing into {num_snippets} snippets for prediction")
-
-    snippets = np.array(
-        [
-            spectrogram[i * shift : i * shift + snippet_length]
-            for i in range(num_snippets)
-        ]
-    )  # Shape: (num_snippets, 736, 171)
-
-    # Step 2: Model predictions for all snippets
-    msgr.info("Prediction of snippets")
-    snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
-    predictions = model.predict(
-        snippets, verbose=0 if verbosity < 2 else 1
-    )  # Shape: (num_snippets, 46, 7)
-
-    # Step 3: Initialize arrays for aggregating predictions
-    msgr.info("Aggregating predictions")
-    total_time_steps = spectrogram.shape[0] // time_steps_per_output_step
-    aggregated_predictions = np.zeros(
-        (total_time_steps, shape["num_labels"])
-    )  # Shape: (3600 * 46, 7)
-    overlap_count = np.zeros(
-        total_time_steps
-    )  # To track the number of overlaps per time step
-
-    # Step 4: Overlay predictions
-    for i, prediction in enumerate(predictions):
-        start = i * (
-            shift // time_steps_per_output_step
-        )  # Start index in aggregated predictions
-        end = start + prediction_length  # End index
-        aggregated_predictions[start:end] += prediction  # Add predictions
-        overlap_count[start:end] += 1  # Track overlaps
-
-    # Step 5: Average the overlapping predictions (or apply another pooling function)
-    msgr.info("Computing binary predictions")
-    valid_mask = overlap_count > 0
-    aggregated_predictions[valid_mask] /= overlap_count[valid_mask, np.newaxis]
-    threshold = 0.5 / np.max(overlap_count)  # larger than 0.5 in at least one snippet
-    binary_prediction = np.zeros((total_time_steps, shape["num_labels"])).astype(int)
-    binary_prediction[aggregated_predictions > threshold] = 1
-
-    # Step 6: compute for each label in binary_prediction start and end of consecutive entries of ones
-    msgr.info("converting binary predictions into start and stop times")
-    delta_t = times[1] - times[0]
-    row_starts = []
-    row_stops = []
-    label_names = []
-    for i, label_name in enumerate(label_calls):
-        if sum(binary_prediction[:, i]) > 0:
-            row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
-            row_starts += list(row_start)
-            row_stops += list(row_stop)
-            label_names += [label_name] * len(row_start)
-    if (label_suffix is not None) & (label_suffix != ""):
-        label_names = [label + "_" + label_suffix for label in label_names]
-    predicted_labels = pd.DataFrame(
-        {
-            "label": label_names,
-            "start": np.asarray(row_starts) * delta_t * time_steps_per_output_step,
-            "stop": np.asarray(row_stops) * delta_t * time_steps_per_output_step,
-        }
-    )
-    msgr.info(f"found {len(predicted_labels)} acoustic signals", indent=1)
-    msgr.info(
-        f"time for prediction and preparing annotation file: {time.time()-start_time:.2f}"
-    )
-    if output_file is not None:
-        predicted_labels[["start", "stop", "label"]].to_csv(
-            output_file, sep="\t", index=False
-        )
-        msgr.success(f"Prediction finished.\nPredictions saved to {output_file}")
-    else:
-        msgr.success(f"Prediction finished.")
-    return predicted_labels
 
 
 def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):
@@ -235,10 +37,8 @@ def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):
         str "keep", "too long", or "too short"
 
     """
-    # print(x)
-    # print(call_duration_limits)
     label = x["label"].replace(f"_{label_suffix}", "")
-    # print(label)
+
     if label in call_duration_limits:
         min_duration, max_duration = call_duration_limits[label]
         if min_duration is None:
@@ -271,6 +71,7 @@ def filter_predictions(
         "default_call_duration_limits.json"
     ),
     label_suffix="orcai-V1",
+    msgr=None,
     verbosity=2,
 ):
     """
@@ -286,6 +87,8 @@ def filter_predictions(
         Path to a JSON file containing a dictionary with call duration limits.
     label_suffix : str
         Suffix that was added to label names during prediction.
+    msgr : Messenger
+        Messenger object for logging. If None a new Messenger object is created.
     verbosity : int
         Verbosity level.
 
@@ -296,7 +99,8 @@ def filter_predictions(
         on duration.
     """
 
-    msgr = Messenger(verbosity=verbosity)
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity)
     msgr.part("Filtering predictions")
 
     if output_file is not None:
@@ -372,3 +176,295 @@ def filter_predictions(
     else:
         msgr.success(f"Filtering predictions finished.")
     return predicted_labels_duration_ok
+
+
+def predict_wav(
+    recording_path,
+    channel=1,
+    model_path=files("orcAI.models").joinpath("orcai-V1"),
+    output_path="default",
+    call_duration_limits=None,
+    label_suffix="*",
+    msgr=None,
+    verbosity=2,
+):
+    """
+    Predicts annotations for a given wav file and saves them in an output file.
+
+    Parameters
+    ----------
+    recording_path : (Path | Str)
+        Path to the wav file.
+    channel : int
+        Channel in wav file where calls are. Defaults to 1.
+    model_path : (Path | Str)
+        Path to the model directory.
+    output_path : (Path | Str) | "default" | None
+        Path to the output file or "default" to save in the same directory as the wav file. None to not save predictions to disk.
+    call_duration_limits : (Path | Str) | dict
+        Path to a JSON file containing a dictionary with call duration limits. Or a dictionary with call duration limits.
+    label_suffix : str
+        Suffix to add to the label names. defaults to "*".
+    msgr : Messenger
+        Messenger object for logging. If None a new Messenger object is created.
+    verbosity : int
+        Verbosity level.
+
+    Returns
+    -------
+    df_predicted_labels : pd.DataFrame
+        DataFrame with predicted labels
+
+    """
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity)
+
+    msgr.part(f"Predicting annotations for wav file: {recording_path}")
+
+    model_path = Path(model_path)
+    msgr.info(f"Model: {model_path.stem}")
+    msgr.info(f"Wav file: {recording_path}")
+
+    if output_path is not None:
+        if output_path == "default":
+            filename = (
+                Path(recording_path).stem + "_" + model_path.stem + "_predicted.txt"
+            )
+            output_path = Path(recording_path).with_name(filename)
+        else:
+            output_path = Path(output_path)
+        msgr.info(f"Output file: {output_path}")
+        if output_path.exists():
+            msgr.error(f"Annotation file already exists: {output_path}")
+            sys.exit()
+
+    label_calls = read_json(model_path.joinpath("trained_calls.json"))
+    msgr.debug("Calls for labeling:")
+    msgr.debug(label_calls)
+
+    shape = read_json(model_path.joinpath("model_shape.json"))
+    msgr.debug(f"Input shape:")
+    msgr.debug(shape)
+
+    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
+    msgr.debug(f"Model parameter:")
+    msgr.debug(model_parameter)
+    spectrogram_parameter = read_json(model_path.joinpath("spectrogram_parameter.json"))
+
+    msgr.debug(f"Spectrogram parameters:")
+    msgr.debug(spectrogram_parameter)
+
+    msgr.part(f"Loading model: {model_path.stem}")
+
+    msgr.info("Building model architecture")
+    model = build_cnn_res_lstm_arch(**shape, **model_parameter)
+
+    msgr.info("Loading model weights")
+    model.load_weights(model_path.joinpath("model_weights.h5"))
+
+    msgr.info("Compiling model")
+    masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
+        fn=lambda y_true, y_pred: masked_binary_accuracy(
+            y_true, y_pred, mask_value=-1.0
+        ),
+        name="masked_binary_accuracy",
+    )
+    model.compile(
+        optimizer="adam",
+        loss=lambda y_true, y_pred: masked_binary_crossentropy(
+            y_true, y_pred, mask_value=-1.0
+        ),
+        metrics=[masked_binary_accuracy_metric],
+    )
+
+    # Generating spectrogram
+    spectrogram, _, times = make_spectrogram(
+        recording_path, channel, spectrogram_parameter, msgr=msgr
+    )
+    if spectrogram.shape[1] != shape["input_shape"][1]:
+        msgr.error(
+            f"Frequency dimensions of spectrogram shape ({spectrogram.shape[1]}) "
+            + f"not equal to frequency dimension of input shape ({shape['input_shape'][1]})"
+        )
+        exit
+
+    # Prediction
+    msgr.part(f"Prediction of annotations for wav_file: {recording_path.stem}")
+    start_time = time.time()
+    # Parameters
+    snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
+    shift = snippet_length // 2  # Shift time steps for overlapping windows
+    time_steps_per_output_step = 2**4  # TODO: MAGIC NUMBER
+    prediction_length = (
+        snippet_length // time_steps_per_output_step
+    )  # Output time steps per prediction
+
+    # Step 1: Create overlapping spectrogram snippets
+    num_snippets = (spectrogram.shape[0] - snippet_length) // shift + 1
+    msgr.info(f"slicing into {num_snippets} snippets for prediction")
+
+    snippets = np.array(
+        [
+            spectrogram[i * shift : i * shift + snippet_length]
+            for i in range(num_snippets)
+        ]
+    )  # Shape: (num_snippets, 736, 171)
+
+    # Step 2: Model predictions for all snippets
+    msgr.info("Prediction of snippets")
+    snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
+    predictions = model.predict(
+        snippets, verbose=0 if verbosity < 2 else 1
+    )  # Shape: (num_snippets, 46, 7)
+
+    # Step 3: Initialize arrays for aggregating predictions
+    msgr.info("Aggregating predictions")
+    total_time_steps = spectrogram.shape[0] // time_steps_per_output_step
+    aggregated_predictions = np.zeros(
+        (total_time_steps, shape["num_labels"])
+    )  # Shape: (3600 * 46, 7)
+    overlap_count = np.zeros(
+        total_time_steps
+    )  # To track the number of overlaps per time step
+
+    # Step 4: Overlay predictions
+    for i, prediction in enumerate(predictions):
+        start = i * (
+            shift // time_steps_per_output_step
+        )  # Start index in aggregated predictions
+        end = start + prediction_length  # End index
+        aggregated_predictions[start:end] += prediction  # Add predictions
+        overlap_count[start:end] += 1  # Track overlaps
+
+    # Step 5: Average the overlapping predictions (or apply another pooling function)
+    msgr.info("Computing binary predictions")
+    valid_mask = overlap_count > 0
+    aggregated_predictions[valid_mask] /= overlap_count[valid_mask, np.newaxis]
+    threshold = 0.5 / np.max(overlap_count)  # larger than 0.5 in at least one snippet
+    binary_prediction = np.zeros((total_time_steps, shape["num_labels"])).astype(int)
+    binary_prediction[aggregated_predictions > threshold] = 1
+
+    # Step 6: compute for each label in binary_prediction start and end of consecutive entries of ones
+    msgr.info("converting binary predictions into start and stop times")
+    delta_t = times[1] - times[0]
+    row_starts = []
+    row_stops = []
+    label_names = []
+    for i, label_name in enumerate(label_calls):
+        if sum(binary_prediction[:, i]) > 0:
+            row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
+            row_starts += list(row_start)
+            row_stops += list(row_stop)
+            label_names += [label_name] * len(row_start)
+    if (label_suffix is not None) & (label_suffix != ""):
+        label_names = [label + label_suffix for label in label_names]
+    predicted_labels = pd.DataFrame(
+        {
+            "start": np.asarray(row_starts) * delta_t * time_steps_per_output_step,
+            "stop": np.asarray(row_stops) * delta_t * time_steps_per_output_step,
+            "label": label_names,
+        }
+    ).sort_values(by=["start", "stop", "label"])
+    msgr.info(f"found {len(predicted_labels)} acoustic signals", indent=1)
+    msgr.info(
+        f"time for prediction and preparing annotation file: {time.time()-start_time:.2f}"
+    )
+
+    if call_duration_limits is not None:
+        predicted_labels = filter_predictions(
+            predicted_labels,
+            output_file=None,
+            call_duration_limits=call_duration_limits,
+            label_suffix=label_suffix,
+            msgr=msgr,
+        )
+
+    if output_path is not None:
+        predicted_labels.round(4).to_csv(output_path, sep="\t", index=False)
+        msgr.success(f"Prediction finished.\nPredictions saved to {output_path}")
+    else:
+        msgr.success(f"Prediction finished.")
+    return predicted_labels
+
+
+def _parallel_predict_wav(
+    index,
+    recording_table,
+    model_path=files("orcAI.models").joinpath("orcai-V1"),
+    call_duration_limits=None,
+    label_suffix="*",
+):
+    return predict_wav(
+        recording_path=Path(recording_table["base_dir_recording"].iloc[index]).joinpath(
+            recording_table["rel_recording_path"].iloc[index]
+        ),
+        channel=recording_table["channel"].iloc[index],
+        model_path=model_path,
+        output_path=recording_table["output_path"].iloc[index],
+        call_duration_limits=call_duration_limits,
+        label_suffix=label_suffix,
+        msgr=None,
+        verbosity=0,
+    )
+
+
+def predict(
+    recording_path,
+    channel=1,
+    model_path=files("orcAI.models").joinpath("orcai-V1"),
+    output_path="default",
+    num_processes=None,
+    base_dir_recording=None,
+    call_duration_limits=None,
+    label_suffix="*",
+    verbosity=2,
+):
+    msgr = Messenger(verbosity=verbosity)
+    recording_path = Path(recording_path)
+    if recording_path.suffix == ".wav":
+        return predict_wav(
+            recording_path,
+            channel=channel,
+            model_path=model_path,
+            output_path=output_path,
+            call_duration_limits=call_duration_limits,
+            label_suffix=label_suffix,
+            msgr=msgr,
+            verbosity=verbosity,
+        )
+    elif recording_path.suffix == ".csv":
+        recording_table = pd.read_csv(recording_path)
+        msgr.part(f"Predicting annotations for {len(recording_table)} wav files")
+    else:
+        msgr.error("Recording file must be a wav or csv file")
+        sys.exit()
+
+    if base_dir_recording is not None:
+        recording_table["base_dir_recording"] = base_dir_recording
+
+    if (output_path is not None) & (output_path != "default"):
+        recording_table["output_path"] = [
+            Path(output_path).joinpath(
+                recording + "_" + model_path.stem + "_predicted.txt"
+            )
+            for recording in recording_table["recording"]
+        ]
+    else:
+        recording_table["output_path"] = output_path
+
+    process_map(
+        partial(
+            _parallel_predict_wav,
+            recording_table=recording_table,
+            model_path=model_path,
+            call_duration_limits=call_duration_limits,
+            label_suffix=label_suffix,
+        ),
+        range(len(recording_table)),
+        max_workers=num_processes,
+        chunksize=1,
+        desc="Predicting annotations",
+    )
+
+    msgr.success("Predictions finished.")
+    return

@@ -86,13 +86,21 @@ def cli():
 
 @cli.command(
     name="predict",
-    help="Predicts call annotations in the wav file at WAV_FILE_PATH.",
+    help="Predicts call annotations from RECORDING_PATH. This can either be a path to a wav file or a recording table (created with create-recording-table) as .csv.",
     short_help="Predicts call annotations.",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
     help_priority=6,
 )
-@click.argument("wav_file_path", type=ClickFilePathR)
+@click.argument("recording_path", type=ClickFilePathR)
+@click.option(
+    "--channel",
+    "-c",
+    type=int,
+    default=1,
+    show_default=1,
+    help="Channel to use for prediction if running predicitons for a single file.",
+)
 @click.option(
     "--model",
     "-m",
@@ -103,33 +111,41 @@ def cli():
     help="Path to the model directory.",
 )
 @click.option(
-    "--output_file",
+    "--output_path",
     "-o",
     default="default",
     show_default="default",
-    help="Path to the output file or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
+    help="Path to the output file/folder or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
 )
 @click.option(
-    "--spectrogram_parameter",
-    "-sp",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
-    show_default="default_spectrogram_parameter.json",
-    help="Path to a JSON file containing spectrogram parameter.",
-)
-@click.option(
-    "--channel",
-    "-c",
+    "--num_processes",
+    "-np",
     type=int,
+    default=3,
+    show_default=True,
+    help="Number of processes to use for prediction. None for all available cores.",
+)
+@click.option(
+    "--base_dir_recording",
+    "-bdr",
+    type=ClickDirPathW,
     default=None,
     show_default="None",
-    help="Overwrite channel to use for prediction. If None, channel from spectrogram_parameter is used.",
+    help="Alternative base directory containing the recordings (possibly in subdirectories). If None the base directory is taken from the recording_table.",
+)
+@click.option(
+    "--call_duration_limits",
+    "-cdl",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to a JSON file containing call duration limits. None for no filtering based on call duration.",
 )
 @click.option(
     "--label_suffix",
     "-ls",
-    default="orcai-V1",
-    show_default="orcai-V1",
+    default="*",
+    show_default=True,
     help="Suffix to add to the label names.",
 )
 @click.option(
