@@ -5,7 +5,8 @@ from pathlib import Path
 from importlib.resources import files
 import time
 import tensorflow as tf
-from concurrent.futures import ProcessPoolExecutor, wait, ALL_COMPLETED
+from tqdm.contrib.concurrent import process_map
+from functools import partial
 
 from orcAI.auxiliary import Messenger, read_json, find_consecutive_ones
 from orcAI.architectures import (
@@ -278,7 +279,7 @@ def predict_wav(
 
     # Generating spectrogram
     spectrogram, _, times = make_spectrogram(
-        recording_path, channel, spectrogram_parameter
+        recording_path, channel, spectrogram_parameter, msgr=msgr
     )
     if spectrogram.shape[1] != shape["input_shape"][1]:
         msgr.error(
@@ -356,7 +357,7 @@ def predict_wav(
             row_stops += list(row_stop)
             label_names += [label_name] * len(row_start)
     if (label_suffix is not None) & (label_suffix != ""):
-        label_names = [label + "_" + label_suffix for label in label_names]
+        label_names = [label + label_suffix for label in label_names]
     predicted_labels = pd.DataFrame(
         {
             "start": np.asarray(row_starts) * delta_t * time_steps_per_output_step,
@@ -386,6 +387,27 @@ def predict_wav(
     return predicted_labels
 
 
+def _parallel_predict_wav(
+    index,
+    recording_table,
+    model_path=files("orcAI.models").joinpath("orcai-V1"),
+    call_duration_limits=None,
+    label_suffix="*",
+):
+    return predict_wav(
+        recording_path=Path(recording_table["base_dir_recording"].iloc[index]).joinpath(
+            recording_table["rel_recording_path"].iloc[index]
+        ),
+        channel=recording_table["channel"].iloc[index],
+        model_path=model_path,
+        output_path=recording_table["output_path"].iloc[index],
+        call_duration_limits=call_duration_limits,
+        label_suffix=label_suffix,
+        msgr=None,
+        verbosity=0,
+    )
+
+
 def predict(
     recording_path,
     channel=1,
@@ -412,6 +434,7 @@ def predict(
         )
     elif recording_path.suffix == ".csv":
         recording_table = pd.read_csv(recording_path)
+        msgr.part(f"Predicting annotations for {len(recording_table)} wav files")
     else:
         msgr.error("Recording file must be a wav or csv file")
         sys.exit()
@@ -419,27 +442,28 @@ def predict(
     if base_dir_recording is not None:
         recording_table["base_dir_recording"] = base_dir_recording
 
-    with ProcessPoolExecutor(max_workers=num_processes) as executor:
-        futures = []
-        for _, row in recording_table.iterrows():
-
-            if (output_path is not None) & output_path != "default":
-                filename = row["recording"] + "_" + model_path.stem + "_predicted.txt"
-                i_output_path = Path(output_path).with_name(filename)
-            else:
-                i_output_path = output_path
-            futures.append(
-                executor.submit(
-                    predict_wav,
-                    Path(row["base_dir_recording"]).joinpath(row["rel_recording_path"]),
-                    row["channel"],
-                    model_path=model_path,
-                    output_path=i_output_path,
-                    call_duration_limits=call_duration_limits,
-                    label_suffix=label_suffix,
-                    msgr=msgr,
-                )
+    if (output_path is not None) & (output_path != "default"):
+        recording_table["output_path"] = [
+            Path(output_path).joinpath(
+                recording + "_" + model_path.stem + "_predicted.txt"
             )
-        wait(futures, timeout=None, return_when=ALL_COMPLETED)
+            for recording in recording_table["recording"]
+        ]
+    else:
+        recording_table["output_path"] = output_path
 
-    pass
+    process_map(
+        partial(
+            _parallel_predict_wav,
+            recording_table=recording_table,
+            model_path=model_path,
+            call_duration_limits=call_duration_limits,
+            label_suffix=label_suffix,
+        ),
+        range(len(recording_table)),
+        max_workers=num_processes,
+        chunksize=1,
+    )
+
+    msgr.success("Predictions finished.")
+    return
