@@ -463,6 +463,7 @@ def predict(
         range(len(recording_table)),
         max_workers=num_processes,
         chunksize=1,
+        desc="Predicting annotations",
     )
 
     msgr.success("Predictions finished.")
