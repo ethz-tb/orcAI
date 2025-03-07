@@ -7,18 +7,18 @@ from orcAI.auxiliary import Messenger, filter_filepaths, read_json
 
 
 def create_recording_table(
-    base_dir_recording,
-    output_path=None,
-    base_dir_annotation=None,
-    default_channel=1,
-    update_table=None,
-    update_paths=True,
-    exclude_patterns=None,
-    remove_duplicate_filenames=False,
-    verbosity=2,
-):
-    """
-    Create a table of recordings for use with other orcAI functions.
+    base_dir_recording: Path | str,
+    output_path: Path | str | None = None,
+    base_dir_annotation: Path | str | None = None,
+    default_channel: int = 1,
+    label_calls: Path | str | None = None,
+    update_table: Path | str | None = None,
+    update_paths: bool = True,
+    exclude_patterns: Path | str | list[str] | None = None,
+    remove_duplicate_filenames: bool = False,
+    verbosity: int = 2,
+) -> pd.DataFrame:
+    """Create a table of recordings for use with other orcAI functions.
 
     Parameters
     ----------
