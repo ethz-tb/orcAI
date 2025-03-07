@@ -252,6 +252,8 @@ def train(
     write_json(confusion_matrices, file_paths["confusion_matrices"])
     msgr.print_dict(confusion_matrices)
 
+    # TODO: Somehow save spectrogram parameter with the model. Then load from there in predict.py
+
     write_json(
         model_parameter, file_paths["model_dir"].joinpath("model_parameter.json")
     )

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] - 2025-03-07
+
+### Changed
+
+- f37fea01: defer loading of cli commands to increase performance if only calling help. This massively speeds up the cli if only calling `--help` or `--version`
+
 ## [0.2.0] - 2025-03-05
 
 ### Added
@@ -21,4 +27,5 @@ _First prerelease._
 
 [0.1.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.1.0
 [0.2.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.0
+[0.2.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.1
 

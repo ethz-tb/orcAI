@@ -48,7 +48,6 @@ def make_spectrogram(
         Times of the spectrogram.
     """
 
-    # TODO: remove channel from spectrogram_parameter and add it as an argument
     msgr.part("Creating spectrogram")
 
     if isinstance(spectrogram_parameter, (Path | str)):

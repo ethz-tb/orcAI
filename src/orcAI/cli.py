@@ -3,9 +3,6 @@ from importlib.resources import files
 from importlib.metadata import version
 import rich_click as click
 
-from orcAI.predict import predict, filter_predictions
-from orcAI.helpers import create_recording_table
-
 click.rich_click.COMMAND_GROUPS = {
     "orcai": [
         {
@@ -126,6 +123,8 @@ def cli():
     help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_predict(**kwargs):
+    from orcAI.predict import predict
+
     predict(**kwargs)
 
 
@@ -168,6 +167,8 @@ def cli_predict(**kwargs):
     help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_filter_predictions(**kwargs):
+    from orcAI.predict import filter_predictions
+
     filter_predictions(**kwargs)
 
 
@@ -240,4 +241,6 @@ def cli_filter_predictions(**kwargs):
     help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_recordings_table(**kwargs):
+    from orcAI.helpers import create_recording_table
+
     create_recording_table(**kwargs)
