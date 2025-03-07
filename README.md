@@ -19,7 +19,7 @@ orcAI requires Python 3.11 and should work on all platforms supported by Python.
 To install the latest version of orcAI, run the following command:
 
 ```bash
-pipx install git+https://gitlab.ethz.ch/tb/orcai.git --version python3.11
+pipx install git+https://gitlab.ethz.ch/tb/orcai.git --python python3.11
 ```
 
 ## Command Line Interface
