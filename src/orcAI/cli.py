@@ -205,6 +205,14 @@ def cli_filter_predictions(**kwargs):
     help="Default channel number for the recordings.",
 )
 @click.option(
+    "--label_calls",
+    "-lc",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to a JSON file containing calls for labeling or a dictionary with calls for labeling. Only needed if preparing table for generating training data.",
+)
+@click.option(
     "--update_table",
     "-ut",
     type=ClickFilePathR,
