@@ -41,8 +41,8 @@ def create_recording_table(
     -------
     recordings_table : pd.DataFrame
         Table of recordings with columns: "channel", "duplicate", "base_dir_recording", "rel_recording_path",
-        "base_dir_annotation", "rel_annotation_path", and columns for each call in label_calls. If updating a table
-        (ie. update_table is not None), additional columns from the previous table are also included.
+        "base_dir_annotation", "rel_annotation_path". If label_calls is given, a column for each call is included.
+        If updating a table (ie. update_table is not None), additional columns from the previous table are also included.
 
     """
     msgr = Messenger(verbosity=verbosity)
@@ -53,9 +53,10 @@ def create_recording_table(
     if output_path.exists():
         msgr.error(f"Output path {output_path} already exists!")
         sys.exit()
-    msgr.part("Creating list of wav files for prediction")
+    msgr.part("Creating recording table")
 
     wav_files = list(Path(base_dir_recording).glob("**/*.wav"))
+
     if base_dir_annotation is None:
         base_dir_annotation = base_dir_recording
     annotation_files = list(Path(base_dir_annotation).glob("**/*.txt"))
@@ -68,7 +69,12 @@ def create_recording_table(
             annotation_files, exclude_patterns, msgr=msgr
         )
 
-    recordings_table = pd.DataFrame(
+    if label_calls is not None:
+        call_possible = {call: pd.NA for call in read_json(label_calls)}
+    else:
+        call_possible = {}
+
+    recording_table = pd.DataFrame(
         data={
             "recording": [path.stem for path in wav_files],
             "recording_type": "unknown",
@@ -77,6 +83,7 @@ def create_recording_table(
             "rel_recording_path": [
                 path.relative_to(base_dir_recording) for path in wav_files
             ],
+            **call_possible,
         },
     ).set_index("recording")
 
@@ -92,12 +99,12 @@ def create_recording_table(
         )
     ).set_index("recording")
 
-    recordings_table = recordings_table.join(annotations_table, how="left")
-    recordings_table["duplicate"] = recordings_table.index.duplicated(keep=False)
+    recording_table = recording_table.join(annotations_table, how="left")
+    recording_table["duplicate"] = recording_table.index.duplicated(keep=False)
 
-    if recordings_table["duplicate"].any():
+    if recording_table["duplicate"].any():
         if remove_duplicate_filenames:
-            recordings_table = recordings_table[~recordings_table["duplicate"]]
+            recording_table = recording_table[~recording_table["duplicate"]]
         else:
             msgr.warning("Duplicate filenames found.")
             msgr.warning(
@@ -109,10 +116,10 @@ def create_recording_table(
     if update_table is not None:
         previous_recordings = pd.read_csv(update_table, index_col="recording")
         additional_columns = previous_recordings.columns.difference(
-            recordings_table.columns
+            recording_table.columns
         )
         if not update_paths:
-            recordings_table[
+            recording_table[
                 [
                     "base_dir_recording",
                     "rel_recording_path",
@@ -120,9 +127,9 @@ def create_recording_table(
                     "rel_annotation_path",
                 ]
             ] = None
-        recordings_table = recordings_table.combine_first(previous_recordings)
+        recording_table = recording_table.combine_first(previous_recordings)
 
-    recordings_table = recordings_table[
+    recording_table = recording_table[
         [
             "channel",
             "duplicate",
@@ -131,15 +138,16 @@ def create_recording_table(
             "base_dir_annotation",
             "rel_annotation_path",
             *additional_columns,
+            *call_possible.keys(),
         ]
     ]
 
-    recordings_table.to_csv(output_path)
+    recording_table.to_csv(output_path)
 
     msgr.success("Recordings table created.")
-    msgr.info(f"Total number of recordings: {len(recordings_table)}")
+    msgr.info(f"Total number of recordings: {len(recording_table)}")
     msgr.info(
-        f"Total number of unique recordings: {len(recordings_table.index.unique())}"
+        f"Total number of unique recordings: {len(recording_table.index.unique())}"
     )
 
-    return recordings_table
+    return recording_table
