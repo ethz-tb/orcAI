@@ -11,12 +11,12 @@ authors = [
     { name = "Nicholas Ochsner", email = "nicolas.ochsner@env.ethz.ch" },
     { name = "Daniel Angst", email = "daniel.angst@env.ethz.ch" },
 ]
-description = "A software package to detect acoustic signals in spectrograms generated from audio recordings"
+description = "A software package to detect acoustic signals in spectrograms generated from audio recordings" #TODO: add ref to paper
 keywords = [
     "Bioaccoustics",
     "Orca",
     "classification",
-] # TODO: update, add citation to paper
+] # TODO: update keywords
 readme = "README.md"
 requires-python = "~=3.11"
 license = { text = "CC-BY-SA-4.0" }
