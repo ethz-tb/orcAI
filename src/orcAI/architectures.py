@@ -8,7 +8,12 @@ from orcAI.auxiliary import Messenger
 
 # CNN model with residual connection
 def res_net_1Dconv_arch(
-    input_shape, num_labels, filters, kernel_size, dropout_rate, **unused
+    input_shape: tuple[int, int, int],
+    num_labels: int,
+    filters: list[int],
+    kernel_size: int,
+    dropout_rate: float,
+    **unused,
 ):
     """TensorFlow/Keras model architecture for a Convolutional Neural Network (CNN) with residual connections (ResNet)
     followed by a global temporal aggregation step using a 1D convolution
@@ -23,7 +28,7 @@ def res_net_1Dconv_arch(
         Number of filters in each convolutional layer
     kernel_size : int
         Size of the convolutional kernel
-    dropout_rate :
+    dropout_rate : float
         Dropout rate for the model
     **unused :
         Additional keyword arguments, unused
@@ -77,7 +82,13 @@ def res_net_1Dconv_arch(
 
 # CNN RES LSTM Model
 def res_net_LSTM_arch(
-    input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units, **unused
+    input_shape: tuple[int, int, int],
+    num_labels: int,
+    filters: list[int],
+    kernel_size: int,
+    dropout_rate: float,
+    lstm_units: int,
+    **unused,
 ):
     """TensorFlow/Keras model architecture for a Convolutional Neural Network (CNN) with residual connections (ResNet)
     extended with bidirectional Long Short-Term Memory (LSTM) layers
@@ -92,9 +103,9 @@ def res_net_LSTM_arch(
         Number of filters in each convolutional layer
     kernel_size : int
         Size of the convolutional kernel
-    dropout_rate :
+    dropout_rate : float
         Dropout rate for the model
-    lstm_units :
+    lstm_units : int
         Dimensionality of the output space of the LSTM layer
     **unused :
         Additional keyword arguments, unused
@@ -167,16 +178,16 @@ def res_net_LSTM_arch(
 
 
 # define masked binary crossentropy and masked binary accuracy
-def masked_binary_crossentropy(y_true, y_pred, mask_value=-1.0):
+def masked_binary_crossentropy(y_true: any, y_pred: any, mask_value: float = -1.0):
     """Custom binary cross-entropy loss function with label masking.
 
     Parameters
     ----------
-    y_true :
+    y_true : any
         True labels (with -1 or a mask_value indicating missing labels).
-    y_pred :
+    y_pred : any
         Predicted probabilities for each label.
-    mask_value :
+    mask_value : float
         Value used to mask missing labels. (Default value = -1.0)
 
     Returns
@@ -198,16 +209,16 @@ def masked_binary_crossentropy(y_true, y_pred, mask_value=-1.0):
     return tf.reduce_mean(loss)
 
 
-def masked_binary_accuracy(y_true, y_pred, mask_value=-1.0):
+def masked_binary_accuracy(y_true: any, y_pred: any, mask_value: float = -1.0):
     """Custom binary accuracy metric that excludes masked labels.
 
     Parameters
     ----------
-    y_true :
+    y_true : any
         True labels (with -1 or mask_value indicating missing labels).
-    y_pred :
+    y_pred : any
         Predicted probabilities.
-    mask_value :
+    mask_value : float
         Value used to mask missing labels. (Default value = -1.0)
 
     Returns
@@ -230,23 +241,25 @@ def masked_binary_accuracy(y_true, y_pred, mask_value=-1.0):
     return tf.reduce_mean(accuracy)
 
 
-def masked_f1_score(y_true, y_pred, mask_value=-1.0, threshold=0.5):
+def masked_f1_score(
+    y_true: any, y_pred: any, mask_value: float = -1.0, threshold: float = 0.5
+):
     """Custom F1 metric that excludes masked labels.
 
     Parameters
     ----------
-    y_true :
+    y_true : any
         True labels (with -1 or mask_value indicating missing labels).
-    y_pred :
+    y_pred : any
         Predicted probabilities or logits.
-    mask_value :
+    mask_value : float
         Value used to mask missing labels. (Default value = -1.0)
-    threshold :
+    threshold : float
         Threshold above which predictions are considered 1, else 0. (Default value = 0.5)
 
     Returns
     -------
-    f1 :
+    f1 : float
         Scalar F1 score (float) for the unmasked elements in this batch.
 
     """
@@ -322,7 +335,12 @@ ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
 
 
 # build model from a choice of models
-def build_model(input_shape, num_labels, model_parameter, msgr=Messenger()):
+def build_model(
+    input_shape: tuple[int, int, int],
+    num_labels: int,
+    model_parameter: dict,
+    msgr: Messenger = Messenger(),
+):
     """
 
     Parameters
