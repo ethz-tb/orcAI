@@ -294,7 +294,7 @@ def predict_wav(
     # Parameters
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
     shift = snippet_length // 2  # Shift time steps for overlapping windows
-    time_steps_per_output_step = 2**4  # TODO: MAGIC NUMBER
+    time_steps_per_output_step = 2 ** len(model_parameter["filters"])
     prediction_length = (
         snippet_length // time_steps_per_output_step
     )  # Output time steps per prediction
