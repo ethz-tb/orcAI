@@ -178,12 +178,12 @@ def create_spectrograms(
     exclude=True,
     verbosity=2,
 ):
-    """Creates spectrograms for all files in spectrogram_table
+    """Creates spectrograms for all files in recording table at recording_table_path
 
     Parameters
     ----------
     recording_table_path : Path
-        Path to .csv table with columns 'recording', 'channel' and columns indicating possibility of presence of calls (True/False). #TODO: clarify
+        Path to .csv table with columns 'recording', 'channel' and columns indicating possibility of presence of calls (True/False).
     base_dir : Path
         Base directory for the wav files. If not None entries in the recording column are interpreted as filenames
         searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.
