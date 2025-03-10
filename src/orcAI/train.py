@@ -31,7 +31,6 @@ def train(
     model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
     label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     load_weights=False,
-    transformer_parallel=False,
     verbosity=1,
 ):
     """Trains an orcAI model
@@ -48,8 +47,6 @@ def train(
         Path to a JSON file containing calls to be labeled or a dictionary with calls to be labeled.
     load_weights : bool
         Load weights from previous training.
-    transformer_parallel : bool
-        Use transformer fix #TODO: Is this necessary
     verbosity : int
         Verbosity level.
     """
@@ -74,7 +71,6 @@ def train(
     msgr.info("Calls for labeling")
     msgr.info(label_calls, indent=-1)
 
-    # TODO: Model Weights, dca had to make a change here, because of Keras API changes
     file_paths = {
         "training_data": data_dir.joinpath("train_dataset"),
         "validation_data": data_dir.joinpath("val_dataset"),
@@ -111,30 +107,6 @@ def train(
     num_labels = labels.shape[2]  # Number of sound types
 
     model = build_model(input_shape, num_labels, model_parameter, msgr=msgr)
-
-    # TODO: is this necessary? if yes, rename to something more descriptive than fix
-    # TRANSFORMER MODEL FIX
-    if transformer_parallel:
-        if model_name == "cnn_res_transformer_model":
-            # Define model within strategy scope
-            strategy = tf.distribute.MirroredStrategy()
-            with strategy.scope():
-                masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-                    fn=lambda y_true, y_pred: masked_binary_accuracy(
-                        y_true, y_pred, mask_value=-1.0
-                    ),
-                    name="masked_binary_accuracy",
-                )
-                model = build_cnn_res_transformer_arch(
-                    input_shape, num_labels, **model_parameter
-                )
-                model.compile(
-                    optimizer="adam",
-                    loss=lambda y_true, y_pred: masked_binary_crossentropy(
-                        y_true, y_pred, mask_value=-1.0
-                    ),
-                    metrics=[masked_binary_accuracy_metric],
-                )
 
     # Compiling Model
     # Loading model weights if required
