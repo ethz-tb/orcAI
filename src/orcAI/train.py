@@ -15,7 +15,6 @@ from orcAI.architectures import (
     masked_binary_accuracy,
     masked_binary_crossentropy,
     masked_f1_score,
-    build_cnn_res_transformer_arch,
 )
 from orcAI.load import reload_dataset
 
@@ -58,18 +57,18 @@ def train(
     msgr.info(f"Data directory: {data_dir}")
 
     msgr.info("Loading parameter and data...", indent=1)
-    msgr.info("Model parameter")
+    msgr.debug("Model parameter")
     if isinstance(model_parameter, (Path | str)):
         model_parameter = read_json(model_parameter)
 
-    msgr.info(model_parameter)
+    msgr.debug(model_parameter)
     model_name = model_parameter["name"]
 
     if isinstance(label_calls, (Path | str)):
         label_calls = read_json(label_calls)
 
-    msgr.info("Calls for labeling")
-    msgr.info(label_calls, indent=-1)
+    msgr.debug("Calls for labeling")
+    msgr.debug(label_calls, indent=-1)
 
     file_paths = {
         "training_data": data_dir.joinpath("train_dataset"),
