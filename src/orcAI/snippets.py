@@ -19,7 +19,7 @@ from orcAI.load import load_data_from_snippet_csv, data_generator
 
 
 def _make_snippet_table(
-    recording_data_dir,
+    recording_dir,
     snippet_parameter=files("orcAI.defaults").joinpath(
         "default_snippet_parameter.json"
     ),
@@ -32,7 +32,7 @@ def _make_snippet_table(
 
     Parameters
     ----------
-    recording_data_dir : str
+    recording_dir : str
         Path to the recording data directory
     snippet_parameter : dict | (str | Path)
         dict containing snippet parameter or path to path to a JSON file containing the same, by default files("orcAI.defaults").joinpath("default_snippet_parameter.json")
@@ -48,12 +48,10 @@ def _make_snippet_table(
     Int
         recording duration
     """
-    recording = Path(recording_data_dir).stem
-    label_zarr_path = Path(recording_data_dir).joinpath("labels", "labels.zarr")
-    label_list_path = Path(recording_data_dir).joinpath("labels", "label_list.json")
-    spectrogram_times_path = Path(recording_data_dir).joinpath(
-        "spectrogram", "times.json"
-    )
+    recording = Path(recording_dir).stem
+    label_zarr_path = Path(recording_dir).joinpath("labels", "labels.zarr")
+    label_list_path = Path(recording_dir).joinpath("labels", "label_list.json")
+    spectrogram_times_path = Path(recording_dir).joinpath("spectrogram", "times.json")
 
     try:
         spectrogram_times = read_json(spectrogram_times_path)
@@ -128,7 +126,7 @@ def _make_snippet_table(
                     list(
                         [
                             recording,
-                            recording_data_dir,
+                            recording_dir,
                             type,
                             index_t_start,
                             index_t_stop,
@@ -306,9 +304,11 @@ def _filter_snippet_table(
     msgr.info("Snippet stats [HMS]:")
     msgr.info(snippet_stats_duration)
 
-    indices_no_label = np.where(snippet_table[label_calls].sum(axis=1) <= 0.0000001)[0]
+    snippets_no_label = snippet_table[
+        snippet_table[label_calls].sum(axis=1) <= 0.0000001
+    ]
     p_no_label_before = np.around(
-        100 * len(indices_no_label) / snippet_table.shape[0], 2
+        100 * len(snippets_no_label) / snippet_table.shape[0], 2
     )
     msgr.info(
         f"Percentage of snippets containing no label before selection: {str(p_no_label_before)} %"
@@ -319,19 +319,19 @@ def _filter_snippet_table(
         f"removing {np.around(snippet_parameter['fraction_removal'] * 100, 2)}% of snippets without label"
     )
     indices_to_drop = np.random.choice(
-        indices_no_label,
-        size=int(snippet_parameter["fraction_removal"] * len(indices_no_label)),
+        snippets_no_label.index,
+        size=int(snippet_parameter["fraction_removal"] * len(snippets_no_label)),
         replace=False,
     )
-    # indices_to_drop.sort()
-    # snippet_table = snippet_table.reset_index(drop=True)
-    # TODO: this will change the indices essentially dropping different rows than selected. still random, i guess?
+    snippet_table = snippet_table.drop(indices_to_drop, axis=0)
 
-    snippet_table = snippet_table[~snippet_table.index.isin(indices_to_drop)]
-    indices_no_label = np.where(snippet_table[label_calls].sum(axis=1) <= 0.0000001)[0]
+    snippets_no_label = snippet_table[
+        snippet_table[label_calls].sum(axis=1) <= 0.0000001
+    ]
     p_no_label_after = np.around(
-        100 * len(indices_no_label) / snippet_table.shape[0], 2
+        100 * len(snippets_no_label) / snippet_table.shape[0], 2
     )
+
     msgr.info(
         f"Percentage of snippets containing no label after selection: {str(p_no_label_after)} %"
     )
@@ -501,7 +501,7 @@ def create_tvt_data(
         start_time = time.time()
         dataset_path = Path(tvt_dir, f"{itype}_dataset")
         dataset[itype].save(
-            path=str(dataset_path)
+            path=str(dataset_path)  # TODO: check path before trying to save
         )  # deadlocks silently on error https://github.com/tensorflow/tensorflow/issues/61736
         msgr.info(
             f"{itype.capitalize()} dataset saved to disk in {seconds_to_hms(time.time() - start_time)}"
