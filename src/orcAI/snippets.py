@@ -113,7 +113,7 @@ def _make_snippet_table(
                 )
             ):  # iterate over number of snippets per segment and type
                 t_max = (i_segment + slice[1]) * snippet_parameter[
-                    "length"
+                    "segment_duration"
                 ] - snippet_parameter["snippet_duration"]
                 t_start = np.random.uniform(low=t_min, high=t_max, size=1)[0]
 
