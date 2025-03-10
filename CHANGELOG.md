@@ -1,10 +1,24 @@
 # Changelog
 
+## [0.3.0] - unreleased
+
+### Changed
+
+- **Breaking**: rename model architectures to correspond to manuscript (`efd3472c`)
+
+### Added
+
+- docstrings in architectures.py
+
+### Removes
+
+- unused transformer models (`57794fed`)
+
 ## [0.2.1] - 2025-03-07
 
 ### Changed
 
-- f37fea01: defer loading of cli commands to increase performance if only calling help. This massively speeds up the cli if only calling `--help` or `--version`
+- defer loading of cli commands to increase performance if only calling help. This massively speeds up the cli if only calling `--help` or `--version` (`f37fea01`)
 
 ## [0.2.0] - 2025-03-05
 
