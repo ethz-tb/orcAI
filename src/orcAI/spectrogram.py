@@ -53,7 +53,9 @@ def make_spectrogram(
     if isinstance(spectrogram_parameter, (Path | str)):
         spectrogram_parameter = read_json(spectrogram_parameter)
 
-    msgr.info(f"Loading wav file: {wav_file_path.name}")
+    msgr.info(
+        f"Loading & resampling (to {spectrogram_parameter['sampling_rate']/1000:.2f} kHz) wav file: {wav_file_path.name}"
+    )
 
     start_time = time.time()
     wav_file, _ = load(
