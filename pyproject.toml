@@ -10,13 +10,13 @@ authors = [
     { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
     { name = "Nicholas Ochsner", email = "nicolas.ochsner@env.ethz.ch" },
     { name = "Daniel Angst", email = "daniel.angst@env.ethz.ch" },
-    { name = "Anna Selbmann" },
-    { name = "Patrick Miller" },
-    { name = "Volker Deecke" },
-    { name = "Filipa Samara" },
 ]
 description = "A software package to detect acoustic signals in spectrograms generated from audio recordings"
-keywords = ["Bioaccoustics", "Orca", "classification"] # TODO: update
+keywords = [
+    "Bioaccoustics",
+    "Orca",
+    "classification",
+] # TODO: update, add citation to paper
 readme = "README.md"
 requires-python = "~=3.11"
 license = { text = "CC-BY-SA-4.0" }
