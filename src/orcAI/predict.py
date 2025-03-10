@@ -10,7 +10,7 @@ from functools import partial
 
 from orcAI.auxiliary import Messenger, read_json, find_consecutive_ones
 from orcAI.architectures import (
-    build_cnn_res_lstm_arch,
+    res_net_LSTM_arch,
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
@@ -257,7 +257,7 @@ def predict_wav(
     msgr.part(f"Loading model: {model_path.stem}")
 
     msgr.info("Building model architecture")
-    model = build_cnn_res_lstm_arch(**shape, **model_parameter)
+    model = res_net_LSTM_arch(**shape, **model_parameter)
 
     msgr.info("Loading model weights")
     model.load_weights(model_path.joinpath("model_weights.h5"))

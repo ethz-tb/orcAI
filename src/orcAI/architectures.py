@@ -7,7 +7,7 @@ from orcAI.auxiliary import Messenger
 
 
 # CNN model with residual connection (corresponds to old model)
-def build_cnn_res_arch(
+def res_net_1Dconv_arch(
     input_shape, num_labels, filters, kernel_size, dropout_rate, **unused
 ):
     inputs = tf.keras.Input(shape=input_shape)
@@ -51,7 +51,7 @@ def build_cnn_res_arch(
 
 
 # CNN RES LSTM Model
-def build_cnn_res_lstm_arch(
+def res_net_LSTM_arch(
     input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units, **unused
 ):
     inputs = tf.keras.Input(shape=input_shape)
@@ -247,8 +247,8 @@ def choose_metric(metric_name):
 
 
 ORCAI_ARCHITECTURES_FN = {
-    "cnn_res_model": build_cnn_res_arch,  # TODO: == ResNet1DConv in paper?
-    "cnn_res_lstm_model": build_cnn_res_lstm_arch,  # TODO: ResNetLSTM in paper?
+    "ResNet1DConv": res_net_1Dconv_arch,
+    "ResNetLSTM": res_net_LSTM_arch,
 }
 
 ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
