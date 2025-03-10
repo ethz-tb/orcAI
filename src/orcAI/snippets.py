@@ -69,7 +69,7 @@ def _make_snippet_table(
         snippet_parameter = read_json(snippet_parameter)
 
     recording_duration = spectrogram_times["max"]
-    n_segments = int(recording_duration // snippet_parameter["length"])
+    n_segments = int(recording_duration // snippet_parameter["segment_duration"])
     if n_segments <= 0:
         msgr.warning(
             f"Duration of recording ({spectrogram_times['max']}) is shorter than segment length ({snippet_parameter['length']}). Skipping recording."
