@@ -93,33 +93,34 @@ def _make_snippet_table(
     )
     delta_t = times[1] - times[0]
     n_filters = len(model_parameter["filters"])
-    i_duration = int(
-        (2**n_filters) * ((snippet_parameter["duration"] / delta_t) // (2**n_filters))
+    n_spectrogram_snippet_steps = int(
+        (2**n_filters)
+        * ((snippet_parameter["snippet_duration"] / delta_t) // (2**n_filters))
     )  # to make time axis divisible by 2 ** n_filters
-    msgr.info(f"i_duration: {i_duration}")  # TODO: clarify
+    msgr.info(f"Number of spectrogram snippet timesteps: {n_spectrogram_snippet_steps}")
     snippet_table_raw = []
     for i_segment in range(n_segments):  # iterate over all segments
-        msgr.info("Segment", i_segment + 1, "of", n_segments)
+        msgr.info(f"Segment {i_segment + 1} of {n_segments}")
         slice = (0, 0)
         for type in list(["train", "val", "test"]):  # iterate over type of snippet
             slice = (slice[1], slice[1] + model_parameter[type])
-            t_min = (i_segment + slice[0]) * snippet_parameter["length"]
+            t_min = (i_segment + slice[0]) * snippet_parameter["segment_duration"]
             for j in range(
                 int(
                     model_parameter[type]
-                    * snippet_parameter["length"]
-                    * snippet_parameter["per_sec"]
+                    * snippet_parameter["segment_duration"]
+                    * snippet_parameter["snippets_per_sec"]
                 )
             ):  # iterate over number of snippets per segment and type
                 t_max = (i_segment + slice[1]) * snippet_parameter[
                     "length"
-                ] - snippet_parameter["duration"]
+                ] - snippet_parameter["snippet_duration"]
                 t_start = np.random.uniform(low=t_min, high=t_max, size=1)[0]
 
                 # Find the max index where entries are smaller than t_start
                 index_t_start = np.searchsorted(times, t_start, side="left") - 1
                 # Find the min index where entries are smaller or equal to t_stop
-                index_t_stop = index_t_start + i_duration
+                index_t_stop = index_t_start + n_spectrogram_snippet_steps
                 label_chunk = label_filepointer[index_t_start:index_t_stop, :]
                 label_duration_snippet = label_chunk.sum(axis=0) * delta_t
                 label_duration_snippet[label_duration_snippet < 0] = np.nan
