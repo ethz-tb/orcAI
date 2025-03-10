@@ -6,10 +6,35 @@ from orcAI.auxiliary import Messenger
 # TODO: docstrings for functions, try pyment
 
 
-# CNN model with residual connection (corresponds to old model)
+# CNN model with residual connection
 def res_net_1Dconv_arch(
     input_shape, num_labels, filters, kernel_size, dropout_rate, **unused
 ):
+    """TensorFlow/Keras model architecture for a Convolutional Neural Network (CNN) with residual connections (ResNet)
+    followed by a global temporal aggregation step using a 1D convolution
+
+    Parameters
+    ----------
+    input_shape : tuple (int, int, int)
+        Dimensions of the input data
+    num_labels : int
+        Number of labels to predict
+    filters : list of int
+        Number of filters in each convolutional layer
+    kernel_size : int
+        Size of the convolutional kernel
+    dropout_rate :
+        Dropout rate for the model
+    **unused :
+        Additional keyword arguments, unused
+
+
+    Returns
+    -------
+    tf.keras.Model
+        Model architecture
+
+    """
     inputs = tf.keras.Input(shape=input_shape)
 
     # Entry block
@@ -54,6 +79,32 @@ def res_net_1Dconv_arch(
 def res_net_LSTM_arch(
     input_shape, num_labels, filters, kernel_size, dropout_rate, lstm_units, **unused
 ):
+    """TensorFlow/Keras model architecture for a Convolutional Neural Network (CNN) with residual connections (ResNet)
+    extended with bidirectional Long Short-Term Memory (LSTM) layers
+
+    Parameters
+    ----------
+    input_shape : tuple (int, int, int)
+        Dimensions of the input data
+    num_labels : int
+        Number of labels to predict
+    filters : list of int
+        Number of filters in each convolutional layer
+    kernel_size : int
+        Size of the convolutional kernel
+    dropout_rate :
+        Dropout rate for the model
+    lstm_units :
+        Dimensionality of the output space of the LSTM layer
+    **unused :
+        Additional keyword arguments, unused
+
+    Returns
+    -------
+    tf.keras.Model
+        Model architecture
+
+    """
     inputs = tf.keras.Input(shape=input_shape)
 
     # Entry block
@@ -117,16 +168,22 @@ def res_net_LSTM_arch(
 
 # define masked binary crossentropy and masked binary accuracy
 def masked_binary_crossentropy(y_true, y_pred, mask_value=-1.0):
-    """
-    Custom binary cross-entropy loss function with label masking.
+    """Custom binary cross-entropy loss function with label masking.
 
-    Args:
-        y_true: True labels (with -1 or a mask_value indicating missing labels).
-        y_pred: Predicted probabilities for each label.
-        mask_value: Value used to mask missing labels.
+    Parameters
+    ----------
+    y_true :
+        True labels (with -1 or a mask_value indicating missing labels).
+    y_pred :
+        Predicted probabilities for each label.
+    mask_value :
+        Value used to mask missing labels. (Default value = -1.0)
 
-    Returns:
-        Loss scalar.
+    Returns
+    -------
+    tf.reduce_mean(loss) :
+        The reduced tensor
+
     """
     # Ensure mask_value has the same type as y_true
     mask_value = tf.cast(mask_value, y_true.dtype)
@@ -142,16 +199,23 @@ def masked_binary_crossentropy(y_true, y_pred, mask_value=-1.0):
 
 
 def masked_binary_accuracy(y_true, y_pred, mask_value=-1.0):
-    """
-    Custom binary accuracy metric that excludes masked labels.
+    """Custom binary accuracy metric that excludes masked labels.
 
-    Args:
-        y_true: True labels (with -1 or mask_value indicating missing labels).
-        y_pred: Predicted probabilities.
-        mask_value: Value used to mask missing labels.
+    Parameters
+    ----------
+    y_true :
+        True labels (with -1 or mask_value indicating missing labels).
+    y_pred :
+        Predicted probabilities.
+    mask_value :
+        Value used to mask missing labels. (Default value = -1.0)
 
-    Returns:
-        Masked accuracy.
+    Returns
+    -------
+    tf.reduce_mean(accuracy) :
+        The reduced tensor
+
+
     """
 
     # Ensure mask_value has the same type as y_true
@@ -167,17 +231,24 @@ def masked_binary_accuracy(y_true, y_pred, mask_value=-1.0):
 
 
 def masked_f1_score(y_true, y_pred, mask_value=-1.0, threshold=0.5):
-    """
-    Custom F1 metric that excludes masked labels.
+    """Custom F1 metric that excludes masked labels.
 
-    Args:
-        y_true: True labels (with -1 or mask_value indicating missing labels).
-        y_pred: Predicted probabilities or logits.
-        mask_value: Value used to mask missing labels.
-        threshold: Threshold above which predictions are considered 1, else 0.
+    Parameters
+    ----------
+    y_true :
+        True labels (with -1 or mask_value indicating missing labels).
+    y_pred :
+        Predicted probabilities or logits.
+    mask_value :
+        Value used to mask missing labels. (Default value = -1.0)
+    threshold :
+        Threshold above which predictions are considered 1, else 0. (Default value = 0.5)
 
-    Returns:
+    Returns
+    -------
+    f1 :
         Scalar F1 score (float) for the unmasked elements in this batch.
+
     """
     # Ensure y_true is float
     y_true = tf.cast(y_true, tf.float32)
@@ -205,8 +276,19 @@ def masked_f1_score(y_true, y_pred, mask_value=-1.0, threshold=0.5):
 
 
 def reshape_labels(arr, n_filters):
-    """
-    Reshape and process labels using the provided number of filters (n_filters) to achieve a time resolution on labels which is time_steps_spectogram//2**n_filters.
+    """Reshape and process labels using the provided number of filters (n_filters) to achieve a time resolution on
+    labels which is time_steps_spectogram//2**n_filters.
+
+    Parameters
+    ----------
+    arr :
+
+    n_filters :
+
+
+    Returns
+    -------
+
     """
 
     if arr.shape[0] % (2**n_filters) == 0:
@@ -231,21 +313,6 @@ def reshape_labels(arr, n_filters):
         )
 
 
-ORCAI_METRICS_FN = {
-    "masked_binary_accuracy": masked_binary_accuracy,
-    "masked_f1_score": masked_f1_score,
-}
-
-ORCAI_METRICS = list(ORCAI_METRICS_FN.keys())
-
-
-def choose_metric(metric_name):
-    if metric_name in ORCAI_METRICS:
-        return ORCAI_METRICS_FN[metric_name]
-    else:
-        raise ValueError(f"Unknown metric name: {metric_name}")
-
-
 ORCAI_ARCHITECTURES_FN = {
     "ResNet1DConv": res_net_1Dconv_arch,
     "ResNetLSTM": res_net_LSTM_arch,
@@ -255,19 +322,38 @@ ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
 
 
 # build model from a choice of models
-def build_model(input_shape, num_labels, model_dict, msgr=Messenger()):
-    n_filters = len(model_dict["filters"])
+def build_model(input_shape, num_labels, model_parameter, msgr=Messenger()):
+    """
+
+    Parameters
+    ----------
+    input_shape : tuple (int, int, int)
+        Dimensions of the input data
+    num_labels : int
+        Number of labels to predict
+    model_parameter : dict
+        Model parameter dictionary
+    msgr : Messenger
+        Messenger object for messages
+         (Default value = Messenger())
+
+    Returns
+    -------
+        model : tf.keras.Model
+            Model architecture
+    """
+    n_filters = len(model_parameter["filters"])
     output_shape = (input_shape[0] // 2**n_filters, num_labels)
 
-    if model_dict["name"] in ORCAI_ARCHITECTURES:
-        model = ORCAI_ARCHITECTURES_FN[model_dict["name"]](
-            input_shape, num_labels, **model_dict
+    if model_parameter["name"] in ORCAI_ARCHITECTURES:
+        model = ORCAI_ARCHITECTURES_FN[model_parameter["name"]](
+            input_shape, num_labels, **model_parameter
         )
     else:
-        raise ValueError(f"Unknown model name: {model_dict['name']}")
+        raise ValueError(f"Unknown model name: {model_parameter['name']}")
 
     msgr.part("Building model architecture")
-    msgr.info(f"model name:          {model_dict['name']}")
+    msgr.info(f"model name:          {model_parameter['name']}")
     msgr.info(f"model input shape:   {model.input_shape}")
     msgr.info(f"model output shape:  {model.output_shape}")
     msgr.info(f"actual input_shape:  {input_shape}")
