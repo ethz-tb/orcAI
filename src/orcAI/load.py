@@ -141,7 +141,7 @@ class ChunkedMultiZarrDataLoader(Sequence):
         Shuffle indices at the end of each epoch if needed.
         """
         if self.shuffle:
-            shuffle(self.indices)
+            random_shuffle(self.indices)
 
 
 # data generator
