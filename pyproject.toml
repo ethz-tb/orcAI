@@ -25,6 +25,8 @@ dependencies = [
     "numpy<3",
     "pandas<3",
     "tensorflow<3",
+    "tensorflow-metal<2; platform_system=='Darwin'",
+    "keras_tuner<2",
     "keras<4",
     "librosa",
     "psutil<8",
