@@ -15,8 +15,9 @@ def res_net_1Dconv_arch(
     dropout_rate: float,
     **unused,
 ):
-    """TensorFlow/Keras model architecture for a Convolutional Neural Network (CNN) with residual connections (ResNet)
-    followed by a global temporal aggregation step using a 1D convolution
+    """TensorFlow/Keras model architecture for a Convolutional Neural Network
+    (CNN) with residual connections (ResNet) followed by a global temporal
+    aggregation step using a 1D convolution
 
     Parameters
     ----------
@@ -90,8 +91,9 @@ def res_net_LSTM_arch(
     lstm_units: int,
     **unused,
 ):
-    """TensorFlow/Keras model architecture for a Convolutional Neural Network (CNN) with residual connections (ResNet)
-    extended with bidirectional Long Short-Term Memory (LSTM) layers
+    """TensorFlow/Keras model architecture for a Convolutional Neural Network
+    (CNN) with residual connections (ResNet) extended with bidirectional
+    Long Short-Term Memory (LSTM) layers
 
     Parameters
     ----------
