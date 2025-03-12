@@ -46,9 +46,9 @@ def train(
 
     Parameters
     ----------
-    data_dir : Path
+    data_dir : Path | str
         Path to the directory containing the training, validation and test datasets.
-    output_dir : Path
+    output_dir : Path | str
         Path to the output directory.
     model_parameter_path : (Path | str) | dict
         Path to a JSON file containing model specifications or a dictionary with model specifications.
@@ -81,14 +81,14 @@ def train(
     msgr.debug(label_calls, indent=-1)
 
     file_paths = {
-        "training_data": data_dir.joinpath("train_dataset"),
-        "validation_data": data_dir.joinpath("val_dataset"),
-        "test_data": data_dir.joinpath("test_dataset"),
-        "model": output_dir.joinpath(model_name, model_name + ".h5"),
-        "model_dir": output_dir.joinpath(model_name),
-        "weights": output_dir.joinpath(model_name, model_name + ".weights.h5"),
-        "history": output_dir.joinpath(model_name, "training_history.json"),
-        "confusion_matrices": output_dir.joinpath("confusion_matrices.json"),
+        "training_data": Path(data_dir).joinpath("train_dataset"),
+        "validation_data": Path(data_dir).joinpath("val_dataset"),
+        "test_data": Path(data_dir).joinpath("test_dataset"),
+        "model": Path(output_dir).joinpath(model_name, model_name + ".h5"),
+        "model_dir": Path(output_dir).joinpath(model_name),
+        "weights": Path(output_dir).joinpath(model_name, model_name + ".weights.h5"),
+        "history": Path(output_dir).joinpath(model_name, "training_history.json"),
+        "confusion_matrices": Path(output_dir).joinpath("confusion_matrices.json"),
     }
 
     # load data sets from local disk
@@ -107,9 +107,9 @@ def train(
     msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")
 
     # Verify the val dataset and obtain shape
-    for spectrogram, labels in val_dataset.take(1):
-        msgr.info(f"Spectrogram batch shape: {spectrogram.numpy().shape}")
-        msgr.info(f"Labels batch shape: {labels.numpy().shape}")
+    spectrogram, labels = val_dataset.take(1).element_spec[0]
+    msgr.info(f"Spectrogram batch shape: {spectrogram.shape}")
+    msgr.info(f"Labels batch shape: {labels.shape}")
 
     # Build model architecture
     input_shape = tuple(spectrogram.shape[1:])  # shape
@@ -150,7 +150,7 @@ def train(
         ],  # Number of epochs to wait for improvement
         mode="max",  # Stop when accuracy stops increasing
         restore_best_weights=True,  # Restore weights from the best epoch
-        verbose=verbosity,
+        verbose=0 if verbosity < 3 else 1,
     )
     model_checkpoint = ModelCheckpoint(
         file_paths["weights"],
@@ -159,7 +159,7 @@ def train(
         ],  # val_masked_binary_accuracy | val_masked_f1_score
         save_best_only=True,
         save_weights_only=True,
-        verbose=1 if verbosity > 0 else 0,
+        verbose=0 if verbosity < 3 else 1,
     )
     reduce_lr = ReduceLROnPlateau(
         monitor=model_parameter[
@@ -168,7 +168,7 @@ def train(
         factor=0.5,  # Reduce learning rate by a factor of 0.5
         patience=3,  # Wait for 3 epochs of no improvement
         min_lr=1e-6,  # Set a lower limit for the learning rate
-        verbose=1 if verbosity > 0 else 0,  # Print updates to the console
+        verbose=0 if verbosity < 3 else 1,  # Print updates to the console
     )
     model.compile(
         optimizer="adam",
