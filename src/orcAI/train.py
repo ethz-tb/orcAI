@@ -20,7 +20,17 @@ from orcAI.load import reload_dataset
 
 
 # model parameters
-def count_params(trainable_weights):
+def count_params(trainable_weights: list) -> int:
+    """Count the number of trainable parameters in a model
+    Parameters
+    ----------
+    trainable_weights : list
+        List of trainable weights in the model
+    Returns
+    -------
+    int
+        Number of parameters in the model
+    """
     return np.sum([np.prod(w.shape) for w in trainable_weights])
 
 
