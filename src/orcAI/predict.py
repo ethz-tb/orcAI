@@ -264,16 +264,12 @@ def predict_wav(
 
     msgr.info("Compiling model")
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: masked_binary_accuracy(
-            y_true, y_pred, mask_value=-1.0
-        ),
+        fn=masked_binary_accuracy,
         name="masked_binary_accuracy",
     )
     model.compile(
         optimizer="adam",
-        loss=lambda y_true, y_pred: masked_binary_crossentropy(
-            y_true, y_pred, mask_value=-1.0
-        ),
+        loss=masked_binary_crossentropy,
         metrics=[masked_binary_accuracy_metric],
     )
 

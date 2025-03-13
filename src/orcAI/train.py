@@ -130,16 +130,13 @@ def train(
 
     # Metrics
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: masked_binary_accuracy(
-            y_true, y_pred, **model_parameter["masked_binary_accuracy_metric"]
-        ),
+        fn=masked_binary_accuracy,
         name="masked_binary_accuracy",
     )
     masked_f1_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: masked_f1_score(
-            y_true, y_pred, **model_parameter["masked_f1_metric"]
-        ),
+        fn=masked_f1_score,
         name="masked_f1_score",
+        **model_parameter["masked_f1_metric"],
     )
 
     # Callbacks
@@ -174,9 +171,7 @@ def train(
     )
     model.compile(
         optimizer="adam",
-        loss=lambda y_true, y_pred: masked_binary_crossentropy(
-            y_true, y_pred, mask_value=-1.0
-        ),
+        loss=masked_binary_crossentropy,
         metrics=[masked_binary_accuracy_metric, masked_f1_metric],
     )
 
@@ -310,17 +305,13 @@ def _hp_model_builder(
     model = build_model(input_shape, num_labels, model_parameter, msgr=msgr)
 
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: masked_binary_accuracy(
-            y_true, y_pred, **model_parameter["masked_binary_accuracy_metric"]
-        ),
+        fn=masked_binary_accuracy,
         name="masked_binary_accuracy",
     )
 
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-        loss=lambda y_true, y_pred: masked_binary_crossentropy(
-            y_true, y_pred, mask_value=-1.0
-        ),
+        loss=masked_binary_crossentropy,
         metrics=[masked_binary_accuracy_metric],
     )
     return model
