@@ -290,44 +290,6 @@ def masked_f1_score(
     return f1
 
 
-def reshape_labels(arr, n_filters):
-    """Reshape and process labels using the provided number of filters (n_filters) to achieve a time resolution on
-    labels which is time_steps_spectogram//2**n_filters.
-
-    Parameters
-    ----------
-    arr :
-
-    n_filters :
-
-
-    Returns
-    -------
-
-    """
-
-    if arr.shape[0] % (2**n_filters) == 0:
-        # Reshape the array to group rows for averaging
-        new_shape = (
-            arr.shape[0] // (2**n_filters),
-            2**n_filters,
-            arr.shape[1],
-        )
-        reshaped = tf.reshape(
-            arr, new_shape
-        )  # Shape: (time_steps_labels, downsample_factor, num_labels)
-        # Compute the mean along the downsampling axis
-        averaged = tf.reduce_mean(
-            reshaped, axis=1
-        )  # Shape: (time_steps_labels, num_labels)
-        arr_out = tf.round(averaged)  # round to next integer
-        return tf.cast(arr_out, dtype=tf.int32)
-    else:
-        raise ValueError(
-            "The number of rows in 'arr' must be divisible by 2**'n_filters'."
-        )
-
-
 ORCAI_ARCHITECTURES_FN = {
     "ResNet1DConv": res_net_1Dconv_arch,
     "ResNetLSTM": res_net_LSTM_arch,
