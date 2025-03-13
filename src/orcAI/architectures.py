@@ -180,17 +180,15 @@ def res_net_LSTM_arch(
 
 
 # define masked binary crossentropy and masked binary accuracy
-def masked_binary_crossentropy(y_true: any, y_pred: any, mask_value: float = -1.0):
+def masked_binary_crossentropy(y_true: any, y_pred: any):
     """Custom binary cross-entropy loss function with label masking.
 
     Parameters
     ----------
     y_true : any
-        True labels (with -1 or a mask_value indicating missing labels).
+        True labels (with -1 indicating missing labels).
     y_pred : any
         Predicted probabilities for each label.
-    mask_value : float
-        Value used to mask missing labels. (Default value = -1.0)
 
     Returns
     -------
@@ -198,6 +196,7 @@ def masked_binary_crossentropy(y_true: any, y_pred: any, mask_value: float = -1.
         The reduced tensor
 
     """
+    mask_value = -1.0
     # Ensure mask_value has the same type as y_true
     mask_value = tf.cast(mask_value, y_true.dtype)
 
@@ -211,17 +210,15 @@ def masked_binary_crossentropy(y_true: any, y_pred: any, mask_value: float = -1.
     return tf.reduce_mean(loss)
 
 
-def masked_binary_accuracy(y_true: any, y_pred: any, mask_value: float = -1.0):
+def masked_binary_accuracy(y_true: any, y_pred: any):
     """Custom binary accuracy metric that excludes masked labels.
 
     Parameters
     ----------
     y_true : any
-        True labels (with -1 or mask_value indicating missing labels).
+        True labels (with -1 indicating missing labels).
     y_pred : any
         Predicted probabilities.
-    mask_value : float
-        Value used to mask missing labels. (Default value = -1.0)
 
     Returns
     -------
@@ -230,7 +227,7 @@ def masked_binary_accuracy(y_true: any, y_pred: any, mask_value: float = -1.0):
 
 
     """
-
+    mask_value = -1.0
     # Ensure mask_value has the same type as y_true
     mask_value = tf.cast(mask_value, y_true.dtype)
     # Create a mask: where y_true != mask_value
@@ -243,19 +240,15 @@ def masked_binary_accuracy(y_true: any, y_pred: any, mask_value: float = -1.0):
     return tf.reduce_mean(accuracy)
 
 
-def masked_f1_score(
-    y_true: any, y_pred: any, mask_value: float = -1.0, threshold: float = 0.5
-):
+def masked_f1_score(y_true: any, y_pred: any, threshold: float = 0.5):
     """Custom F1 metric that excludes masked labels.
 
     Parameters
     ----------
     y_true : any
-        True labels (with -1 or mask_value indicating missing labels).
+        True labels (with -1 indicating missing labels).
     y_pred : any
         Predicted probabilities or logits.
-    mask_value : float
-        Value used to mask missing labels. (Default value = -1.0)
     threshold : float
         Threshold above which predictions are considered 1, else 0. (Default value = 0.5)
 
@@ -265,6 +258,7 @@ def masked_f1_score(
         Scalar F1 score (float) for the unmasked elements in this batch.
 
     """
+    mask_value = -1.0
     # Ensure y_true is float
     y_true = tf.cast(y_true, tf.float32)
     mask_value = tf.cast(mask_value, tf.float32)

@@ -304,18 +304,22 @@ def filter_filepaths(
     return filepaths
 
 
-def compute_confusion_matrix(y_true_batch, y_pred_batch, label_names, mask_value=-1):
+def compute_confusion_matrix(
+    y_true_batch,
+    y_pred_batch,
+    label_names,
+):
     """
     Compute the confusion matrix for each label across the entire batch.
 
     Args:
         y_true_batch (np.ndarray): Ground truth binary labels with shape (batch_size, time_steps, num_labels).
         y_pred_batch (np.ndarray): Predicted  labels with shape (batch_size, time_steps, num_labels).
-        mask_value (int, optional): Mask value in y_true_batch that indicates missing labels. Defaults to -1.
 
     Returns:
         dict: A dictionary where keys are label indices and values are confusion matrices (2x2 numpy arrays).
     """
+    mask_value = -1
     # Ensure inputs are numpy arrays
     y_true_batch = np.array(y_true_batch)
     y_pred_binary_batch = (y_pred_batch >= 0.5).astype(int)
