@@ -9,6 +9,7 @@
 ### Added
 
 - docstrings in architectures.py
+- restructure hyperparameter_search.py and move to train.py
 
 ### Removes
 

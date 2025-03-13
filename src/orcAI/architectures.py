@@ -362,8 +362,6 @@ def build_model(
         model : tf.keras.Model
             Model architecture
     """
-    n_filters = len(model_parameter["filters"])
-    output_shape = (input_shape[0] // 2**n_filters, num_labels)
 
     if model_parameter["name"] in ORCAI_ARCHITECTURES:
         model = ORCAI_ARCHITECTURES_FN[model_parameter["name"]](
@@ -371,6 +369,9 @@ def build_model(
         )
     else:
         raise ValueError(f"Unknown model name: {model_parameter['name']}")
+
+    n_filters = len(model_parameter["filters"])
+    output_shape = (input_shape[0] // 2**n_filters, num_labels)
 
     msgr.part("Building model architecture")
     msgr.info(f"model name:          {model_parameter['name']}")
