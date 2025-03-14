@@ -1,222 +1,102 @@
-#!/usr/bin/env python
-# %%
-#  import
-import os
 import zarr
-import sys
+from pathlib import Path
 import random
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
+import json
 
 import tensorflow as tf
-from tensorflow.keras.callbacks import (
-    EarlyStopping,
-    ModelCheckpoint,
-    ReduceLROnPlateau,
+from sklearn.metrics import confusion_matrix
+
+from orcAI.auxiliary import (
+    Messenger,
+    read_json_to_vector,
+    seconds_to_hms,
+    read_json,
 )
-
-# import local
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-import auxiliary as aux
-import model as mod
-import plot
-import load
-
-
-computer = "laptop"
-train_model = False
-scratch_dir = "undefined"
-mode_dataset = "use_existing"
-interactive = True
-
-interactive = aux.check_interactive()
-if not interactive:
-    print("Command-line call:", " ".join(sys.argv))
-    (computer, data_dir, model_name, project_dir) = aux.train_model_commandline_parse()
-else:
-    project_dir = "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/"
-    computer = "laptop"
-    data_dir = "/Users/sb/AI_data/tvtdata/"
-    model_name = "cnn_res_lstm_model"
-
-# %%
-# Read parameters
-print("Project directory:", project_dir)
-os.chdir(project_dir)
-print("READ IN PARAMETERS")
-dicts = {
-    "directories_dict": "GenericParameters/directories.dict",
-    "model_dict": "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/Results/Euler/Final/cnn_res_lstm_model_final/model.dict",
-    "calls_for_labeling_list": "GenericParameters/calls_for_labeling.list",
-}
-for key, value in dicts.items():
-    print("  - reading", key)
-    globals()[key] = aux.read_dict(value, True)
-
-# %%
-# read in test.csv.gz and add t_start and t_stop
-test_df = pd.read_csv(directories_dict[computer]["root_dir_tvtdata"] + "test.csv.gz")
-fn_times = test_df["fnstem_path"].iloc[0] + "spectrogram/times.json"
-t_vector = aux.read_json_to_vector(fn_times)
-delta_t = t_vector[1] - t_vector[0]
-test_df["t_start"] = test_df["row_start"] * delta_t
-test_df["t_stop"] = test_df["row_stop"] * delta_t
-test_df["t_start"] = test_df["t_start"].apply(aux.seconds_to_hms)
-test_df["t_stop"] = test_df["t_stop"].apply(aux.seconds_to_hms)
-
-
-# %%
-# read in extracted snippets
-extracted_snippets = pd.read_csv(project_dir + "Results/" + "extracted_snippets.csv.gz")
-fnstems = list(extracted_snippets["fnstem"])
-extracted_snippets["fnstem_path"] = [
-    directories_dict[computer]["root_dir_spectrograms"] + x + "/" for x in fnstems
-]
-
-
-# %%
-# function to get spec and reshaped labels from index of test_df
-def get_spec_labels(df, index, predict=False):
-    from pathlib import Path
-
-    spec_path = os.path.join(df["fnstem_path"].iloc[index], "spectrogram/zarr.spc")
-    lbl_path = os.path.join(df["fnstem_path"].iloc[index], "labels/zarr.lbl")
-    spectrogram_z = zarr.open(spec_path, mode="r")
-    labels_z = zarr.open(lbl_path, mode="r")
-    spec = spectrogram_z[df["row_start"].iloc[index] : df["row_stop"].iloc[index], :]
-    labels_long = labels_z[df["row_start"].iloc[index] : df["row_stop"].iloc[index], :]
-    lab_true = mod.reshape_labels(labels_long, len(model_dict["filters"]))
-    sp = spec.reshape((1, spec.shape[0], spec.shape[1], 1))
-    if predict:
-        lab_pred = model.predict(sp, verbose=0)
-        lab_pred = lab_pred[0, :, :]
-        lab_pred = (lab_pred + 0.5).astype(int)
-    title = (
-        Path(df["fnstem_path"].iloc[index]).stem
-        + "    "
-        + df["t_start"].iloc[index]
-        + "-"
-        + df["t_stop"].iloc[index]
-    )
-    if predict:
-        return spec, lab_true, lab_pred, title
-    else:
-        return spec, lab_true, None, title
-
-
-predict = False
-spec, lab_true, lab_pred, title = get_spec_labels(test_df, 0, predict)
-
-# %%
-# Build  model
-print("Building model:")
-
-model_choice_dict = {
-    "cnn_res_model": lambda: mod.build_cnn_res_model(
-        input_shape,
-        num_labels,
-        model_dict["filters"],
-        model_dict["kernel_size"],
-        model_dict["dropout_rate"],
-    ),
-    "cnn_res_lstm_model": lambda: mod.build_cnn_res_lstm_model(
-        input_shape,
-        num_labels,
-        model_dict["filters"],
-        model_dict["kernel_size"],
-        model_dict["dropout_rate"],
-        model_dict["lstm_units"],
-    ),
-    "cnn_res_transformer_model": lambda: mod.build_cnn_res_transformer_model(
-        input_shape,
-        num_labels,
-        model_dict["filters"],
-        model_dict["kernel_size"],
-        model_dict["dropout_rate"],
-        model_dict["num_heads"],
-    ),
-}
-input_shape = (spec.shape[0], spec.shape[1], 1)  #  shape
-num_labels = lab_true.shape[1]  # Number of sound types
-
-model = mod.build_model(model_choice_dict, model_dict, input_shape, num_labels)
-
-
-# %%
-# Loading model weights
-print("Loading weights from stored model:", model_dict["name"])
-model.load_weights(
-    "/Users/sb/polybox/Documents/Research/Sebastian/OrcAI_project/Results/Euler/Final/cnn_res_lstm_model_final/cnn_res_lstm_model"
+from orcAI.architectures import (
+    build_model,
+    masked_binary_accuracy,
+    masked_binary_crossentropy,
 )
-
-# %%
-# Compiling Model
-print("Compiling model:", model_dict["name"])
-# Metric
-masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-    fn=lambda y_true, y_pred: mod.masked_binary_accuracy(
-        y_true, y_pred, mask_value=-1.0
-    ),
-    name="masked_binary_accuracy",
-)
-
-model.compile(
-    optimizer="adam",
-    loss=lambda y_true, y_pred: mod.masked_binary_crossentropy(
-        y_true, y_pred, mask_value=-1.0
-    ),
-    metrics=[masked_binary_accuracy_metric],
-)
-
-aux.print_memory_usage()
+from orcAI.load import reload_dataset, data_generator, ChunkedMultiZarrDataLoader
 
 
-# %%
-# Functions to compute misclassification matrix
-def stack_batch(batch):
+def _stack_batch(batch):
+    """Stack a batch of label matrices."""
     stacked = np.vstack(batch).astype(int)
     return stacked
 
 
-def get_mask_for_rows_with_atmost_one_1(mat):
-    count_ones_per_row = np.sum(mat == 1, axis=1)
+def _get_mask_for_rows_with_atmost_one_1(matrix):
+    """Get a boolean mask for rows with at most one '1' in a matrix."""
+    count_ones_per_row = np.sum(matrix == 1, axis=1)
     # Create a boolean mask: True if the row has <= 1 '1'
     mask = count_ones_per_row <= 1
     return mask
 
 
-def compute_misclassification_table(mat1, mat2, suffix1, suffix2, calls_list):
-    cm = np.zeros((num_labels + 1, num_labels + 1))
-    for row_index in range(mat1.shape[0]):
-        col_mat1_equal_one = np.where(mat1[row_index, :] == 1)[0]
-        cols_mat2_equal_one = np.where(mat2[row_index, :] == 1)[0]
+def _compute_misclassification_table(
+    label_matrix_1, label_matrix_2, suffix_1, suffix_2, label_names
+):
+    """Compute the misclassification table between two label matrices.
+
+    Parameters
+    ----------
+    label_matrix_1: np.ndarray
+        Binary label matrix.
+    label_matrix_2: np.ndarray
+        Binary label matrix.
+    suffix_1: str
+        Suffix for the first label matrix. (e.g. "true")
+    suffix_2: str
+        Suffix for the second label matrix. (e.g. "pred")
+    label_names: list[str]
+        List of label names.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing the misclassification table (1 vs 2).
+    """
+    num_labels = len(label_names)
+    misclassification_matrix = np.zeros((num_labels + 1, num_labels + 1))
+
+    for row_index in range(label_matrix_1.shape[0]):
+        col_mat1_equal_one = np.where(label_matrix_1[row_index, :] == 1)[0]
+        cols_mat2_equal_one = np.where(label_matrix_2[row_index, :] == 1)[0]
         if len(col_mat1_equal_one) == 1:
             if (
-                mat2[row_index, col_mat1_equal_one] != -1
+                label_matrix_2[row_index, col_mat1_equal_one] != -1
             ):  # only proceed if column in second matrix is not masked
                 if len(cols_mat2_equal_one) > 0:
                     for cp_i in cols_mat2_equal_one:
-                        cm[col_mat1_equal_one, cp_i] += 1 / len(cols_mat2_equal_one)
+                        misclassification_matrix[col_mat1_equal_one, cp_i] += 1 / len(
+                            cols_mat2_equal_one
+                        )
                 else:
-                    cm[col_mat1_equal_one, num_labels] += 1
+                    misclassification_matrix[col_mat1_equal_one, num_labels] += 1
         if len(col_mat1_equal_one) == 0:
             if len(cols_mat2_equal_one) > 0:
                 for cp_i in cols_mat2_equal_one:
-                    cm[num_labels, cp_i] += 1 / len(cols_mat2_equal_one)
+                    misclassification_matrix[num_labels, cp_i] += 1 / len(
+                        cols_mat2_equal_one
+                    )
             else:
-                cm[num_labels, num_labels] += 1
+                misclassification_matrix[num_labels, num_labels] += 1
         if len(col_mat1_equal_one) > 1:
             print("WARNING: more than one 1 in row of matrix y_true_stacked_drop")
 
     # normalize confusion matrix
-    row_sum = np.sum(cm, axis=1, keepdims=True)
-    cm = cm / row_sum
-    cm = np.around(cm, 3)
-    col_names = [suffix2 + "_" + x for x in calls_list]
-    col_names += [suffix2 + "_NOLABEL"]
-    row_names = [suffix1 + "_" + x for x in calls_list]
-    row_names += [suffix1 + "_NOLABEL"]
-    misclassification_table = pd.DataFrame(cm)
+    row_sum = np.sum(misclassification_matrix, axis=1, keepdims=True)
+    misclassification_matrix = misclassification_matrix / row_sum
+    misclassification_matrix = np.around(misclassification_matrix, 3)
+    col_names = [suffix_2 + "_" + x for x in label_names]
+    col_names += [suffix_2 + "_NOLABEL"]
+    row_names = [suffix_1 + "_" + x for x in label_names]
+    row_names += [suffix_1 + "_NOLABEL"]
+    misclassification_table = pd.DataFrame(misclassification_matrix)
     misclassification_table.columns = col_names
     misclassification_table.index = row_names
     misclassification_table["fraction_time"] = np.around(row_sum / sum(row_sum), 5)
@@ -224,257 +104,319 @@ def compute_misclassification_table(mat1, mat2, suffix1, suffix2, calls_list):
     return misclassification_table
 
 
-# %%
-# run model on test data
-test_dataset = load.reload_dataset(data_dir + "test_dataset", model_dict["batch_size"])
-print("Evaluate model on test data:", model_dict["name"])
-test_loss, test_metric = model.evaluate(test_dataset)
-print(f"  - test loss: {test_loss}")
-print(f"  - test masked binary accuracy: {test_metric}")
+def compute_misclassification_tables(
+    label_matrix_1, label_matrix_2, suffix_1, suffix_2, label_names
+):
+    """Compute both misclassification tables for two label matrices (predicted and true).
 
-for spectrogram_batch, label_batch in test_dataset.take(1):
-    print(f"  - spectrogram batch shape: {spectrogram_batch.shape}")
-    print(f"  - Label batch shape: {label_batch.shape}")
+    Parameters
+    ----------
+    label_matrix_1: np.ndarray
+        Binary label matrix.
+    label_matrix_2: np.ndarray
+        Binary label matrix.
+    suffix_1: str
+        Suffix for the first label matrix. (e.g. "true")
+    suffix_2: str
+        Suffix for the second label matrix. (e.g. "pred")
+    label_names: list[str]
+        List of label names.
 
-# Confusion matrices
-print(f"  - confusion matrices on test data:")
-# Extract true labels
-y_pred_batch = []
-y_true_batch = []
-i = 1
-len_test_data = len(test_dataset)
-print("  - predicting test data:")
-for spectrogram_batch, label_batch in test_dataset:
-    # print("  -", i, "of", len_test_data)
-    y_true_batch.append(label_batch.numpy())
-    y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
-    i += 1
-
-y_true_batch = np.concatenate(y_true_batch, axis=0)
-y_pred_batch = np.concatenate(y_pred_batch, axis=0)
-confusion_matrices = aux.compute_confusion_matrix(
-    y_true_batch, y_pred_batch, calls_for_labeling_list, mask_value=-1
-)
-aux.print_confusion_matrices(confusion_matrices)
-test_accuracy = mod.masked_binary_accuracy(
-    y_true_batch, y_pred_batch, mask_value=-1.0
-).numpy()
-
-print(
-    " - masked binary test accuracy based on select data (equivalent to train and val):",
-    test_accuracy,
-)
-
-# aux.write_dict(
-#     confusion_matrices,
-#     project_dir + "Results/" + model_dict["name"] + "/" + "/confusion_matrices",
-# )
-
-y_pred_batch_test = y_pred_batch
-y_true_batch_test = y_true_batch
+    Returns
+    -------
+    dict
+        A dictionary containing both misclassification tables (e.g. "true_pred" and "pred_true").
 
 
-# %%
-# Convert to binary and stack batch
-# convert y_pred_batch to binary values
-y_pred_binary_batch_test = (y_pred_batch_test >= 0.5).astype(int)
-# stack y_true_batch and y_pred_binary_batch_test
-y_true_stacked = stack_batch(y_true_batch)
-y_pred_binary_stacked = stack_batch(y_pred_binary_batch_test)
+    """
+    label_matrix_1_mask = _get_mask_for_rows_with_atmost_one_1(label_matrix_1)
+    label_matrix_2_mask = _get_mask_for_rows_with_atmost_one_1(label_matrix_2)
 
-# %%
-# compute misclassification table true vs pred
-# get mask for those rows where there is at most one 1 (i.e. avoid overlapping labels)
-mask = get_mask_for_rows_with_atmost_one_1(y_true_stacked)
-# drop rows with overlapping labels in y_true_stacked
-y_true_stacked_drop = y_true_stacked[mask]
-y_pred_binary_stacked_drop = y_pred_binary_stacked[mask]
-# compute misclassification
-misclassification_table_true_vs_pred = compute_misclassification_table(
-    y_true_stacked_drop,
-    y_pred_binary_stacked_drop,
-    "true",
-    "pred",
-    calls_for_labeling_list,
-)
-misclassification_table_true_vs_pred
-
-# %%
-# compute misclassification table pred vs true
-# get mask for those rows where there is at most one 1 (i.e. avoid overlapping labels)
-mask = get_mask_for_rows_with_atmost_one_1(y_pred_binary_stacked)
-# drop rows with overlapping labels in y_true_stacked
-y_true_stacked_drop = y_true_stacked[mask]
-y_pred_binary_stacked_drop = y_pred_binary_stacked[mask]
-misclassification_table_pred_vs_true = compute_misclassification_table(
-    y_pred_binary_stacked_drop,
-    y_true_stacked_drop,
-    "pred",
-    "true",
-    calls_for_labeling_list,
-)
-misclassification_table_pred_vs_true
+    misclassification_table_1_2 = _compute_misclassification_table(
+        label_matrix_1[label_matrix_1_mask],
+        label_matrix_2[label_matrix_1_mask],
+        suffix_1,
+        suffix_2,
+        label_names,
+    )
+    misclassification_table_2_1 = _compute_misclassification_table(
+        label_matrix_2[label_matrix_2_mask],
+        label_matrix_1[label_matrix_2_mask],
+        suffix_2,
+        suffix_1,
+        label_names,
+    )
+    return {
+        "_".join([suffix_1, suffix_2]): misclassification_table_1_2,
+        "_".join([suffix_2, suffix_1]): misclassification_table_2_1,
+    }
 
 
-# %%
-# run model on test part of extracted_snippets
-test_all_df = extracted_snippets[["fnstem_path", "row_start", "row_stop"]][
-    extracted_snippets["type"] == "test"
-]
-test_all_df = test_all_df.sample(n=100000, replace=False).reset_index()
-batch_size = model_dict["batch_size"]
-n_filters = len(model_dict["filters"])
-shuffle = False
-test_all_loader = load.ChunkedMultiZarrDataLoader(
-    test_all_df,
-    batch_size=batch_size,
-    n_filters=n_filters,
-    shuffle=shuffle,
-)
-test_all_dataset = tf.data.Dataset.from_generator(
-    lambda: load.data_generator(test_all_loader),
-    output_signature=(
-        tf.TensorSpec(
-            shape=(spectrogram_batch.shape[1], spectrogram_batch.shape[2], 1),
-            dtype=tf.float32,
-        ),  # Single spectrogram shape
-        tf.TensorSpec(
-            shape=(label_batch.shape[1], label_batch.shape[2]), dtype=tf.float32
-        ),  # Single label shape
-    ),
-)
-test_all_dataset = test_all_dataset.batch(
-    batch_size, drop_remainder=True
-).prefetch(  # Batch size as defined in model_dict
-    buffer_size=tf.data.AUTOTUNE
-)
-total_batches = len(test_all_loader)  # Assuming test_all_loader supports len()
+def compute_confusion_table(
+    y_true_batch: np.ndarray,
+    y_pred_batch: np.ndarray,
+    label_names: list[str],
+):
+    """Compute the confusion matrix for each label across the entire batch.
 
-test_all_dataset = test_all_dataset.apply(
-    tf.data.experimental.assert_cardinality(total_batches)
-)
+    Parameters:
+    ----------
+    y_true_batch: np.ndarray
+        Ground truth binary labels with shape (batch_size, time_steps, num_labels).
+    y_pred_batch: np.ndarray
+        Predicted labels with shape (batch_size, time_steps, num_labels).
+    label_names: list[str]
+        List of label names.
 
-# %%
-# Evaluate on all snippets rather than just test
-print("Evaluate model on all snippets in test segments of wav:", model_dict["name"])
-test_loss, test_metric = model.evaluate(test_all_dataset)
-print(f"  - test loss: {test_loss}")
-print(f"  - test masked binary accuracy: {test_metric}")
+    Returns
+    -------
+    confusion_table: pd.DataFrame
+        A DataFrame with confusion values for each label.
 
-print(f"  - confusion matrices on all test snippets (not removing empty ones):")
-# Extract true labels
-y_pred_batch = []
-y_true_batch = []
-i = 1
-len_test_data_all = len(test_all_dataset)
-print("  - predicting test data on all snippets:")
-print("     - # snippets:", len_test_data)
-for spectrogram_batch, label_batch in test_all_dataset:
-    print(".", sep="")
-    if i % 80 == 0:
-        print("")
-    y_true_batch.append(label_batch.numpy())
-    y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
-    i += 1
+    """
+    mask_value = -1
+    # Ensure inputs are numpy arrays
+    y_true_batch = np.array(y_true_batch)
+    y_pred_binary_batch = (y_pred_batch >= 0.5).astype(int)
+    y_pred_binary_batch = np.array(y_pred_binary_batch)
 
-y_true_batch = np.concatenate(y_true_batch, axis=0)
-y_pred_batch = np.concatenate(y_pred_batch, axis=0)
-confusion_matrices_test_all = aux.compute_confusion_matrix(
-    y_true_batch, y_pred_batch, calls_for_labeling_list, mask_value=-1
-)
-aux.print_confusion_matrices(confusion_matrices_test_all)
-test_all_accuracy = mod.masked_binary_accuracy(
-    y_true_batch, y_pred_batch, mask_value=-1.0
-).numpy()
-print(" - masked binary test accuracy based on all data:", test_all_accuracy)
+    # Validate input shapes
+    assert (
+        y_true_batch.shape == y_pred_binary_batch.shape
+    ), "Shapes of y_true_batch and y_pred_binary_batch must match"
 
-# aux.write_dict(
-#     confusion_matrices,
-#     project_dir + "Results/" + model_dict["name"] + "/" + "/confusion_matrices",
-# )
+    # Initialize a dictionary to store confusion matrices for each label
+    confusion_table = {}
 
-y_pred_batch_all = y_pred_batch
-y_true_batch_all = y_true_batch
+    for label_idx in range(len(label_names)):
+        # Flatten the predictions and ground truth for the current label
+        y_true_flat = y_true_batch[:, :, label_idx].flatten()
+        y_pred_flat = y_pred_binary_batch[:, :, label_idx].flatten()
 
-# %%
-# Convert to binary and stack batch
-# convert y_pred_batch to binary values
-y_pred_binary_batch_all = (y_pred_batch_all >= 0.5).astype(int)
-# stack y_true_batch and y_pred_binary_batch_all
-y_true_stacked = stack_batch(y_true_batch_all)
-y_pred_binary_stacked = stack_batch(y_pred_binary_batch_all)
+        # Apply the mask to exclude masked values
+        mask = y_true_flat != mask_value
+        y_true_filtered = y_true_flat[mask]
+        y_pred_filtered = y_pred_flat[mask]
 
-# %%
-# compute misclassification table true vs pred
-# get mask for those rows where there is at most one 1 (i.e. avoid overlapping labels)
-mask = get_mask_for_rows_with_atmost_one_1(y_true_stacked)
-# drop rows with overlapping labels in y_true_stacked
-y_true_stacked_drop = y_true_stacked[mask]
-y_pred_binary_stacked_drop = y_pred_binary_stacked[mask]
-# compute misclassification
-misclassification_table_all_true_vs_pred = compute_misclassification_table(
-    y_true_stacked_drop,
-    y_pred_binary_stacked_drop,
-    "true",
-    "pred",
-    calls_for_labeling_list,
-)
-print(misclassification_table_all_true_vs_pred.to_latex())
-
-# %%
-# compute misclassification table pred vs true
-# get mask for those rows where there is at most one 1 (i.e. avoid overlapping labels)
-mask = get_mask_for_rows_with_atmost_one_1(y_pred_binary_stacked)
-# drop rows with overlapping labels in y_true_stacked
-y_true_stacked_drop = y_true_stacked[mask]
-y_pred_binary_stacked_drop = y_pred_binary_stacked[mask]
-misclassification_table_all_pred_vs_true = compute_misclassification_table(
-    y_pred_binary_stacked_drop,
-    y_true_stacked_drop,
-    "pred",
-    "true",
-    calls_for_labeling_list,
-)
-print(misclassification_table_all_pred_vs_true.to_latex())
+        # Compute the confusion matrix for the current label
+        [tn, fp], [fn, tp] = confusion_matrix(
+            y_true_filtered, y_pred_filtered, labels=[0, 1]
+        )
+        tot = tn + fp + fn + tp
+        cm = {
+            "TP": float(tp / tot),
+            "FN": float(fn / tot),
+            "FP": float(fp / tot),
+            "TN": float(tn / tot),
+            "PR": float(tp / (tp + fp)) if tp + fp > 0 else np.nan,
+            "RE": float(tp / (tp + fn)) if tp + fn > 0 else np.nan,
+            "F1": float(2 * tp / (2 * tp + fp + fn)) if tp + fp + fn > 0 else np.nan,
+            "Total": int(tot),
+        }
+        # Store the confusion matrix
+        confusion_table[label_names[label_idx]] = cm
+    confusion_table = pd.DataFrame.from_dict(
+        confusion_table, orient="index"
+    ).sort_values(by="Total", ascending=False)
+    return confusion_table
 
 
-# %%
-# generate latex table for confusion matrices
-df = pd.DataFrame.from_dict(confusion_matrices, orient="index").reset_index()
-df.insert(1, "set", "select")
-df.rename(columns={"index": "label"}, inplace=True)
-df_all = pd.DataFrame.from_dict(
-    confusion_matrices_test_all, orient="index"
-).reset_index()
-df_all.insert(1, "set", "all")
-df_all.rename(columns={"index": "label"}, inplace=True)
+def _test_model_on_dataset(
+    model: tf.keras.Model,
+    dataset: tf.data.Dataset,
+    label_names: list[str],
+    dataset_name: str,
+    msgr: Messenger,
+):
+    """Test a model on a dataset."""
+    msgr.part(f"Testing model on {dataset_name}", indent=1)
+    msgr.info(f"Evaluating model on {dataset_name}")
+    data_loss, data_metric = model.evaluate(
+        dataset, verbose=0 if msgr.verbosity < 3 else 1
+    )
+    msgr.info(f"loss: {data_loss:.4f}")
+    msgr.info(f"masked binary accuracy: {data_metric:.4f}")
+    msgr.debug(f"Input (spectrogram) shape: {model.input_shape}")
+    msgr.debug(f"Output (labels) shape: {model.output_shape}", indent=-1)
 
-confusion_matrix_table = pd.concat([df, df_all])
-# confusion_matrix_table = confusion_matrix_table.sort_values(['label'])
-for col in ["TP", "FN", "FP", "TN"]:
-    confusion_matrix_table[col] = (confusion_matrix_table[col] * 100).round(3)
+    # CONFUSION MATRICES
+    msgr.part(f"Calculating confusion table for {dataset_name}")
+    data_predicted = []
+    data_true = []
 
-print(confusion_matrix_table.to_latex(index=False))
+    for spectrogram_batch, label_batch in tqdm(
+        dataset, disable=True if msgr.verbosity < 2 else None
+    ):
+        data_true.append(label_batch.numpy())
+        data_predicted.append(model.predict(spectrogram_batch, verbose=0))
 
-# %%
-# show spec, lab_true, lab_pred for random element of test_df
-show_random_snippets = False
-if show_random_snippets:
-    random_index = random.randint(0, len(test_df))
-    predict = True
-    spec, lab_true, lab_pred, title = get_spec_labels(test_df, random_index, predict)
+    data_true = np.concatenate(data_true, axis=0)
+    data_predicted = np.concatenate(data_predicted, axis=0)
 
-    lower_quantile, upper_quantile = np.quantile(spec, [0.001, 0.999])
-    clipped_spec = np.clip(spec, lower_quantile, upper_quantile)
-    max_val = np.max(clipped_spec)
-    min_val = np.min(clipped_spec)
-    clipped_normed_spec = (clipped_spec - min_val) / (max_val - min_val)
-    plot.plot_spec_and_labels(
-        spec,
-        calls_for_labeling_list,
-        lab_true,
-        lab_pred,
-        title,
+    confusion_table = compute_confusion_table(data_true, data_predicted, label_names)
+    msgr.info(confusion_table)
+
+    # MISCLASSIFICATION TABLES on dataset
+    data_true_stacked = _stack_batch(data_true)
+    data_predicted_stacked = _stack_batch((data_predicted >= 0.5).astype(int))
+
+    # compute misclassification
+    missclassification_tables = compute_misclassification_tables(
+        label_matrix_1=data_true_stacked,
+        label_matrix_2=data_predicted_stacked,
+        suffix_1="true",
+        suffix_2="pred",
+        label_names=label_names,
+    )
+    msgr.part("Misclassification tables on dataset:")
+    for key, table in missclassification_tables.items():
+        msgr.info("\n" + key, indent=1)
+        msgr.info(table, indent=-1)
+
+    return {
+        "dataset": dataset_name,
+        "loss": data_loss,
+        "masked_binary_accuracy": data_metric,
+        "confusion_table": confusion_table,
+        "misclassification_tables": missclassification_tables,
+    }
+
+
+def _save_test_results(
+    results: dict,
+    save_results_dir: Path,
+    msgr: Messenger,
+):
+    """Save test results to disk."""
+    msgr.part(f"Saving test results")
+    dataset_name = results["dataset"]
+
+    metrics = {
+        key: value
+        for key, value in results.items()
+        if key in ["loss", "masked_binary_accuracy"]
+    }
+    with open(save_results_dir.joinpath(dataset_name + "_metrics.json"), "w") as f:
+        json.dump(metrics, f)
+
+    results["confusion_table"].to_csv(
+        save_results_dir.joinpath(dataset_name + "_confusion_table.csv")
     )
 
-# %%
+    for key, table in results["misclassification_tables"].items():
+        table.to_csv(
+            save_results_dir.joinpath(
+                dataset_name + "_" + "misclassification_table_" + key + ".csv"
+            )
+        )
+    msgr.part(f"saved test results to {save_results_dir}")
+    return
+
+
+def test_model(
+    model_path: Path | str,
+    model_data_dir: Path | str,
+    test_data_sample_size: int = 100000,
+    save_results_dir: None | Path | str = None,
+    verbosity: int = 2,
+):
+    """Test a trained model on test data and a sample of test snippets."
+    Parameters
+    ----------
+    model_path : Path | str
+        Path to the model directory.
+    model_data_dir : Path | str
+        Path to the model data directory containing the training, valdidation
+        and testing data.
+    test_data_sample_size : int
+        Number of test snippets to sample from the complete test data for testing. Default is 100000.
+    save_results_dir : None | Path | str
+        Directory to save the test results. Default is None (no saving).
+    verbosity : int
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+
+    Returns
+    -------
+    None
+        Saves results to disk if save_results_dir is provided.
+    """
+
+    # Initialize messenger
+    msgr = Messenger(verbosity=verbosity)
+    model_data_dir = Path(model_data_dir)
+    model_path = Path(model_path)
+
+    msgr.part("OrcAI - testing model")
+    msgr.info(f"Model directory: {model_path}")
+    msgr.info(f"Model data directory: {model_data_dir}")
+
+    msgr.info("Loading parameter and data...", indent=1)
+    model_parameter = read_json(Path(model_path).joinpath("model_parameter.json"))
+    msgr.debug("Model parameter")
+    msgr.debug(model_parameter)
+
+    model_shape = read_json(model_path.joinpath("model_shape.json"))
+    trained_calls = read_json(model_path.joinpath("trained_calls.json"))
+
+    # LOAD MODEL #TODO: load from .keras file?
+    msgr.part("Compiling model")
+    model = build_model(**model_shape, model_parameter=model_parameter, msgr=msgr)
+    model.load_weights(model_path.joinpath("model_weights.h5"))
+    masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
+        fn=masked_binary_accuracy,
+        name="masked_binary_accuracy",
+    )
+    model.compile(
+        optimizer="adam",
+        loss=masked_binary_crossentropy,
+        metrics=[masked_binary_accuracy_metric],
+    )
+
+    msgr.part("Testing model on test data")
+    test_dataset = reload_dataset(
+        model_data_dir.joinpath("test_dataset"), model_parameter["batch_size"]
+    )
+    results_test_dataset = _test_model_on_dataset(
+        model, test_dataset, trained_calls, "test_data", msgr
+    )
+
+    msgr.part("Testing model on new sample of extracted test snippets")
+    all_snippets = pd.read_csv(model_data_dir.joinpath("all_snippets.csv.gz"))
+    all_test_snippets = all_snippets[all_snippets["data_type"] == "test"]
+    sampled_test_snippets = all_test_snippets.sample(
+        test_data_sample_size, replace=False
+    ).reset_index()
+    sampled_test_snippets_loader = ChunkedMultiZarrDataLoader(
+        sampled_test_snippets,
+        batch_size=model_parameter["batch_size"],
+        n_filters=len(model_parameter["filters"]),
+        shuffle=False,
+    )
+    test_sampled_dataset = tf.data.Dataset.from_generator(
+        lambda: data_generator(sampled_test_snippets_loader),
+        output_signature=(
+            tf.TensorSpec(
+                shape=(model.input_shape[1], model.input_shape[2], 1),
+                dtype=tf.float32,
+            ),  # Single spectrogram shape
+            tf.TensorSpec(
+                shape=(model.output_shape[1], model.output_shape[2]), dtype=tf.float32
+            ),  # Single label shape
+        ),
+    )
+    test_sampled_dataset = test_sampled_dataset.batch(
+        model_parameter["batch_size"], drop_remainder=True
+    ).prefetch(buffer_size=tf.data.AUTOTUNE)
+    total_batches = len(sampled_test_snippets_loader)
+    test_sampled_dataset = test_sampled_dataset.apply(
+        tf.data.experimental.assert_cardinality(total_batches)
+    )
+    results_test_dataset = _test_model_on_dataset(
+        model, test_sampled_dataset, trained_calls, "test_sampled_data", msgr
+    )
+
+    if save_results_dir is not None:
+        save_results_dir = Path(save_results_dir)
+        _save_test_results(results_test_dataset, save_results_dir, msgr)
+
+    return

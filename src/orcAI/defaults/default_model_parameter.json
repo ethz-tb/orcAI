@@ -1,5 +1,6 @@
 {
-    "name": "ResNetLSTM",
+    "name": "orcai-v1",
+    "architecture": "ResNetLSTM",
     "epochs": 30,
     "patience": 10,
     "batch_size": 32,
@@ -16,8 +17,5 @@
     "train": 0.8,
     "val": 0.1,
     "test": 0.1,
-    "masked_f1_metric": {
-        "threshold": 0.5
-    },
     "callback_metric": "val_masked_binary_accuracy"
 }

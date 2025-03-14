@@ -59,7 +59,7 @@ def train(
     load_weights : bool
         Load weights from previous training.
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     """
     # Initialize messenger
     msgr = Messenger(verbosity=verbosity)
@@ -109,7 +109,7 @@ def train(
     msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")
 
     # Verify the val dataset and obtain shape
-    spectrogram, labels = val_dataset.take(1).element_spec[0]
+    spectrogram, labels = val_dataset.take(1).element_spec
     msgr.info(f"Spectrogram batch shape: {spectrogram.shape}")
     msgr.info(f"Labels batch shape: {labels.shape}")
 
@@ -137,6 +137,14 @@ def train(
         fn=masked_f1_score,
         name="masked_f1_score",
         **model_parameter["masked_f1_metric"],
+    )
+    model.compile(
+        optimizer="adam",
+        loss=masked_binary_crossentropy,
+        metrics=[
+            masked_binary_accuracy_metric,
+            masked_f1_metric,
+        ],  # TODO: masked_f1_metric is not used? yep can be removed
     )
 
     # Callbacks
@@ -169,11 +177,6 @@ def train(
         min_lr=1e-6,  # Set a lower limit for the learning rate
         verbose=0 if verbosity < 3 else 1,  # Print updates to the console
     )
-    model.compile(
-        optimizer="adam",
-        loss=masked_binary_crossentropy,
-        metrics=[masked_binary_accuracy_metric, masked_f1_metric],
-    )
 
     total_params = model.count_params()
     trainable_params = _count_params(model.trainable_weights)
@@ -203,33 +206,6 @@ def train(
     with open(file_paths["history"], "w") as f:
         f.write(str(history.history))
 
-    # Model evaluation
-    msgr.info(f"Evaluating model: {model_name}", level="part")
-    test_loss, test_metric = model.evaluate(test_dataset)
-    msgr.info(f"test loss: {test_loss}")
-    msgr.info(f"test masked binary accuracy: {test_metric}")
-
-    msgr.part("Predicting test data:")
-    # Extract true labels
-    y_pred_batch = []
-    y_true_batch = []
-
-    with click.progressbar(test_dataset, label="Predicting test data") as test_data:
-        for spectrogram_batch, label_batch in test_data:
-            y_true_batch.append(label_batch.numpy())
-            y_pred_batch.append(model.predict(spectrogram_batch, verbose=0))
-
-    y_true_batch = np.concatenate(y_true_batch, axis=0)
-    y_pred_batch = np.concatenate(y_pred_batch, axis=0)
-    confusion_matrices = compute_confusion_matrix(
-        y_true_batch, y_pred_batch, label_calls, mask_value=-1
-    )
-    msgr.info(f"confusion matrices:", indent=1)
-    msgr.print_confusion_matrices(confusion_matrices)
-    masked_binary_accuracy(y_true_batch, y_pred_batch, mask_value=-1.0)
-    write_json(confusion_matrices, file_paths["confusion_matrices"])
-    msgr.print_dict(confusion_matrices)
-
     # TODO: Somehow save spectrogram parameter with the model. Then load from there in predict.py
 
     write_json(
@@ -241,7 +217,7 @@ def train(
         file_paths["model_dir"].joinpath("model_shape.json"),
     )
     # TODO: Save model?
-    model.save(file_paths["model"])
+    model.save(file_paths["model"], include_optimizer=True)
 
     msgr.success(
         f"OrcAI - training model finished. Model saved to {file_paths['model']}"
@@ -343,7 +319,7 @@ def hyperparameter_search(
     parallel : bool
         Run hyperparameter search on multiple GPUs
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
 
     Returns
     -------
