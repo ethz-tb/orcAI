@@ -5,6 +5,8 @@
 ### Changed
 
 - **Breaking**: rename model architectures to correspond to manuscript (`efd3472c`)
+- **Breaking**: remove multiprocessing from predict. It wasn't working and caused more problems than it solved. -np parameter is not available anymore.
+- refactored predict_wav so that model is only loaded once in case of multiple predictions
 - changed confusion matrix to confusion table reporting TP, FN, FP, TN, precision, recall, F1 score and number of samples
 
 ### Added
@@ -47,4 +49,6 @@ _First prerelease._
 [0.1.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.1.0
 [0.2.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.0
 [0.2.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.1
+[0.3.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.3.0
+
 
