@@ -53,8 +53,10 @@ class Messenger:
         if set_indent is not None:
             self.n_indent = set_indent
 
-        if isinstance(message, dict) or isinstance(message, list):
+        if isinstance(message, dict):
             message = self.dict_to_str(message)
+        elif isinstance(message, list):
+            message = self.list_to_str(message)
         elif isinstance(message, pd.DataFrame | pd.Series):
             message = self.pd_to_str(message)
         else:
@@ -157,23 +159,10 @@ class Messenger:
             **kwargs,
         )
 
-    def confusion_matrices_to_str(self, confusion_matrices):
-        """Convert confusion matrices to a formatted string."""
-        message = ""
-        for label, cm in confusion_matrices.items():
-            message = message.append(
-                "\n".join(
-                    [
-                        f"............................",
-                        f"Label: {label}, total={cm['Total']}",
-                        f"   Predicted:     | POS     | NEG  ",
-                        f"   Actual:    POS | {100*cm['TP']:.5f} | {100*cm['FN']:.5f} ",
-                        f"              -------------------------- ",
-                        f"   Actual:    NEG | {100*cm['FP']:.5f} | {100*cm['TN']:.5f} ",
-                    ]
-                )
-            )
-        return message
+    def list_to_str(self, list):
+        """Convert a list to a formatted string with indentation."""
+        list_string = "\n".join(self.indent_str * self.n_indent + line for line in list)
+        return list_string
 
     def dict_to_str(self, dictionary):
         """Convert a dictionary or list to a formatted string with indentation."""
