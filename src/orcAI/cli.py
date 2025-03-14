@@ -120,7 +120,7 @@ def cli():
     type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_predict(**kwargs):
     from orcAI.predict import predict

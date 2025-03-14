@@ -144,7 +144,7 @@ def create_label_arrays(
     call_equivalences : (Path | str) | dict
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Making label arrays")

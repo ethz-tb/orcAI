@@ -90,7 +90,7 @@ def filter_predictions(
     msgr : Messenger
         Messenger object for logging. If None a new Messenger object is created.
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
 
     Returns
     -------
@@ -208,7 +208,7 @@ def predict_wav(
     msgr : Messenger
         Messenger object for logging. If None a new Messenger object is created.
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
 
     Returns
     -------

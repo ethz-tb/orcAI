@@ -196,7 +196,7 @@ def create_spectrograms(
     exclude : bool
         Exclude recordings without possible annotations.
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Reading recordings table")
