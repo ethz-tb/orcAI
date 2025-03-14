@@ -5,15 +5,19 @@
 ### Changed
 
 - **Breaking**: rename model architectures to correspond to manuscript (`efd3472c`)
+- changed confusion matrix to confusion table reporting TP, FN, FP, TN, precision, recall, F1 score and number of samples
 
 ### Added
 
 - docstrings in architectures.py
 - restructure hyperparameter_search.py and move to train.py
+- restructure test.py
+- removed all tests from train.py
 
 ### Removes
 
 - unused transformer models (`57794fed`)
+- plot fn
 
 ## [0.2.1] - 2025-03-07
 
