@@ -1,10 +1,31 @@
 # Changelog
 
+## [0.3.0] - 2025-03-14
+
+### Changed
+
+- **Breaking**: rename model architectures to correspond to manuscript (`efd3472c`)
+- **Breaking**: remove multiprocessing from predict. It wasn't working and caused more problems than it solved. -np parameter is not available anymore.
+- refactored predict_wav so that model is only loaded once in case of multiple predictions
+- changed confusion matrix to confusion table reporting TP, FN, FP, TN, precision, recall, F1 score and number of samples
+
+### Added
+
+- docstrings in architectures.py
+- restructure hyperparameter_search.py and move to train.py
+- restructure test.py
+- removed all tests from train.py
+
+### Removes
+
+- unused transformer models (`57794fed`)
+- plot fn
+
 ## [0.2.1] - 2025-03-07
 
 ### Changed
 
-- f37fea01: defer loading of cli commands to increase performance if only calling help. This massively speeds up the cli if only calling `--help` or `--version`
+- defer loading of cli commands to increase performance if only calling help. This massively speeds up the cli if only calling `--help` or `--version` (`f37fea01`)
 
 ## [0.2.0] - 2025-03-05
 
@@ -28,4 +49,6 @@ _First prerelease._
 [0.1.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.1.0
 [0.2.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.0
 [0.2.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.1
+[0.3.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.3.0
+
 

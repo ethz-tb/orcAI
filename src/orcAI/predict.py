@@ -4,13 +4,13 @@ import numpy as np
 from pathlib import Path
 from importlib.resources import files
 import time
-import tensorflow as tf
-from tqdm.contrib.concurrent import process_map
+import keras
+from tqdm import tqdm
 from functools import partial
 
 from orcAI.auxiliary import Messenger, read_json, find_consecutive_ones
 from orcAI.architectures import (
-    build_cnn_res_lstm_arch,
+    res_net_LSTM_arch,
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
@@ -90,7 +90,7 @@ def filter_predictions(
     msgr : Messenger
         Messenger object for logging. If None a new Messenger object is created.
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
 
     Returns
     -------
@@ -178,59 +178,26 @@ def filter_predictions(
     return predicted_labels_duration_ok
 
 
-def predict_wav(
-    recording_path,
-    channel=1,
-    model_path=files("orcAI.models").joinpath("orcai-V1"),
-    output_path="default",
-    call_duration_limits=None,
-    label_suffix="*",
-    msgr=None,
-    verbosity=2,
+def _predict_wav(
+    recording_path: Path | str,
+    channel: int,
+    model: keras.Model,
+    model_parameter: dict,
+    spectrogram_parameter: dict,
+    shape: dict,
+    label_calls: list,
+    output_path: Path | str = "default",
+    call_duration_limits: (Path | str) | dict = None,
+    label_suffix: str = "*",
+    msgr: Messenger = Messenger(verbosity=0),
+    progressbar: tqdm = None,
 ):
-    """
-    Predicts annotations for a given wav file and saves them in an output file.
-
-    Parameters
-    ----------
-    recording_path : (Path | Str)
-        Path to the wav file.
-    channel : int
-        Channel in wav file where calls are. Defaults to 1.
-    model_path : (Path | Str)
-        Path to the model directory.
-    output_path : (Path | Str) | "default" | None
-        Path to the output file or "default" to save in the same directory as the wav file. None to not save predictions to disk.
-    call_duration_limits : (Path | Str) | dict
-        Path to a JSON file containing a dictionary with call duration limits. Or a dictionary with call duration limits.
-    label_suffix : str
-        Suffix to add to the label names. defaults to "*".
-    msgr : Messenger
-        Messenger object for logging. If None a new Messenger object is created.
-    verbosity : int
-        Verbosity level.
-
-    Returns
-    -------
-    df_predicted_labels : pd.DataFrame
-        DataFrame with predicted labels
-
-    """
-    if msgr is None:
-        msgr = Messenger(verbosity=verbosity)
-
-    msgr.part(f"Predicting annotations for wav file: {recording_path}")
-
-    model_path = Path(model_path)
-    msgr.info(f"Model: {model_path.stem}")
-    msgr.info(f"Wav file: {recording_path}")
-
     if output_path is not None:
         if output_path == "default":
             filename = (
-                Path(recording_path).stem + "_" + model_path.stem + "_predicted.txt"
+                recording_path.stem + "_" + model_parameter["name"] + "_predicted.txt"
             )
-            output_path = Path(recording_path).with_name(filename)
+            output_path = recording_path.with_name(filename)
         else:
             output_path = Path(output_path)
         msgr.info(f"Output file: {output_path}")
@@ -238,46 +205,10 @@ def predict_wav(
             msgr.error(f"Annotation file already exists: {output_path}")
             sys.exit()
 
-    label_calls = read_json(model_path.joinpath("trained_calls.json"))
-    msgr.debug("Calls for labeling:")
-    msgr.debug(label_calls)
-
-    shape = read_json(model_path.joinpath("model_shape.json"))
-    msgr.debug(f"Input shape:")
-    msgr.debug(shape)
-
-    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
-    msgr.debug(f"Model parameter:")
-    msgr.debug(model_parameter)
-    spectrogram_parameter = read_json(model_path.joinpath("spectrogram_parameter.json"))
-
-    msgr.debug(f"Spectrogram parameters:")
-    msgr.debug(spectrogram_parameter)
-
-    msgr.part(f"Loading model: {model_path.stem}")
-
-    msgr.info("Building model architecture")
-    model = build_cnn_res_lstm_arch(**shape, **model_parameter)
-
-    msgr.info("Loading model weights")
-    model.load_weights(model_path.joinpath("model_weights.h5"))
-
-    msgr.info("Compiling model")
-    masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=lambda y_true, y_pred: masked_binary_accuracy(
-            y_true, y_pred, mask_value=-1.0
-        ),
-        name="masked_binary_accuracy",
-    )
-    model.compile(
-        optimizer="adam",
-        loss=lambda y_true, y_pred: masked_binary_crossentropy(
-            y_true, y_pred, mask_value=-1.0
-        ),
-        metrics=[masked_binary_accuracy_metric],
-    )
-
     # Generating spectrogram
+    if progressbar:
+        progressbar.set_description(f"{recording_path.stem}: Generating spectrogram")
+        progressbar.refresh()
     spectrogram, _, times = make_spectrogram(
         recording_path, channel, spectrogram_parameter, msgr=msgr
     )
@@ -290,11 +221,14 @@ def predict_wav(
 
     # Prediction
     msgr.part(f"Prediction of annotations for wav_file: {recording_path.stem}")
+    if progressbar:
+        progressbar.set_description(f"{recording_path.stem} - Predicting annotations")
+        progressbar.refresh()
     start_time = time.time()
     # Parameters
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
     shift = snippet_length // 2  # Shift time steps for overlapping windows
-    time_steps_per_output_step = 2**4  # TODO: MAGIC NUMBER
+    time_steps_per_output_step = 2 ** len(model_parameter["filters"])
     prediction_length = (
         snippet_length // time_steps_per_output_step
     )  # Output time steps per prediction
@@ -314,11 +248,15 @@ def predict_wav(
     msgr.info("Prediction of snippets")
     snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
     predictions = model.predict(
-        snippets, verbose=0 if verbosity < 2 else 1
+        snippets, verbose=0 if msgr.verbosity < 2 else 1
     )  # Shape: (num_snippets, 46, 7)
 
     # Step 3: Initialize arrays for aggregating predictions
     msgr.info("Aggregating predictions")
+    if progressbar:
+        progressbar.set_description(f"{recording_path.stem} - Aggregating predictions")
+        progressbar.refresh()
+
     total_time_steps = spectrogram.shape[0] // time_steps_per_output_step
     aggregated_predictions = np.zeros(
         (total_time_steps, shape["num_labels"])
@@ -387,25 +325,103 @@ def predict_wav(
     return predicted_labels
 
 
-def _parallel_predict_wav(
-    index,
-    recording_table,
+def predict_wav(
+    recording_path,
+    channel=1,
     model_path=files("orcAI.models").joinpath("orcai-V1"),
+    output_path="default",
     call_duration_limits=None,
     label_suffix="*",
+    msgr=None,
+    verbosity=2,
 ):
-    return predict_wav(
-        recording_path=Path(recording_table["base_dir_recording"].iloc[index]).joinpath(
-            recording_table["rel_recording_path"].iloc[index]
-        ),
-        channel=recording_table["channel"].iloc[index],
-        model_path=model_path,
-        output_path=recording_table["output_path"].iloc[index],
+    """
+    Predicts annotations for a given wav file and saves them in an output file.
+
+    Parameters
+    ----------
+    recording_path : (Path | Str)
+        Path to the wav file.
+    channel : int
+        Channel in wav file where calls are. Defaults to 1.
+    model_path : (Path | Str)
+        Path to the model directory.
+    output_path : (Path | Str) | "default" | None
+        Path to the output file or "default" to save in the same directory as the wav file. None to not save predictions to disk.
+    call_duration_limits : (Path | Str) | dict
+        Path to a JSON file containing a dictionary with call duration limits. Or a dictionary with call duration limits.
+    label_suffix : str
+        Suffix to add to the label names. defaults to "*".
+    msgr : Messenger
+        Messenger object for logging. If None a new Messenger object is created.
+    verbosity : int
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+    Returns
+    -------
+    df_predicted_labels : pd.DataFrame
+        DataFrame with predicted labels
+
+    """
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity)
+    model_path = Path(model_path)
+    recording_path = Path(recording_path)
+
+    msgr.part(f"Predicting annotations for wav file: {recording_path}")
+    msgr.info(f"Model: {model_path.stem}")
+    msgr.info(f"Wav file: {recording_path}")
+
+    label_calls = read_json(model_path.joinpath("trained_calls.json"))
+    msgr.debug("Calls for labeling:")
+    msgr.debug(label_calls)
+
+    shape = read_json(model_path.joinpath("model_shape.json"))
+    msgr.debug(f"Input shape:")
+    msgr.debug(shape)
+
+    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
+    msgr.debug(f"Model parameter:")
+    msgr.debug(model_parameter)
+    spectrogram_parameter = read_json(model_path.joinpath("spectrogram_parameter.json"))
+
+    msgr.debug(f"Spectrogram parameters:")
+    msgr.debug(spectrogram_parameter)
+
+    msgr.part(f"Loading model: {model_path.stem}")
+
+    msgr.info("Building model architecture")
+    model = res_net_LSTM_arch(**shape, **model_parameter)
+
+    msgr.info("Loading model weights")
+    model.load_weights(model_path.joinpath("model_weights.h5"))
+
+    msgr.info("Compiling model")
+    masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
+        fn=masked_binary_accuracy,
+        name="masked_binary_accuracy",
+    )
+    model.compile(
+        optimizer="adam",
+        loss=masked_binary_crossentropy,
+        metrics=[masked_binary_accuracy_metric],
+    )
+
+    predictions = _predict_wav(
+        recording_path=recording_path,
+        channel=channel,
+        model=model,
+        model_parameter=model_parameter,
+        spectrogram_parameter=spectrogram_parameter,
+        shape=shape,
+        label_calls=label_calls,
+        output_path=output_path,
         call_duration_limits=call_duration_limits,
         label_suffix=label_suffix,
-        msgr=None,
-        verbosity=0,
+        msgr=msgr,
+        progressbar=None,
     )
+
+    return predictions
 
 
 def predict(
@@ -413,14 +429,15 @@ def predict(
     channel=1,
     model_path=files("orcAI.models").joinpath("orcai-V1"),
     output_path="default",
-    num_processes=None,
     base_dir_recording=None,
     call_duration_limits=None,
     label_suffix="*",
     verbosity=2,
 ):
     msgr = Messenger(verbosity=verbosity)
+    model_path = Path(model_path)
     recording_path = Path(recording_path)
+
     if recording_path.suffix == ".wav":
         return predict_wav(
             recording_path,
@@ -434,7 +451,6 @@ def predict(
         )
     elif recording_path.suffix == ".csv":
         recording_table = pd.read_csv(recording_path)
-        msgr.part(f"Predicting annotations for {len(recording_table)} wav files")
     else:
         msgr.error("Recording file must be a wav or csv file")
         sys.exit()
@@ -452,19 +468,59 @@ def predict(
     else:
         recording_table["output_path"] = output_path
 
-    process_map(
-        partial(
-            _parallel_predict_wav,
-            recording_table=recording_table,
-            model_path=model_path,
-            call_duration_limits=call_duration_limits,
-            label_suffix=label_suffix,
-        ),
-        range(len(recording_table)),
-        max_workers=num_processes,
-        chunksize=1,
-        desc="Predicting annotations",
+    label_calls = read_json(model_path.joinpath("trained_calls.json"))
+    msgr.debug("Calls for labeling:")
+    msgr.debug(label_calls)
+
+    shape = read_json(model_path.joinpath("model_shape.json"))
+    msgr.debug(f"Input shape:")
+    msgr.debug(shape)
+
+    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
+    msgr.debug(f"Model parameter:")
+    msgr.debug(model_parameter)
+    spectrogram_parameter = read_json(model_path.joinpath("spectrogram_parameter.json"))
+
+    msgr.debug(f"Spectrogram parameters:")
+    msgr.debug(spectrogram_parameter)
+
+    msgr.part(f"Loading model: {model_path.stem}")
+
+    msgr.info("Building model architecture")
+    model = res_net_LSTM_arch(**shape, **model_parameter)
+
+    msgr.info("Loading model weights")
+    model.load_weights(model_path.joinpath("model_weights.h5"))
+
+    msgr.info("Compiling model")
+    masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
+        fn=masked_binary_accuracy,
+        name="masked_binary_accuracy",
+    )
+    model.compile(
+        optimizer="adam",
+        loss=masked_binary_crossentropy,
+        metrics=[masked_binary_accuracy_metric],
     )
 
+    msgr.part(f"Predicting annotations for {len(recording_table)} wav files")
+    progressbar = tqdm(recording_table.index, desc="Starting ...", unit="file")
+    for i in progressbar:
+        _predict_wav(
+            recording_path=Path(recording_table.loc[i, "base_dir_recording"]).joinpath(
+                recording_table.loc[i, "rel_recording_path"]
+            ),
+            channel=recording_table.loc[i, "channel"],
+            model=model,
+            model_parameter=model_parameter,
+            spectrogram_parameter=spectrogram_parameter,
+            shape=shape,
+            label_calls=label_calls,
+            output_path=recording_table.loc[i, "output_path"],
+            call_duration_limits=call_duration_limits,
+            label_suffix=label_suffix,
+            msgr=Messenger(verbosity=0),
+            progressbar=progressbar,
+        )
     msgr.success("Predictions finished.")
     return

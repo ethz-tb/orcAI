@@ -144,7 +144,7 @@ def create_label_arrays(
     call_equivalences : (Path | str) | dict
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Making label arrays")
@@ -210,11 +210,3 @@ def create_label_arrays(
     msgr.warning(f"No labels present in {recordings_no_labels}")
     msgr.success("Finished making label arrays")
     return
-
-
-def reshape_label_arr(arr, n_filters):
-    dim1 = arr.shape[0] // n_filters
-    dim2 = arr.shape[1]
-    if arr.shape[0] % n_filters == 0:
-        arr_out = (arr.reshape(dim1, n_filters, dim2).mean(axis=1) + 0.5).astype(int)
-    return arr_out

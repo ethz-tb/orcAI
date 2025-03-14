@@ -19,7 +19,7 @@ from orcAI.load import load_data_from_snippet_csv, data_generator
 
 
 def _make_snippet_table(
-    recording_data_dir,
+    recording_dir,
     snippet_parameter=files("orcAI.defaults").joinpath(
         "default_snippet_parameter.json"
     ),
@@ -32,7 +32,7 @@ def _make_snippet_table(
 
     Parameters
     ----------
-    recording_data_dir : str
+    recording_dir : str
         Path to the recording data directory
     snippet_parameter : dict | (str | Path)
         dict containing snippet parameter or path to path to a JSON file containing the same, by default files("orcAI.defaults").joinpath("default_snippet_parameter.json")
@@ -48,12 +48,10 @@ def _make_snippet_table(
     Int
         recording duration
     """
-    recording = Path(recording_data_dir).stem
-    label_zarr_path = Path(recording_data_dir).joinpath("labels", "labels.zarr")
-    label_list_path = Path(recording_data_dir).joinpath("labels", "label_list.json")
-    spectrogram_times_path = Path(recording_data_dir).joinpath(
-        "spectrogram", "times.json"
-    )
+    recording = Path(recording_dir).stem
+    label_zarr_path = Path(recording_dir).joinpath("labels", "labels.zarr")
+    label_list_path = Path(recording_dir).joinpath("labels", "label_list.json")
+    spectrogram_times_path = Path(recording_dir).joinpath("spectrogram", "times.json")
 
     try:
         spectrogram_times = read_json(spectrogram_times_path)
@@ -69,7 +67,7 @@ def _make_snippet_table(
         snippet_parameter = read_json(snippet_parameter)
 
     recording_duration = spectrogram_times["max"]
-    n_segments = int(recording_duration // snippet_parameter["length"])
+    n_segments = int(recording_duration // snippet_parameter["segment_duration"])
     if n_segments <= 0:
         msgr.warning(
             f"Duration of recording ({spectrogram_times['max']}) is shorter than segment length ({snippet_parameter['length']}). Skipping recording."
@@ -93,33 +91,34 @@ def _make_snippet_table(
     )
     delta_t = times[1] - times[0]
     n_filters = len(model_parameter["filters"])
-    i_duration = int(
-        (2**n_filters) * ((snippet_parameter["duration"] / delta_t) // (2**n_filters))
+    n_spectrogram_snippet_steps = int(
+        (2**n_filters)
+        * ((snippet_parameter["snippet_duration"] / delta_t) // (2**n_filters))
     )  # to make time axis divisible by 2 ** n_filters
-    msgr.info(f"i_duration: {i_duration}")  # TODO: clarify
+    msgr.info(f"Number of spectrogram snippet timesteps: {n_spectrogram_snippet_steps}")
     snippet_table_raw = []
     for i_segment in range(n_segments):  # iterate over all segments
-        msgr.info("Segment", i_segment + 1, "of", n_segments)
+        msgr.info(f"Segment {i_segment + 1} of {n_segments}")
         slice = (0, 0)
         for type in list(["train", "val", "test"]):  # iterate over type of snippet
             slice = (slice[1], slice[1] + model_parameter[type])
-            t_min = (i_segment + slice[0]) * snippet_parameter["length"]
+            t_min = (i_segment + slice[0]) * snippet_parameter["segment_duration"]
             for j in range(
                 int(
                     model_parameter[type]
-                    * snippet_parameter["length"]
-                    * snippet_parameter["per_sec"]
+                    * snippet_parameter["segment_duration"]
+                    * snippet_parameter["snippets_per_sec"]
                 )
             ):  # iterate over number of snippets per segment and type
                 t_max = (i_segment + slice[1]) * snippet_parameter[
-                    "length"
-                ] - snippet_parameter["duration"]
+                    "segment_duration"
+                ] - snippet_parameter["snippet_duration"]
                 t_start = np.random.uniform(low=t_min, high=t_max, size=1)[0]
 
                 # Find the max index where entries are smaller than t_start
                 index_t_start = np.searchsorted(times, t_start, side="left") - 1
                 # Find the min index where entries are smaller or equal to t_stop
-                index_t_stop = index_t_start + i_duration
+                index_t_stop = index_t_start + n_spectrogram_snippet_steps
                 label_chunk = label_filepointer[index_t_start:index_t_stop, :]
                 label_duration_snippet = label_chunk.sum(axis=0) * delta_t
                 label_duration_snippet[label_duration_snippet < 0] = np.nan
@@ -127,7 +126,7 @@ def _make_snippet_table(
                     list(
                         [
                             recording,
-                            recording_data_dir,
+                            recording_dir,
                             type,
                             index_t_start,
                             index_t_stop,
@@ -305,9 +304,11 @@ def _filter_snippet_table(
     msgr.info("Snippet stats [HMS]:")
     msgr.info(snippet_stats_duration)
 
-    indices_no_label = np.where(snippet_table[label_calls].sum(axis=1) <= 0.0000001)[0]
+    snippets_no_label = snippet_table[
+        snippet_table[label_calls].sum(axis=1) <= 0.0000001
+    ]
     p_no_label_before = np.around(
-        100 * len(indices_no_label) / snippet_table.shape[0], 2
+        100 * len(snippets_no_label) / snippet_table.shape[0], 2
     )
     msgr.info(
         f"Percentage of snippets containing no label before selection: {str(p_no_label_before)} %"
@@ -318,19 +319,19 @@ def _filter_snippet_table(
         f"removing {np.around(snippet_parameter['fraction_removal'] * 100, 2)}% of snippets without label"
     )
     indices_to_drop = np.random.choice(
-        indices_no_label,
-        size=int(snippet_parameter["fraction_removal"] * len(indices_no_label)),
+        snippets_no_label.index,
+        size=int(snippet_parameter["fraction_removal"] * len(snippets_no_label)),
         replace=False,
     )
-    # indices_to_drop.sort()
-    # snippet_table = snippet_table.reset_index(drop=True)
-    # TODO: this will change the indices essentially dropping different rows than selected. still random, i guess?
+    snippet_table = snippet_table.drop(indices_to_drop, axis=0)
 
-    snippet_table = snippet_table[~snippet_table.index.isin(indices_to_drop)]
-    indices_no_label = np.where(snippet_table[label_calls].sum(axis=1) <= 0.0000001)[0]
+    snippets_no_label = snippet_table[
+        snippet_table[label_calls].sum(axis=1) <= 0.0000001
+    ]
     p_no_label_after = np.around(
-        100 * len(indices_no_label) / snippet_table.shape[0], 2
+        100 * len(snippets_no_label) / snippet_table.shape[0], 2
     )
+
     msgr.info(
         f"Percentage of snippets containing no label after selection: {str(p_no_label_after)} %"
     )
@@ -500,7 +501,7 @@ def create_tvt_data(
         start_time = time.time()
         dataset_path = Path(tvt_dir, f"{itype}_dataset")
         dataset[itype].save(
-            path=str(dataset_path)
+            path=str(dataset_path)  # TODO: check path before trying to save
         )  # deadlocks silently on error https://github.com/tensorflow/tensorflow/issues/61736
         msgr.info(
             f"{itype.capitalize()} dataset saved to disk in {seconds_to_hms(time.time() - start_time)}"

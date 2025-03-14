@@ -84,14 +84,6 @@ def cli():
     help="Path to the output file/folder or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
 )
 @click.option(
-    "--num_processes",
-    "-np",
-    type=int,
-    default=3,
-    show_default=True,
-    help="Number of processes to use for prediction. None for all available cores.",
-)
-@click.option(
     "--base_dir_recording",
     "-bdr",
     type=ClickDirPathW,
@@ -120,7 +112,7 @@ def cli():
     type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_predict(**kwargs):
     from orcAI.predict import predict
@@ -203,6 +195,14 @@ def cli_filter_predictions(**kwargs):
     default=1,
     show_default=1,
     help="Default channel number for the recordings.",
+)
+@click.option(
+    "--label_calls",
+    "-lc",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to a JSON file containing calls for labeling or a dictionary with calls for labeling. Only needed if preparing table for generating training data.",
 )
 @click.option(
     "--update_table",

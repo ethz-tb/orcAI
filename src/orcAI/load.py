@@ -28,8 +28,7 @@ class ChunkedMultiZarrDataLoader(Sequence):
 
         # Preload Zarr files and JSON label names
         self.zarr_files = []
-        # self.label_names = [] # TODO: not used?
-        for idx, row in self.snippet_table.iterrows():
+        for _, row in self.snippet_table.iterrows():
             spectrogram_zarr_path = Path(row["recording_data_dir"]).joinpath(
                 "spectrogram", "spectrogram.zarr"
             )
@@ -141,7 +140,7 @@ class ChunkedMultiZarrDataLoader(Sequence):
         Shuffle indices at the end of each epoch if needed.
         """
         if self.shuffle:
-            shuffle(self.indices)
+            random_shuffle(self.indices)
 
 
 # data generator
@@ -161,12 +160,10 @@ def load_data_from_snippet_csv(
     batch_size = model_parameter["batch_size"]
     n_filters = len(model_parameter["filters"])
     shuffle = model_parameter["shuffle"]
-    # snippet_tables = [] #TODO: not used?
     loader_list = {}
     for i, csv_path in enumerate(csv_paths):
         snippet_table = pd.read_csv(csv_path)
         msgr.info(f"snippet file: {csv_path.stem}, length: {len(snippet_table)}")
-        # snippet_tables += [snippet_table] #TODO: not used?
         if i == 0:
             spectrogram = zarr.open(
                 Path(snippet_table.iloc[0]["recording_data_dir"]).joinpath(
@@ -189,7 +186,7 @@ def load_data_from_snippet_csv(
                 :,
             ]
         loader_list[csv_path.with_suffix("").stem] = ChunkedMultiZarrDataLoader(
-            snippet_table,  # snippet_tables[i], #TODO: not used?
+            snippet_table,
             batch_size=batch_size,
             n_filters=n_filters,
             shuffle=shuffle,
@@ -199,7 +196,7 @@ def load_data_from_snippet_csv(
         loader_list,
         spectrogram_chunk.shape,
         label_chunk.shape,
-    )  # TODO: spectrogram_chunk_shape, label_chunk_shape from first entry only. Can this be simplified?
+    )
 
 
 # reload tf dataset

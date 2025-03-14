@@ -57,10 +57,10 @@ This will use the included model `orcai-V1` to predict annotations in the input 
 Advanced usage e.g. for predicting multiple recordings in parallel:
 
 ```bash
-orcai predict path/to/recording_table.csv -o path/to/output_dir -np 4
+orcai predict path/to/recording_table.csv -o path/to/output_dir
 ```
 
-This will use the included model `orcai-V1` to predict annotations in the recordings listed in the recording table `path/to/recording_table.csv`. The output will be saved in the directory `path/to/output_dir` with the same name as the input file but with the extension `_orcai-V1_predicted.txt` and is compatible with Audacity. The predictions will be done in parallel using 4 processes.
+This will use the included model `orcai-V1` to predict annotations in the recordings listed in the recording table `path/to/recording_table.csv`. The output will be saved in the directory `path/to/output_dir` with the same name as the input file but with the extension `_orcai-V1_predicted.txt` and is compatible with Audacity.
 
 A appropriate recording table can be created using the `orcai create-recording-table` command, described below.
 

@@ -53,7 +53,9 @@ def make_spectrogram(
     if isinstance(spectrogram_parameter, (Path | str)):
         spectrogram_parameter = read_json(spectrogram_parameter)
 
-    msgr.info(f"Loading wav file: {wav_file_path.name}")
+    msgr.info(
+        f"Loading & resampling (to {spectrogram_parameter['sampling_rate']/1000:.2f} kHz) wav file: {wav_file_path.name}"
+    )
 
     start_time = time.time()
     wav_file, _ = load(
@@ -176,12 +178,12 @@ def create_spectrograms(
     exclude=True,
     verbosity=2,
 ):
-    """Creates spectrograms for all files in spectrogram_table
+    """Creates spectrograms for all files in recording table at recording_table_path
 
     Parameters
     ----------
     recording_table_path : Path
-        Path to .csv table with columns 'recording', 'channel' and columns indicating possibility of presence of calls (True/False). #TODO: clarify
+        Path to .csv table with columns 'recording', 'channel' and columns indicating possibility of presence of calls (True/False).
     base_dir : Path
         Base directory for the wav files. If not None entries in the recording column are interpreted as filenames
         searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.
@@ -194,7 +196,7 @@ def create_spectrograms(
     exclude : bool
         Exclude recordings without possible annotations.
     verbosity : int
-        Verbosity level.
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Reading recordings table")

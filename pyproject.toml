@@ -4,19 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orcAI"
-version = "0.2.1"
+version = "0.3.0"
 authors = [
     { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
     { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
     { name = "Nicholas Ochsner", email = "nicolas.ochsner@env.ethz.ch" },
     { name = "Daniel Angst", email = "daniel.angst@env.ethz.ch" },
-    { name = "Anna Selbmann" },
-    { name = "Patrick Miller" },
-    { name = "Volker Deecke" },
-    { name = "Filipa Samara" },
 ]
-description = "A software package to detect acoustic signals in spectrograms generated from audio recordings"
-keywords = ["Bioaccoustics", "Orca", "classification"] # TODO: update
+description = "A software package to detect acoustic signals in spectrograms generated from audio recordings" #TODO: add ref to paper
+keywords = [
+    "Bioaccoustics",
+    "Orca",
+    "classification",
+] # TODO: update keywords
 readme = "README.md"
 requires-python = "~=3.11"
 license = { text = "CC-BY-SA-4.0" }
@@ -25,6 +25,9 @@ dependencies = [
     "numpy<3",
     "pandas<3",
     "tensorflow<3",
+    "tensorflow-macos<3; platform_system=='Darwin'",
+    "tensorflow-metal; platform_system=='Darwin'",
+    "keras_tuner<2",
     "keras<4",
     "librosa",
     "psutil<8",
