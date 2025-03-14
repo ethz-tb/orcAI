@@ -1,5 +1,6 @@
 import tensorflow as tf
 from keras import layers
+from keras.saving import register_keras_serializable
 
 from orcAI.auxiliary import Messenger
 
@@ -81,7 +82,6 @@ def res_net_1Dconv_arch(
     return tf.keras.Model(inputs, outputs)
 
 
-# CNN RES LSTM Model
 def res_net_LSTM_arch(
     input_shape: tuple[int, int, int],
     num_labels: int,
@@ -180,6 +180,7 @@ def res_net_LSTM_arch(
 
 
 # define masked binary crossentropy and masked binary accuracy
+@register_keras_serializable(name="masked_binary_crossentropy")
 def masked_binary_crossentropy(y_true: any, y_pred: any):
     """Custom binary cross-entropy loss function with label masking.
 
@@ -210,6 +211,7 @@ def masked_binary_crossentropy(y_true: any, y_pred: any):
     return tf.reduce_mean(loss)
 
 
+@register_keras_serializable(name="masked_binary_accuracy")
 def masked_binary_accuracy(y_true: any, y_pred: any):
     """Custom binary accuracy metric that excludes masked labels.
 
@@ -240,6 +242,7 @@ def masked_binary_accuracy(y_true: any, y_pred: any):
     return tf.reduce_mean(accuracy)
 
 
+@register_keras_serializable(name="masked_f1_score")
 def masked_f1_score(y_true: any, y_pred: any, threshold: float = 0.5):
     """Custom F1 metric that excludes masked labels.
 
@@ -316,21 +319,24 @@ def build_model(
     Returns
     -------
         model : tf.keras.Model
-            Model architecture
+            Model
     """
 
-    if model_parameter["name"] in ORCAI_ARCHITECTURES:
-        model = ORCAI_ARCHITECTURES_FN[model_parameter["name"]](
+    if model_parameter["architecture"] in ORCAI_ARCHITECTURES:
+        model = ORCAI_ARCHITECTURES_FN[model_parameter["architecture"]](
             input_shape, num_labels, **model_parameter
         )
     else:
-        raise ValueError(f"Unknown model name: {model_parameter['name']}")
+        raise ValueError(
+            f"Unknown model architecture: {model_parameter['architecture']}"
+        )
 
     n_filters = len(model_parameter["filters"])
     output_shape = (input_shape[0] // 2**n_filters, num_labels)
 
     msgr.part("Building model architecture")
     msgr.info(f"model name:          {model_parameter['name']}")
+    msgr.info(f"model architecture:  {model_parameter['architecture']}")
     msgr.info(f"model input shape:   {model.input_shape}")
     msgr.info(f"model output shape:  {model.output_shape}")
     msgr.info(f"actual input_shape:  {input_shape}")
