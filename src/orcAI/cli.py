@@ -84,14 +84,6 @@ def cli():
     help="Path to the output file/folder or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
 )
 @click.option(
-    "--num_processes",
-    "-np",
-    type=int,
-    default=3,
-    show_default=True,
-    help="Number of processes to use for prediction. None for all available cores.",
-)
-@click.option(
     "--base_dir_recording",
     "-bdr",
     type=ClickDirPathW,
