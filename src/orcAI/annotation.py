@@ -178,6 +178,7 @@ def create_label_arrays(
         recording_table.index,
         desc="Converting annotation files",
         total=len(recording_table),
+        unit="recording",
     ):
         recording_labels = recording_table.loc[i, label_calls]
         labels_present = list(recording_labels[recording_labels].index)
