@@ -378,13 +378,3 @@ def find_consecutive_ones(binary_vector):
 
     # Combine starts and ends into a list of tuples
     return starts, stops
-
-
-def recording_table_show_func(index, recording_table):
-    """Show the recording and channel for a given index in the recording table. Used for progress bars."""
-    if index is not None:
-        return (
-            recording_table.loc[index, "recording"]
-            + ", Ch "
-            + str(recording_table.loc[index, "channel"])
-        )
