@@ -11,7 +11,7 @@ from sklearn.metrics import confusion_matrix
 
 from orcAI.auxiliary import (
     Messenger,
-    read_json_to_vector,
+    generate_times_from_spectrogram,
     seconds_to_hms,
     read_json,
 )
