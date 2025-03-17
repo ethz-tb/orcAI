@@ -2,16 +2,14 @@ from pathlib import Path
 from importlib.resources import files
 import numpy as np
 import pandas as pd
-from click import progressbar
+from tqdm import tqdm
 
 
 # import local
 from orcAI.auxiliary import (
     Messenger,
     read_json,
-    read_json_to_vector,
-    resolve_file_paths,
-    recording_table_show_func,
+    generate_times_from_spectrogram,
     save_as_zarr,
     write_json,
 )
@@ -30,29 +28,40 @@ def read_annotation_file(annotation_file_path):
     return annotation_file[["recording", "start", "stop", "origlabel"]]
 
 
-def read_annotation_files(fns):
-    """read multiple annotation file and return with fnstem as additional column"""
-    annot = pd.DataFrame()
-    for fn in fns:
-        a = read_annotation_file(fn)
-        annot = pd.concat([annot, a])
-    return annot
-
-
-def apply_label_equivalences(df, dict):
-    """map call_dict to origlabel"""
-    df["label"] = df["origlabel"].map(dict)
-    return df
-
-
 def convert_annotation(
-    annotation_file_path,
-    labels_present,
-    labels_masked,
-    call_equivalences=None,
-    msgr=Messenger(),
+    annotation_file_path: Path | str,
+    recording_data_dir: Path | str,
+    labels_present: list,
+    labels_masked: list,
+    call_equivalences: (Path | str) | dict = None,
+    msgr: Messenger = Messenger(),
 ):
-    """transform annotation into array with 0 for absence and 1 for presence and -1 for masked (presence not possible) of each label at times t_vec"""
+    """Transform annotation into array with 0 for absence and 1 for presence and
+    -1 for masked (presence not possible) of each label at times corresponding to spectrogram
+
+    Parameters
+
+    annotation_file_path : Path | str
+        Path to the annotation file.
+    recording_data_dir : Path | str
+        Path to the recording data directory where the spectrogram is stored.
+    labels_present : list
+        List of labels that are present in the annotation file.
+    labels_masked : list
+        List of labels that are masked in the annotation file.
+    call_equivalences : (Path | str) | dict
+        Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
+    msgr : Messenger
+        Messenger object for logging.
+
+    Returns
+    -------
+    annotations_array : pd.DataFrame
+        DataFrame with columns for each label present and masked in the annotation file.
+    label_list : dict
+        Dictionary with labels present or masked.
+
+    """
     msgr.part("Converting annotation to label array")
     # read annotation file
     recording = Path(annotation_file_path).stem
@@ -62,7 +71,7 @@ def convert_annotation(
         msgr.info("Applying call equivalences")
         if isinstance(call_equivalences, (Path | str)):
             call_equivalences = read_json(call_equivalences)
-        annotations = apply_label_equivalences(annotations, call_equivalences)
+        annotations["label"] = annotations["origlabel"].map(call_equivalences)
         all_orig_labels = set(annotations["origlabel"].unique())
         call_equivalences_keys = set(call_equivalences.keys())
         labels_not_in_equivalences = all_orig_labels.difference(call_equivalences_keys)
@@ -70,13 +79,11 @@ def convert_annotation(
             msgr.info("labels not in call_dict:", labels_not_in_equivalences)
 
     annotations = annotations[["start", "stop", "label"]]
-    spectrogram_dir = Path(annotation_file_path).parent.joinpath(
-        recording, "spectrogram"
-    )
+    spectrogram_dir = Path(recording_data_dir).joinpath(recording, "spectrogram")
 
     # load t_vec of spectrogram
     try:
-        t_vec = read_json_to_vector(spectrogram_dir.joinpath("times.json"))
+        t_vec = generate_times_from_spectrogram(spectrogram_dir.joinpath("times.json"))
     except FileNotFoundError as e:
         msgr.error(f"File not found: {spectrogram_dir.joinpath('times.json')}")
         msgr.error("Did you create the spectrogram?")
@@ -119,26 +126,27 @@ def convert_annotation(
 
 
 def create_label_arrays(
-    recording_table_path,
-    output_dir,
-    base_dir=None,
-    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
-    call_equivalences=None,
-    verbosity=2,
+    recording_table_path: Path | str,
+    output_dir: Path | str,
+    base_dir_annotation: Path | str = None,
+    label_calls: (Path | str) | dict = files("orcAI.defaults").joinpath(
+        "default_calls.json"
+    ),
+    call_equivalences: (Path | str) | dict = None,
+    verbosity: int = 2,
 ):
     """Makes label arrays for all files in recording_table
 
     Parameters
     ----------
-    recording_table_path : Path
+    recording_table_path : Path | str
         Path to .csv table with columns 'recording', 'channel' and columns corresponding to calls intendend for
         teaching (corresponding to calls in label_call) indicating possibility of presence of calls
         (even if no instance of this call is annotated).
-    base_dir : Path
-        Base directory for the recording files. If not None entries in the recording column are interpreted as filenames
-        searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.
-    output_dir : Path
+    output_dir : Path | str
         Output directory for the labels. If None the labels are saved in the same directory as the wav files.
+    base_dir_annotation : Path
+        Base directory for the annotation files. If None the base_dir_annotation is taken from the recording_table.
     label_calls : (Path | str) | dict
         Path to a JSON file containing calls for labeling or a dictionary with calls for labeling.
     call_equivalences : (Path | str) | dict
@@ -151,62 +159,57 @@ def create_label_arrays(
 
     recording_table = pd.read_csv(recording_table_path)
 
-    if base_dir is not None:
-        msgr.info(f"Resolving file paths...")
-        recording_table["annotation_file"] = resolve_file_paths(
-            base_dir,
-            recording_table["recording"],
-            ".txt",
-            msgr=msgr,
-        )
+    if base_dir_annotation is not None:
+        recording_table["base_dir_annotation"] = base_dir_annotation
 
-    missing_annotations = pd.isna(recording_table["annotation_file"])
-    if any(missing_annotations):
-        msgr.warning(
-            f"Missing annotation files for {sum(missing_annotations)} recordings. Skipping these recordings."
+    not_annotated = recording_table["base_dir_annotation"].isna()
+    if any(not_annotated):
+        msgr.info(
+            f"Missing annotation files for {sum(not_annotated)} recordings. Skipping these recordings."
         )
-        recording_table = recording_table[~missing_annotations]
+        recording_table = recording_table[~not_annotated]
 
     if isinstance(label_calls, (Path | str)):
         label_calls = read_json(label_calls)
     recordings_no_labels = []
-    with progressbar(
+
+    for i in tqdm(
         recording_table.index,
-        label="Converting annotation files",
-        item_show_func=lambda index: recording_table_show_func(
-            index,
-            recording_table,
-        ),
-    ) as recording_indices:
-        for i in recording_indices:
-            recording_labels = recording_table.loc[i, label_calls]
-            labels_present = list(recording_labels[recording_labels].index)
+        desc="Converting annotation files",
+        total=len(recording_table),
+    ):
+        recording_labels = recording_table.loc[i, label_calls]
+        labels_present = list(recording_labels[recording_labels].index)
 
-            if len(labels_present) > 0:
-                labels_masked = list(set(label_calls).difference(labels_present))
-                annotations_array, label_list = convert_annotation(
-                    recording_table.loc[i, "annotation_file"],
-                    labels_present,
-                    labels_masked,
-                    call_equivalences=call_equivalences,
-                    msgr=Messenger(verbosity=0),
-                )
+        if len(labels_present) > 0:
+            labels_masked = list(set(label_calls).difference(labels_present))
+            annotations_array, label_list = convert_annotation(
+                Path(recording_table.loc[i, "base_dir_annotation"]).joinpath(
+                    recording_table.loc[i, "rel_annotation_path"]
+                ),
+                Path(output_dir),
+                labels_present,
+                labels_masked,
+                call_equivalences=call_equivalences,
+                msgr=Messenger(verbosity=0),
+            )
 
-                # save
-                recording_output_dir = Path(output_dir).joinpath(
-                    recording_table.loc[i, "recording"], "labels"
-                )
+            # save
+            recording_output_dir = Path(output_dir).joinpath(
+                recording_table.loc[i, "recording"], "labels"
+            )
 
-                save_as_zarr(
-                    annotations_array.to_numpy(),
-                    recording_output_dir.joinpath("labels.zarr"),
-                    msgr=Messenger(verbosity=0),
-                )
-                write_json(label_list, recording_output_dir.joinpath("label_list.json"))
+            save_as_zarr(
+                annotations_array.to_numpy(),
+                recording_output_dir.joinpath("labels.zarr"),
+                msgr=Messenger(verbosity=0),
+            )
+            write_json(label_list, recording_output_dir.joinpath("label_list.json"))
 
-            else:
-                recordings_no_labels.append(recording_table.loc[i, "recording"])
+        else:
+            recordings_no_labels.append(recording_table.loc[i, "recording"])
 
-    msgr.warning(f"No labels present in {recordings_no_labels}")
+    if len(recordings_no_labels) > 0:
+        msgr.warning(f"No labels present in {recordings_no_labels}")
     msgr.success("Finished making label arrays")
     return
