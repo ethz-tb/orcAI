@@ -10,8 +10,12 @@ click.rich_click.COMMAND_GROUPS = {
             "commands": ["predict", "filter-predictions"],
         },
         {
+            "name": "Training Models",
+            "commands": ["create-spectrograms"],
+        },
+        {
             "name": "Helpers",
-            "commands": ["create-recording-table"],
+            "commands": ["init", "create-recording-table"],
         },
     ]
 }
@@ -244,3 +248,79 @@ def cli_create_recordings_table(**kwargs):
     from orcAI.helpers import create_recording_table
 
     create_recording_table(**kwargs)
+
+
+@cli.command(
+    name="init",
+    help="Initializes a new orcAI project with PROJECT_NAME in PROJECT_DIR.",
+    short_help="Initializes a new orcAI project.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("project_dir", type=ClickDirPathW)
+@click.argument("project_name", type=str)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_init_project(**kwargs):
+    from orcAI.helpers import init_project
+
+    init_project(**kwargs)
+
+
+@cli.command(
+    name="create-spectrograms",
+    help="Creates spectrograms for all files in recording table at RECORDING_TABLE_PATH.",
+    short_help="Creates spectrograms.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("recording_table_path", type=ClickFilePathR)
+@click.argument("output_dir", type=ClickDirPathW)
+@click.option(
+    "--base_dir_recording",
+    "-bdr",
+    type=ClickDirPathR,
+    default=None,
+    show_default="None",
+    help="Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.",
+)
+@click.option(
+    "--spectrogram_parameter",
+    "-sp",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
+    show_default="default_spectrogram_parameter.json",
+    help="Path to the spectrogram parameter file.",
+)
+@click.option(
+    "--exclude",
+    "-e",
+    is_flag=True,
+    help="Exclude recordings without possible annotations.",
+)
+@click.option(
+    "--label_calls",
+    "-lc",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_calls.json"),
+    show_default="default_calls.json",
+    help="Path to a JSON file containing calls for labeling or a dict.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_create_spectrograms(**kwargs):
+    from orcAI.spectrogram import create_spectrograms
+
+    create_spectrograms(**kwargs)

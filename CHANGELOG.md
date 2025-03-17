@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0] - unreleased
+
+### Added
+
+- added function to initialize a project, copying the default parameter files
+- added cli for making spectrograms
+
 ## [0.3.0] - 2025-03-14
 
 ### Changed

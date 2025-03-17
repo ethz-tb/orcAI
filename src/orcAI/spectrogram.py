@@ -3,8 +3,9 @@ from importlib.resources import files
 import numpy as np
 import time
 import pandas as pd
-from click import progressbar
 from librosa import load, stft, fft_frequencies, frames_to_time, amplitude_to_db
+from tqdm import tqdm
+
 
 # import local
 from orcAI.auxiliary import (
@@ -12,8 +13,6 @@ from orcAI.auxiliary import (
     read_json,
     save_as_zarr,
     write_vector_to_json,
-    resolve_file_paths,
-    recording_table_show_func,
 )
 
 
@@ -167,15 +166,46 @@ def save_spectrogram(
     return
 
 
+def _make_and_save_spectrogram(
+    recording_info,
+    spectrogram_parameter,
+    output_dir,
+    **kwargs,
+):
+    """Helper function for creating and saving spectrograms for a single recording"""
+    silent_msgr = Messenger(verbosity=0)
+    spectrogram, frequencies, times = make_spectrogram(
+        Path(recording_info.base_dir_recording).joinpath(
+            recording_info.rel_recording_path
+        ),
+        recording_info.channel,
+        spectrogram_parameter,
+        msgr=silent_msgr,
+    )
+
+    recording_output_dir = Path(output_dir).joinpath(
+        recording_info.recording, "spectrogram"
+    )
+
+    save_spectrogram(
+        spectrogram,
+        frequencies,
+        times,
+        recording_output_dir,
+        msgr=silent_msgr,
+    )
+    return recording_info.recording
+
+
 def create_spectrograms(
     recording_table_path,
     output_dir,
-    base_dir=None,
+    base_dir_recording=None,
     spectrogram_parameter=files("orcAI.defaults").joinpath(
         "default_spectrogram_parameter.json"
     ),
-    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     exclude=True,
+    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     verbosity=2,
 ):
     """Creates spectrograms for all files in recording table at recording_table_path
@@ -183,20 +213,25 @@ def create_spectrograms(
     Parameters
     ----------
     recording_table_path : Path
-        Path to .csv table with columns 'recording', 'channel' and columns indicating possibility of presence of calls (True/False).
-    base_dir : Path
-        Base directory for the wav files. If not None entries in the recording column are interpreted as filenames
-        searched for in base_dir and subfolders. If None the entries are interpreted as absolute paths.
+        Path to .csv table with columns 'recording', 'channel', 'base_dir_recording',
+        'rel_recording_path' and columns indicating possibility of presence of calls (True/False).
     output_dir : Path
         Output directory for the spectrograms. Spectograms are stored in subdirectories named '<recording>/spectrogram'
+    base_dir_recording : Path
+        Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.
     spectrogram_parameter : (Path | str) | dict
         Path to the spectrogram parameter file or a dictionary with parameters for the spectrogram creation.
-    label_calls : (Path | str) | dict
-        Path to a JSON file containing calls for labeling or a dict.
     exclude : bool
         Exclude recordings without possible annotations.
+    label_calls : (Path | str) | dict
+        Path to a JSON file containing calls for labeling or a dict.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+
+    Returns
+    -------
+    None
+        Saves spectrograms in output_dir
     """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Reading recordings table")
@@ -212,40 +247,19 @@ def create_spectrograms(
         msgr.info(str(recording_table[~is_included]["recording"].values), indent=-1)
         recording_table = recording_table[is_included]
 
-    if base_dir is not None:
-        msgr.info(f"Resolving file paths...")
-        recording_table["wav_file_path"] = resolve_file_paths(
-            base_dir, recording_table["recording"], ".wav", msgr=msgr
-        )
+    if base_dir_recording is not None:
+        recording_table["base_dir_recording"] = base_dir_recording
 
     if isinstance(spectrogram_parameter, (Path | str)):
         spectrogram_parameter = read_json(spectrogram_parameter)
 
     msgr.part(f"Creating {len(recording_table)} spectrograms")
-    with progressbar(
-        recording_table.index,
-        label="Creating spectrograms",
-        item_show_func=lambda index: recording_table_show_func(index, recording_table),
-    ) as recording_indices:
-        for i in recording_indices:
-            silent_msgr = Messenger(verbosity=0)
-            spectrogram, frequencies, times = make_spectrogram(
-                recording_table.loc[i, "wav_file_path"],
-                recording_table.loc[i, "channel"],
-                spectrogram_parameter,
-                msgr=silent_msgr,
-            )
 
-            recording_output_dir = Path(output_dir).joinpath(
-                recording_table.loc[i, "recording"], "spectrogram"
-            )
-
-            save_spectrogram(
-                spectrogram,
-                frequencies,
-                times,
-                recording_output_dir,
-                msgr=silent_msgr,
-            )
+    for recording in tqdm(
+        recording_table.itertuples(index=False),
+        desc="Making spectrograms",
+        total=len(recording_table),
+    ):
+        _make_and_save_spectrogram(recording, spectrogram_parameter, output_dir)
 
     return

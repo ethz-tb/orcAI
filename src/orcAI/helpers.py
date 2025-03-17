@@ -1,9 +1,33 @@
 import sys
+import shutil
 from pathlib import Path
 from importlib.resources import files
 import pandas as pd
 
 from orcAI.auxiliary import Messenger, filter_filepaths, read_json
+
+
+def init_project(
+    project_dir: Path | str, project_name: str, verbosity: int = 2
+) -> None:
+    """Initialize a new orcAI project."""
+
+    msgr = Messenger(verbosity=verbosity)
+    msgr.part("Initializing project")
+    msgr.info(f"Creating project directory: {project_dir}")
+    project_dir = Path(project_dir)
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy the default configuration files
+    default_files = files("orcAI.defaults").iterdir()
+    for file in default_files:
+        new_file_path = project_dir.joinpath(file.name.replace("default", project_name))
+        msgr.info(f"Creating {new_file_path.name}")
+        shutil.copy(
+            file,
+            new_file_path,
+        )
+    msgr.success("Project initialized.")
 
 
 def create_recording_table(
