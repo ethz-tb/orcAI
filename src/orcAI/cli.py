@@ -299,8 +299,14 @@ def cli_init_project(**kwargs):
     help="Path to the spectrogram parameter file.",
 )
 @click.option(
-    "--exclude",
-    "-e",
+    "--exclude_not_annotated",
+    "-en",
+    is_flag=True,
+    help="Exclude recordings without annotations.",
+)
+@click.option(
+    "--exclude_no_possible_annotations",
+    "-enp",
     is_flag=True,
     help="Exclude recordings without possible annotations.",
 )
