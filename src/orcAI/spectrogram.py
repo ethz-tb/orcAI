@@ -19,12 +19,12 @@ from orcAI.auxiliary import (
 def make_spectrogram(
     wav_file_path,
     channel=1,
-    spectrogram_parameter=str(
-        files("orcAI.defaults").joinpath("default_spectrogram_parameter.json")
+    orcai_parameter=str(
+        files("orcAI.defaults").joinpath("default_orcai_parameter.json")
     ),
     msgr=Messenger(),
 ):
-    """Makes spectrogram from .wav file according to spectrogram_parameter
+    """Makes spectrogram from .wav file according to orcai_parameter
 
     Parameters
     ----------
@@ -32,8 +32,8 @@ def make_spectrogram(
         Path to the wav file.
     channel : int
         Channel of wav_file to use for the spectrogram.
-    spectrogram_parameter : dict | (str | Path)
-        Dictionary with parameters for the spectrogram creation or path to JSON containing the same. Defaults to default_spectrogram_parameter.json.
+    orcai_parameter : dict | (str | Path)
+        Dictionary with orcai parameters or path to JSON containing the same. Defaults to default_orcai_parameter.json.
     msgr : Messenger
         Messenger object for logging.
 
@@ -49,8 +49,9 @@ def make_spectrogram(
 
     msgr.part("Creating spectrogram")
 
-    if isinstance(spectrogram_parameter, (Path | str)):
-        spectrogram_parameter = read_json(spectrogram_parameter)
+    if isinstance(orcai_parameter, (Path | str)):
+        orcai_parameter = read_json(orcai_parameter)
+    spectrogram_parameter = orcai_parameter["spectrogram"]
 
     msgr.info(
         f"Loading & resampling (to {spectrogram_parameter['sampling_rate']/1000:.2f} kHz) wav file: {wav_file_path.name}"
@@ -168,7 +169,7 @@ def save_spectrogram(
 
 def _make_and_save_spectrogram(
     recording_info,
-    spectrogram_parameter,
+    orcai_parameter,
     output_dir,
     **kwargs,
 ):
@@ -179,7 +180,7 @@ def _make_and_save_spectrogram(
             recording_info.rel_recording_path
         ),
         recording_info.channel,
-        spectrogram_parameter,
+        orcai_parameter,
         msgr=silent_msgr,
     )
 
@@ -201,12 +202,9 @@ def create_spectrograms(
     recording_table_path,
     output_dir,
     base_dir_recording=None,
-    spectrogram_parameter=files("orcAI.defaults").joinpath(
-        "default_spectrogram_parameter.json"
-    ),
+    orcai_parameter=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
     exclude_not_annotated=True,
     exclude_no_possible_annotations=True,
-    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
     verbosity=2,
 ):
     """Creates spectrograms for all files in recording table at recording_table_path
@@ -220,14 +218,12 @@ def create_spectrograms(
         Output directory for the spectrograms. Spectograms are stored in subdirectories named '<recording>/spectrogram'
     base_dir_recording : Path
         Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.
-    spectrogram_parameter : (Path | str) | dict
-        Path to the spectrogram parameter file or a dictionary with parameters for the spectrogram creation.
+    orcai_parameter : (Path | str) | dict
+        Path to the orcai parameter file or a dictionary with parameters.
     exclude_not_annotated: bool
         Exclude recordings without annotations.
     exclude_no_possible_annotations : bool
         Exclude recordings without possible annotations.
-    label_calls : (Path | str) | dict
-        Path to a JSON file containing calls for labeling or a dict.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
 
@@ -240,6 +236,10 @@ def create_spectrograms(
     msgr.part("Reading recordings table")
     recording_table = pd.read_csv(recording_table_path)
 
+    if isinstance(orcai_parameter, (Path | str)):
+        orcai_parameter = read_json(orcai_parameter)
+    spectrogram_parameter = orcai_parameter["spectrogram"]
+
     if exclude_not_annotated:
         not_annotated = recording_table["base_dir_annotation"].isna()
         msgr.info(
@@ -248,8 +248,7 @@ def create_spectrograms(
         recording_table = recording_table[~not_annotated]
 
     if exclude_no_possible_annotations:
-        if isinstance(label_calls, (Path | str)):
-            label_calls = read_json(label_calls)
+        label_calls = orcai_parameter["calls"]
         is_included = recording_table[label_calls].apply(lambda x: x.any(), axis=1)
         msgr.info(
             f"Excluded recordings because they lack any possible annotations:", indent=1
@@ -259,9 +258,6 @@ def create_spectrograms(
 
     if base_dir_recording is not None:
         recording_table["base_dir_recording"] = base_dir_recording
-
-    if isinstance(spectrogram_parameter, (Path | str)):
-        spectrogram_parameter = read_json(spectrogram_parameter)
 
     msgr.part(f"Creating {len(recording_table)} spectrograms")
 

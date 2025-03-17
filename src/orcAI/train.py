@@ -39,8 +39,7 @@ def _count_params(trainable_weights: list) -> int:
 def train(
     data_dir,
     output_dir,
-    model_parameter=files("orcAI.defaults").joinpath("default_model_parameter.json"),
-    label_calls=files("orcAI.defaults").joinpath("default_calls.json"),
+    orcai_parameter=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
     load_weights=False,
     verbosity=1,
 ):
@@ -52,10 +51,8 @@ def train(
         Path to the directory containing the training, validation and test datasets.
     output_dir : Path | str
         Path to the output directory.
-    model_parameter_path : (Path | str) | dict
-        Path to a JSON file containing model specifications or a dictionary with model specifications.
-    label_calls : (Path | str) | dict
-        Path to a JSON file containing calls to be labeled or a dictionary with calls to be labeled.
+    orcai_parameter : (Path | str) | dict
+        Path to a JSON file containing orcai parameter or a dictionary with orcai parameter.
     load_weights : bool
         Load weights from previous training.
     verbosity : int
@@ -70,15 +67,13 @@ def train(
 
     msgr.info("Loading parameter and data...", indent=1)
     msgr.debug("Model parameter")
-    if isinstance(model_parameter, (Path | str)):
-        model_parameter = read_json(model_parameter)
+    if isinstance(orcai_parameter, (Path | str)):
+        orcai_parameter = read_json(orcai_parameter)
+    model_parameter = orcai_parameter["model"]
+    label_calls = orcai_parameter["calls"]
 
     msgr.debug(model_parameter)
     model_name = model_parameter["name"]
-
-    if isinstance(label_calls, (Path | str)):
-        label_calls = read_json(label_calls)
-
     msgr.debug("Calls for labeling")
     msgr.debug(label_calls, indent=-1)
 
@@ -117,7 +112,7 @@ def train(
     input_shape = tuple(spectrogram.shape[1:])  # shape
     num_labels = labels.shape[2]  # Number of sound types
 
-    model = build_model(input_shape, num_labels, model_parameter, msgr=msgr)
+    model = build_model(input_shape, num_labels, orcai_parameter, msgr=msgr)
 
     # Compiling Model
     # Loading model weights if required
@@ -133,25 +128,16 @@ def train(
         fn=masked_binary_accuracy,
         name="masked_binary_accuracy",
     )
-    masked_f1_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=masked_f1_score,
-        name="masked_f1_score",
-        **model_parameter["masked_f1_metric"],
-    )
+
     model.compile(
         optimizer="adam",
         loss=masked_binary_crossentropy,
-        metrics=[
-            masked_binary_accuracy_metric,
-            masked_f1_metric,
-        ],  # TODO: masked_f1_metric is not used? yep can be removed
+        metrics=[masked_binary_accuracy_metric],
     )
 
     # Callbacks
     early_stopping = EarlyStopping(
-        monitor=model_parameter[
-            "callback_metric"
-        ],  # val_masked_binary_accuracy | val_masked_f1_score
+        monitor="val_masked_binary_accuracy",
         patience=model_parameter[
             "patience"
         ],  # Number of epochs to wait for improvement
@@ -161,17 +147,13 @@ def train(
     )
     model_checkpoint = ModelCheckpoint(
         file_paths["weights"],
-        monitor=model_parameter[
-            "callback_metric"
-        ],  # val_masked_binary_accuracy | val_masked_f1_score
+        monitor="val_masked_binary_accuracy",
         save_best_only=True,
         save_weights_only=True,
         verbose=0 if verbosity < 3 else 1,
     )
     reduce_lr = ReduceLROnPlateau(
-        monitor=model_parameter[
-            "callback_metric"
-        ],  # val_masked_binary_accuracy | val_masked_f1_score
+        monitor="val_masked_binary_accuracy",
         factor=0.5,  # Reduce learning rate by a factor of 0.5
         patience=3,  # Wait for 3 epochs of no improvement
         min_lr=1e-6,  # Set a lower limit for the learning rate
@@ -206,12 +188,10 @@ def train(
     with open(file_paths["history"], "w") as f:
         f.write(str(history.history))
 
-    # TODO: Somehow save spectrogram parameter with the model. Then load from there in predict.py
-
     write_json(
-        model_parameter, file_paths["model_dir"].joinpath("model_parameter.json")
+        orcai_parameter,
+        file_paths["model_dir"].joinpath(f"orcai_parameter.json"),
     )
-    write_json(label_calls, file_paths["model_dir"].joinpath("trained_calls.json"))
     write_json(
         {"input_shape": input_shape, "num_labels": num_labels},
         file_paths["model_dir"].joinpath("model_shape.json"),
@@ -296,8 +276,8 @@ def _hp_model_builder(
 def hyperparameter_search(
     data_dir: Path | str,
     output_dir: Path | str,
-    model_parameter: Path | str = files("orcAI.defaults").joinpath(
-        "default_model_parameter.json"
+    orcai_parameter: Path | str = files("orcAI.defaults").joinpath(
+        "default_orcai_parameter.json"
     ),
     hps_parameter: Path | str = files("orcAI.defaults").joinpath(
         "default_hps_parameter.json"
@@ -312,8 +292,8 @@ def hyperparameter_search(
         Path to the data directory
     output_dir : Path | str
         Path to the output directory
-    model_parameter : Path | str
-        Path to the model parameter file
+    orcai_parameter : Path | str
+        Path to the OrcAi parameter file
     hps_parameter : Path | str
         Path to the hyperparameter search parameter file
     parallel : bool
@@ -332,8 +312,9 @@ def hyperparameter_search(
     msgr.info(f"Data directory: {data_dir}")
 
     msgr.info("Loading parameter and data...", indent=1)
-    if isinstance(model_parameter, (Path | str)):
-        model_parameter = read_json(model_parameter)
+    if isinstance(orcai_parameter, (Path | str)):
+        orcai_parameter = read_json(orcai_parameter)
+    model_parameter = orcai_parameter["model"]
     msgr.debug("Model parameter")
     msgr.debug(model_parameter)
     model_name = model_parameter["name"]
@@ -401,15 +382,13 @@ def hyperparameter_search(
                 model_parameter=model_parameter,
                 hps_parameter=hps_parameter,
             ),
-            objective=kt.Objective(
-                "val_masked_binary_accuracy", direction="max"
-            ),  # Specify the objective explicitly
+            objective=kt.Objective("val_masked_binary_accuracy", direction="max"),
             max_epochs=10,
             directory=file_paths["hps_logs_dir"],
             project_name=model_name,
         )
     early_stopping = EarlyStopping(
-        monitor=model_parameter["callback_metric"],  # Use the validation metric
+        monitor="val_masked_binary_accuracy",  # Use the validation metric
         patience=5,  # Number of epochs to wait for improvement TODO: different than for train, intentional?
         mode="max",  # Stop when accuracy stops increasing
         restore_best_weights=True,  # Restore weights from the best epoch

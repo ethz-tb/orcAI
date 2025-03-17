@@ -35,7 +35,7 @@ def create_recording_table(
     output_path: Path | str | None = None,
     base_dir_annotation: Path | str | None = None,
     default_channel: int = 1,
-    label_calls: Path | str | None = None,
+    orcai_parameter: Path | str | None = None,
     update_table: Path | str | None = None,
     update_paths: bool = True,
     exclude_patterns: Path | str | list[str] | None = None,
@@ -54,6 +54,8 @@ def create_recording_table(
         Base directory containing the annotations (if different from base_dir_recording).
     default_channel : int
         Default channel number for the recordings.
+    orcai_parameter : (Path | str) | None
+        Path to a JSON file containing orcAi parameter.
     update_table : (Path | str) | None
         Path to a .csv file with a previous table of recordings to update.
     update_paths : bool
@@ -93,8 +95,9 @@ def create_recording_table(
             annotation_files, exclude_patterns, msgr=msgr
         )
 
-    if label_calls is not None:
-        call_possible = {call: pd.NA for call in read_json(label_calls)}
+    if orcai_parameter is not None:
+        label_calls = read_json(orcai_parameter)["calls"]
+        call_possible = {call: pd.NA for call in label_calls}
     else:
         call_possible = {}
 

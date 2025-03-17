@@ -11,8 +11,6 @@ from sklearn.metrics import confusion_matrix
 
 from orcAI.auxiliary import (
     Messenger,
-    generate_times_from_spectrogram,
-    seconds_to_hms,
     read_json,
 )
 from orcAI.architectures import (
@@ -351,16 +349,17 @@ def test_model(
     msgr.info(f"Model data directory: {model_data_dir}")
 
     msgr.info("Loading parameter and data...", indent=1)
-    model_parameter = read_json(Path(model_path).joinpath("model_parameter.json"))
+    orcai_parameter = read_json(Path(model_path).joinpath("orcai_parameter.json"))
+    model_parameter = orcai_parameter["model"]
     msgr.debug("Model parameter")
     msgr.debug(model_parameter)
 
     model_shape = read_json(model_path.joinpath("model_shape.json"))
-    trained_calls = read_json(model_path.joinpath("trained_calls.json"))
+    trained_calls = orcai_parameter["calls"]
 
     # LOAD MODEL #TODO: load from .keras file?
     msgr.part("Compiling model")
-    model = build_model(**model_shape, model_parameter=model_parameter, msgr=msgr)
+    model = build_model(**model_shape, orcai_parameter=orcai_parameter, msgr=msgr)
     model.load_weights(model_path.joinpath("model_weights.h5"))
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
         fn=masked_binary_accuracy,

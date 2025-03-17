@@ -160,12 +160,35 @@ def cli_predict(**kwargs):
     type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_filter_predictions(**kwargs):
     from orcAI.predict import filter_predictions
 
     filter_predictions(**kwargs)
+
+
+@cli.command(
+    name="init",
+    help="Initializes a new orcAI project with PROJECT_NAME in PROJECT_DIR.",
+    short_help="Initializes a new orcAI project.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("project_dir", type=ClickDirPathW)
+@click.argument("project_name", type=str)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_init_project(**kwargs):
+    from orcAI.helpers import init_project
+
+    init_project(**kwargs)
 
 
 @cli.command(
@@ -201,12 +224,12 @@ def cli_filter_predictions(**kwargs):
     help="Default channel number for the recordings.",
 )
 @click.option(
-    "--label_calls",
-    "-lc",
+    "--orcai_parameter",
+    "-p",
     type=ClickFilePathR,
     default=None,
     show_default="None",
-    help="Path to a JSON file containing calls for labeling or a dictionary with calls for labeling. Only needed if preparing table for generating training data.",
+    help="Path to a JSON file containing OrcAI parameter. Only needed if preparing table for generating training data.",
 )
 @click.option(
     "--update_table",
@@ -242,35 +265,12 @@ def cli_filter_predictions(**kwargs):
     type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_recordings_table(**kwargs):
     from orcAI.helpers import create_recording_table
 
     create_recording_table(**kwargs)
-
-
-@cli.command(
-    name="init",
-    help="Initializes a new orcAI project with PROJECT_NAME in PROJECT_DIR.",
-    short_help="Initializes a new orcAI project.",
-    no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
-)
-@click.argument("project_dir", type=ClickDirPathW)
-@click.argument("project_name", type=str)
-@click.option(
-    "--verbosity",
-    "-v",
-    type=click.IntRange(0, 3),
-    default=2,
-    show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
-)
-def cli_init_project(**kwargs):
-    from orcAI.helpers import init_project
-
-    init_project(**kwargs)
 
 
 @cli.command(
@@ -291,12 +291,12 @@ def cli_init_project(**kwargs):
     help="Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.",
 )
 @click.option(
-    "--spectrogram_parameter",
-    "-sp",
+    "--orcai_parameter",
+    "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_spectrogram_parameter.json"),
-    show_default="default_spectrogram_parameter.json",
-    help="Path to the spectrogram parameter file.",
+    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    show_default="default_orcai_parameter.json",
+    help="Path to the OrcAI parameter file.",
 )
 @click.option(
     "--exclude_not_annotated",
@@ -311,20 +311,12 @@ def cli_init_project(**kwargs):
     help="Exclude recordings without possible annotations.",
 )
 @click.option(
-    "--label_calls",
-    "-lc",
-    type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_calls.json"),
-    show_default="default_calls.json",
-    help="Path to a JSON file containing calls for labeling or a dict.",
-)
-@click.option(
     "--verbosity",
     "-v",
     type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_spectrograms(**kwargs):
     from orcAI.spectrogram import create_spectrograms
@@ -350,12 +342,12 @@ def cli_create_spectrograms(**kwargs):
     help="Base directory for the annotation files. If None the base_dir_annotation is taken from the recording_table.",
 )
 @click.option(
-    "--label_calls",
-    "-lc",
+    "--orcai_parameter",
+    "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_calls.json"),
-    show_default="default_calls.json",
-    help="Path to a JSON file containing calls for labeling or a dictionary with calls for labeling.",
+    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    show_default="default_orcai_parameter.json",
+    help="Path to a JSON file containing orcai parameter.",
 )
 @click.option(
     "--call_equivalences",
@@ -371,7 +363,7 @@ def cli_create_spectrograms(**kwargs):
     type=click.IntRange(0, 3),
     default=2,
     show_default=True,
-    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_label_arrays(**kwargs):
     from orcAI.annotation import create_label_arrays

@@ -129,8 +129,8 @@ def create_label_arrays(
     recording_table_path: Path | str,
     output_dir: Path | str,
     base_dir_annotation: Path | str = None,
-    label_calls: (Path | str) | dict = files("orcAI.defaults").joinpath(
-        "default_calls.json"
+    orcai_parameter: (Path | str) | dict = files("orcAI.defaults").joinpath(
+        "default_orcai_parameter.json"
     ),
     call_equivalences: (Path | str) | dict = None,
     verbosity: int = 2,
@@ -147,8 +147,8 @@ def create_label_arrays(
         Output directory for the labels. If None the labels are saved in the same directory as the wav files.
     base_dir_annotation : Path
         Base directory for the annotation files. If None the base_dir_annotation is taken from the recording_table.
-    label_calls : (Path | str) | dict
-        Path to a JSON file containing calls for labeling or a dictionary with calls for labeling.
+    orcai_parameter : (Path | str) | dict
+        Path to a JSON file containing orcAI parameters or a dictionary of the same.
     call_equivalences : (Path | str) | dict
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
@@ -169,9 +169,10 @@ def create_label_arrays(
         )
         recording_table = recording_table[~not_annotated]
 
-    if isinstance(label_calls, (Path | str)):
-        label_calls = read_json(label_calls)
+    if isinstance(orcai_parameter, (Path | str)):
+        orcai_parameter = read_json(orcai_parameter)
     recordings_no_labels = []
+    label_calls = orcai_parameter["calls"]
 
     for i in tqdm(
         recording_table.index,

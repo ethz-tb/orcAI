@@ -2,6 +2,10 @@
 
 ## [0.4.0] - unreleased
 
+### Changed
+
+- **Breaking**: Combined default_calls.json, default_model_parameter.json, default_spectrogram_parameter.json, default_snippet_parameter.json into a single default_orcai_parameter.json file.
+
 ### Added
 
 - added function to initialize a project, copying the default parameter files
