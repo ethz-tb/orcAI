@@ -6,6 +6,7 @@
 
 - added function to initialize a project, copying the default parameter files
 - added cli for making spectrograms
+- added cli for creating label arrays
 
 ## [0.3.0] - 2025-03-14
 

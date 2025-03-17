@@ -11,7 +11,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Training Models",
-            "commands": ["create-spectrograms"],
+            "commands": ["create-spectrograms", "create-label-arrays"],
         },
         {
             "name": "Helpers",
@@ -275,7 +275,7 @@ def cli_init_project(**kwargs):
 
 @cli.command(
     name="create-spectrograms",
-    help="Creates spectrograms for all files in recording table at RECORDING_TABLE_PATH.",
+    help="Creates spectrograms for all files in recording table at RECORDING_TABLE_PATH and writes them to OUTPUT_DIR.",
     short_help="Creates spectrograms.",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
@@ -330,3 +330,50 @@ def cli_create_spectrograms(**kwargs):
     from orcAI.spectrogram import create_spectrograms
 
     create_spectrograms(**kwargs)
+
+
+@cli.command(
+    name="create-label-arrays",
+    help="Creates label arrays for all files in recording table at RECORDING_TABLE_PATH and writes them to OUTPUT_DIR.",
+    short_help="Creates label arrays.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("recording_table_path", type=ClickFilePathR)
+@click.argument("output_dir", type=ClickDirPathW)
+@click.option(
+    "--base_dir_annotation",
+    "-bda",
+    type=ClickDirPathR,
+    default=None,
+    show_default="None",
+    help="Base directory for the annotation files. If None the base_dir_annotation is taken from the recording_table.",
+)
+@click.option(
+    "--label_calls",
+    "-lc",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_calls.json"),
+    show_default="default_calls.json",
+    help="Path to a JSON file containing calls for labeling or a dictionary with calls for labeling.",
+)
+@click.option(
+    "--call_equivalences",
+    "-ce",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. O: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_create_label_arrays(**kwargs):
+    from orcAI.annotation import create_label_arrays
+
+    create_label_arrays(**kwargs)
