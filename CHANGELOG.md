@@ -11,6 +11,7 @@
 - added function to initialize a project, copying the default parameter files
 - added cli for making spectrograms
 - added cli for creating label arrays
+- added cli for creating snippet table
 
 ## [0.3.0] - 2025-03-14
 

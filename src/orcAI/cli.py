@@ -11,7 +11,11 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Training Models",
-            "commands": ["create-spectrograms", "create-label-arrays"],
+            "commands": [
+                "create-spectrograms",
+                "create-label-arrays",
+                "create-snippet-table",
+            ],
         },
         {
             "name": "Helpers",
@@ -369,3 +373,34 @@ def cli_create_label_arrays(**kwargs):
     from orcAI.annotation import create_label_arrays
 
     create_label_arrays(**kwargs)
+
+
+@cli.command(
+    name="create-snippet-table",
+    help="Creates a table of snippets for all files in recording table at RECORDING_TABLE_PATH and writes them to RECORDING_DATA_DIR.",
+    short_help="Creates snippet table.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("recording_table_path", type=ClickFilePathR)
+@click.argument("recording_data_dir", type=ClickDirPathW)
+@click.option(
+    "--orcai_parameter",
+    "-p",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    show_default="default_orcai_parameter.json",
+    help="Path to the snippet parameter file.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_create_snippet_table(**kwargs):
+    from orcAI.snippets import create_snippet_table
+
+    create_snippet_table(**kwargs)
