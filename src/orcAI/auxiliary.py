@@ -189,7 +189,7 @@ def write_vector_to_json(vector, filename):
     return
 
 
-def read_json_to_vector(filename):
+def generate_times_from_spectrogram(filename):
     """read and generate equally spaced vector in short form from min, max and length"""
     with open(filename, "r") as f:
         dictionary = json.load(f)
