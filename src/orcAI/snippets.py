@@ -310,8 +310,8 @@ def _filter_snippet_table(
     snippet_stats_duration = snippet_stats.filter(regex=".*(?<!_ef)$", axis=1).map(
         seconds_to_hms
     )
-    msgr.info("Snippet stats [HMS]:")
-    msgr.info(snippet_stats_duration)
+    msgr.info("Snippet stats [HMS]:", indent=1)
+    msgr.info(snippet_stats_duration, indent=-1)
 
     snippets_no_label = snippet_table[
         snippet_table[label_calls].sum(axis=1) <= 0.0000001
@@ -346,8 +346,8 @@ def _filter_snippet_table(
     )
     snippet_table = snippet_table.reset_index(drop=True)
 
-    msgr.info("Number of train, val, test snippets:")
-    msgr.info(snippet_table.groupby("data_type").size())
+    msgr.info("Number of train, val, test snippets:", indent=1)
+    msgr.info(snippet_table.groupby("data_type").size(), indent=-1)
 
     return snippet_table
 
@@ -395,7 +395,6 @@ def create_tvt_snippet_tables(
     if isinstance(snippet_table, (Path | str)):
         snippet_table = pd.read_csv(snippet_table)
 
-    msgr.info("Filtering snippet table")
     snippet_table_filtered = _filter_snippet_table(
         snippet_table,
         snippet_parameter=snippet_parameter,

@@ -15,6 +15,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "create-spectrograms",
                 "create-label-arrays",
                 "create-snippet-table",
+                "create-tvt-snippet-tables",
             ],
         },
         {
@@ -30,6 +31,9 @@ ClickDirPathR = click.Path(
 )
 ClickDirPathW = click.Path(
     exists=True, file_okay=False, writable=True, resolve_path=True, path_type=Path
+)
+ClickDirPathWcreate = click.Path(
+    exists=False, file_okay=False, writable=True, resolve_path=True, path_type=Path
 )
 ClickFilePathR = click.Path(
     exists=True, dir_okay=False, readable=True, resolve_path=True, path_type=Path
@@ -410,3 +414,42 @@ def cli_create_snippet_table(**kwargs):
     from orcAI.snippets import create_snippet_table
 
     create_snippet_table(**kwargs)
+
+
+@cli.command(
+    name="create-tvt-snippet-tables",
+    help="Creates snippet tables for training, validation and test datasets from recordings in RECORDING_DATA_DIR and saves them to OUTPUT_DIR.",
+    short_help="Creates TVT snippet tables.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("recording_data_dir", type=ClickDirPathR)
+@click.argument("output_dir", type=ClickDirPathWcreate)
+@click.option(
+    "--snippet_table",
+    "-st",
+    type=ClickFilePathR,
+    default=None,
+    show_default="None",
+    help="Path to the snippet table csv or the snippet table itself. None if the snippet table should be read from RECORDING_DATA_DIR/all_snippets.csv.gz.",
+)
+@click.option(
+    "--orcai_parameter",
+    "-p",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    show_default="default_orcai_parameter.json",
+    help="Path to the snippet parameter file.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_create_tvt_snippet_tables(**kwargs):
+    from orcAI.snippets import create_tvt_snippet_tables
+
+    create_tvt_snippet_tables(**kwargs)
