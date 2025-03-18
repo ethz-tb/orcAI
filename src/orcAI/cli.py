@@ -92,6 +92,12 @@ def cli():
     help="Path to the output file/folder or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
 )
 @click.option(
+    "--save_prediction_probabilities",
+    "-sp",
+    is_flag=True,
+    help="If True the prediction probabilities are saved to a file.",
+)
+@click.option(
     "--base_dir_recording",
     "-bdr",
     type=ClickDirPathW,
