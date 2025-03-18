@@ -185,6 +185,7 @@ def _predict_wav(
     orcai_parameter: dict,
     shape: dict,
     output_path: Path | str = "default",
+    save_prediction_probabilities: bool = False,
     call_duration_limits: (Path | str) | dict = None,
     label_suffix: str = "*",
     msgr: Messenger = Messenger(verbosity=0),
@@ -256,9 +257,7 @@ def _predict_wav(
         progressbar.refresh()
 
     total_time_steps = spectrogram.shape[0] // time_steps_per_output_step
-    aggregated_predictions = np.zeros(
-        (total_time_steps, shape["num_labels"])
-    )  # Shape: (3600 * 46, 7)
+    aggregated_predictions = np.zeros((total_time_steps, shape["num_labels"]))
     overlap_count = np.zeros(
         total_time_steps
     )  # To track the number of overlaps per time step
@@ -318,6 +317,15 @@ def _predict_wav(
     if output_path is not None:
         predicted_labels.round(4).to_csv(output_path, sep="\t", index=False)
         msgr.success(f"Prediction finished.\nPredictions saved to {output_path}")
+        msgr.success(f"Predictions saved to {output_path}")
+        if save_prediction_probabilities:
+            predictions_path = output_path.with_name(
+                output_path.stem + "_probabilities.txt"
+            )
+            pd.DataFrame(
+                aggregated_predictions, columns=orcai_parameter["calls"]
+            ).to_csv(predictions_path)
+            msgr.success(f"Prediction probabilities saved to {predictions_path}")
     else:
         msgr.success(f"Prediction finished.")
     return predicted_labels
@@ -328,6 +336,7 @@ def predict_wav(
     channel=1,
     model_path=files("orcAI.models").joinpath("orcai-V1"),
     output_path="default",
+    save_prediction_probabilities=False,
     call_duration_limits=None,
     label_suffix="*",
     msgr=None,
@@ -346,6 +355,8 @@ def predict_wav(
         Path to the model directory.
     output_path : (Path | Str) | "default" | None
         Path to the output file or "default" to save in the same directory as the wav file. None to not save predictions to disk.
+    save_prediction_probabilities : bool
+        Save prediction probabilities to a separate file. Defaults to False.
     call_duration_limits : (Path | Str) | dict
         Path to a JSON file containing a dictionary with call duration limits. Or a dictionary with call duration limits.
     label_suffix : str
@@ -409,6 +420,7 @@ def predict_wav(
         orcai_parameter=orcai_parameter,
         shape=shape,
         output_path=output_path,
+        save_prediction_probabilities=save_prediction_probabilities,
         call_duration_limits=call_duration_limits,
         label_suffix=label_suffix,
         msgr=msgr,
@@ -423,6 +435,7 @@ def predict(
     channel=1,
     model_path=files("orcAI.models").joinpath("orcai-V1"),
     output_path="default",
+    save_prediction_probabilities=False,
     base_dir_recording=None,
     call_duration_limits=None,
     label_suffix="*",
@@ -438,6 +451,7 @@ def predict(
             channel=channel,
             model_path=model_path,
             output_path=output_path,
+            save_prediction_probabilities=save_prediction_probabilities,
             call_duration_limits=call_duration_limits,
             label_suffix=label_suffix,
             msgr=msgr,
@@ -511,6 +525,7 @@ def predict(
             shape=shape,
             label_calls=label_calls,
             output_path=recording_table.loc[i, "output_path"],
+            save_prediction_probabilities=save_prediction_probabilities,
             call_duration_limits=call_duration_limits,
             label_suffix=label_suffix,
             msgr=Messenger(verbosity=0),
