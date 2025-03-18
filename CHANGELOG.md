@@ -9,9 +9,11 @@
 ### Added
 
 - added function to initialize a project, copying the default parameter files
+- added option to `predict' to save predicted probabilities
 - added cli for making spectrograms
 - added cli for creating label arrays
 - added cli for creating snippet table
+- added cli for create-tvt-snippet-tables
 
 ## [0.3.0] - 2025-03-14
 
