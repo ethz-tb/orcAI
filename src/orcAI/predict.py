@@ -182,10 +182,8 @@ def _predict_wav(
     recording_path: Path | str,
     channel: int,
     model: keras.Model,
-    model_parameter: dict,
-    spectrogram_parameter: dict,
+    orcai_parameter: dict,
     shape: dict,
-    label_calls: list,
     output_path: Path | str = "default",
     call_duration_limits: (Path | str) | dict = None,
     label_suffix: str = "*",
@@ -195,7 +193,7 @@ def _predict_wav(
     if output_path is not None:
         if output_path == "default":
             filename = (
-                recording_path.stem + "_" + model_parameter["name"] + "_predicted.txt"
+                recording_path.stem + "_" + orcai_parameter["name"] + "_predicted.txt"
             )
             output_path = recording_path.with_name(filename)
         else:
@@ -203,21 +201,21 @@ def _predict_wav(
         msgr.info(f"Output file: {output_path}")
         if output_path.exists():
             msgr.error(f"Annotation file already exists: {output_path}")
-            sys.exit()
+            sys.exit()  # TODO: replace with return
 
     # Generating spectrogram
     if progressbar:
         progressbar.set_description(f"{recording_path.stem}: Generating spectrogram")
         progressbar.refresh()
     spectrogram, _, times = make_spectrogram(
-        recording_path, channel, spectrogram_parameter, msgr=msgr
+        recording_path, channel, orcai_parameter, msgr=msgr
     )
     if spectrogram.shape[1] != shape["input_shape"][1]:
         msgr.error(
             f"Frequency dimensions of spectrogram shape ({spectrogram.shape[1]}) "
             + f"not equal to frequency dimension of input shape ({shape['input_shape'][1]})"
         )
-        exit
+        sys.exit()  # TODO: replace with return
 
     # Prediction
     msgr.part(f"Prediction of annotations for wav_file: {recording_path.stem}")
@@ -228,7 +226,7 @@ def _predict_wav(
     # Parameters
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
     shift = snippet_length // 2  # Shift time steps for overlapping windows
-    time_steps_per_output_step = 2 ** len(model_parameter["filters"])
+    time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
     prediction_length = (
         snippet_length // time_steps_per_output_step
     )  # Output time steps per prediction
@@ -288,7 +286,7 @@ def _predict_wav(
     row_starts = []
     row_stops = []
     label_names = []
-    for i, label_name in enumerate(label_calls):
+    for i, label_name in enumerate(orcai_parameter["calls"]):
         if sum(binary_prediction[:, i]) > 0:
             row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
             row_starts += list(row_start)
@@ -371,26 +369,24 @@ def predict_wav(
     msgr.info(f"Model: {model_path.stem}")
     msgr.info(f"Wav file: {recording_path}")
 
-    label_calls = read_json(model_path.joinpath("trained_calls.json"))
+    orcai_parameter = read_json(model_path.joinpath("orcai_parameter.json"))
     msgr.debug("Calls for labeling:")
-    msgr.debug(label_calls)
+    msgr.debug(orcai_parameter["calls"])
 
     shape = read_json(model_path.joinpath("model_shape.json"))
     msgr.debug(f"Input shape:")
     msgr.debug(shape)
 
-    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
     msgr.debug(f"Model parameter:")
-    msgr.debug(model_parameter)
-    spectrogram_parameter = read_json(model_path.joinpath("spectrogram_parameter.json"))
+    msgr.debug(orcai_parameter["model"])
 
     msgr.debug(f"Spectrogram parameters:")
-    msgr.debug(spectrogram_parameter)
+    msgr.debug(orcai_parameter["spectrogram"])
 
     msgr.part(f"Loading model: {model_path.stem}")
 
     msgr.info("Building model architecture")
-    model = res_net_LSTM_arch(**shape, **model_parameter)
+    model = res_net_LSTM_arch(**shape, **orcai_parameter["model"])
 
     msgr.info("Loading model weights")
     model.load_weights(model_path.joinpath("model_weights.h5"))
@@ -410,10 +406,8 @@ def predict_wav(
         recording_path=recording_path,
         channel=channel,
         model=model,
-        model_parameter=model_parameter,
-        spectrogram_parameter=spectrogram_parameter,
+        orcai_parameter=orcai_parameter,
         shape=shape,
-        label_calls=label_calls,
         output_path=output_path,
         call_duration_limits=call_duration_limits,
         label_suffix=label_suffix,

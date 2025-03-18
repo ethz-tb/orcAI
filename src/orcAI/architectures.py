@@ -327,14 +327,16 @@ def build_model(
             input_shape, num_labels, **orcai_parameter["model"]
         )
     else:
-        raise ValueError(f"Unknown model architecture: {orcai_parameter['architecture']}")
+        raise ValueError(
+            f"Unknown model architecture: {orcai_parameter['architecture']}"
+        )
 
     n_filters = len(orcai_parameter["model"]["filters"])
     output_shape = (input_shape[0] // 2**n_filters, num_labels)
 
     msgr.part("Building model architecture")
-    msgr.info(f"model name:          {orcai_parameter["model"]['name']}")
-    msgr.info(f"model architecture:  {orcai_parameter["model"]['architecture']}")
+    msgr.info(f"model name:          {orcai_parameter['model']['name']}")
+    msgr.info(f"model architecture:  {orcai_parameter['model']['architecture']}")
     msgr.info(f"model input shape:   {model.input_shape}")
     msgr.info(f"model output shape:  {model.output_shape}")
     msgr.info(f"actual input_shape:  {input_shape}")
