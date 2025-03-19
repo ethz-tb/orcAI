@@ -273,7 +273,7 @@ def _predict_wav(
 
     # Step 5: Average the overlapping predictions (or apply another pooling function)
     msgr.info("Computing binary predictions")
-    valid_mask = overlap_count > 0
+    valid_mask = overlap_count > 0  # removes zeros at end
     aggregated_predictions[valid_mask] /= overlap_count[valid_mask, np.newaxis]
     threshold = 0.5 / np.max(overlap_count)  # larger than 0.5 in at least one snippet
     binary_prediction = np.zeros((total_time_steps, shape["num_labels"])).astype(int)
@@ -320,11 +320,18 @@ def _predict_wav(
         msgr.success(f"Predictions saved to {output_path}")
         if save_prediction_probabilities:
             predictions_path = output_path.with_name(
-                output_path.stem + "_probabilities.txt"
+                output_path.stem + "_probabilities.csv.gz"
             )
+
+            delta_t * time_steps_per_output_step * range(len(aggregated_predictions))
+
             pd.DataFrame(
-                aggregated_predictions, columns=orcai_parameter["calls"]
-            ).to_csv(predictions_path)
+                aggregated_predictions,
+                columns=orcai_parameter["calls"],
+                index=delta_t
+                * time_steps_per_output_step
+                * range(len(aggregated_predictions)),
+            ).to_csv(predictions_path, index_label="time", compression="gzip")
             msgr.success(f"Prediction probabilities saved to {predictions_path}")
     else:
         msgr.success(f"Prediction finished.")
