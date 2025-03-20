@@ -1,28 +1,31 @@
 import time
 from pathlib import Path
 from importlib.resources import files
-import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import zarr
 import tensorflow as tf
+import numpy as np
 
+tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 from orcAI.auxiliary import (
     Messenger,
     read_json,
+    write_json,
     seconds_to_hms,
     resolve_recording_data_dir,
 )
-from orcAI.load import load_data_from_snippet_csv, data_generator
+from orcAI.load import DataLoader, serialize_example
 
 
 def _make_snippet_table(
     recording_dir: str | Path,
     orcai_parameter: dict,
+    rng=np.random.default_rng(),
     msgr: Messenger = Messenger(verbosity=2),
 ):
-    """Generates times for snippets to be extracted from labels
+    """Generates times for snippets to be extracted from recordings
 
     returns pd.DataFrame with recording, data_type, start, stop and duration for each label
 
@@ -95,6 +98,7 @@ def _make_snippet_table(
     )  # to make time axis divisible by 2 ** n_filters
     msgr.info(f"Number of spectrogram snippet timesteps: {n_spectrogram_snippet_steps}")
     snippet_table_raw = []
+
     for i_segment in range(n_segments):  # iterate over all segments
         msgr.info(f"Segment {i_segment + 1} of {n_segments}")
         slice = (0, 0)
@@ -111,7 +115,7 @@ def _make_snippet_table(
                 t_max = (i_segment + slice[1]) * snippet_parameter[
                     "segment_duration"
                 ] - snippet_parameter["snippet_duration"]
-                t_start = np.random.uniform(low=t_min, high=t_max, size=1)[0]
+                t_start = rng.uniform(low=t_min, high=t_max, size=1)[0]
 
                 # Find the max index where entries are smaller than t_start
                 index_t_start = np.searchsorted(times, t_start, side="left") - 1
@@ -228,6 +232,9 @@ def create_snippet_table(
     failed = []
     failed_result = []
 
+    rng = np.random.default_rng(
+        seed=[1, orcai_parameter["seed"]]
+    )  # magic 1 to make this seed unique to this function
     for i in tqdm(
         recording_table.index,
         desc="Making snippet tables",
@@ -238,6 +245,7 @@ def create_snippet_table(
             _make_snippet_table(
                 recording_table.loc[i, "recording_data_dir"],
                 orcai_parameter=orcai_parameter,
+                rng=rng,
                 msgr=Messenger(verbosity=0),
             )
         )
@@ -254,14 +262,16 @@ def create_snippet_table(
     failed_table = pd.DataFrame({"recording": failed, "reason": failed_result})
 
     msgr.info(
-        f"Created snippet table for {len(snippet_table['recording'].unique())} recordings. "
-        + f"Total recording duration: {seconds_to_hms(np.sum(recording_lengths))}. "
-        + f"Total number of snippets: {len(snippet_table)}. "
-        + f"Total number of segments: {np.sum(segments)}"
+        f"Created snippet table for {len(snippet_table['recording'].unique())} recordings."
     )
+    msgr.info(f"Total recording duration: {seconds_to_hms(np.sum(recording_lengths))}.")
+    msgr.info(f"Total number of snippets: {len(snippet_table)}.")
+    msgr.info(f"Total number of segments: {np.sum(segments)}")
 
-    msgr.info(f"Creating snippet table failed for {len(failed)} recordings.")
-    msgr.info(failed_table.groupby("reason").size())
+    msgr.info(f"Creating snippet table failed for {len(failed)} recordings.", indent=1)
+    msgr.info(failed_table.groupby("reason").size(), indent=-1)
+
+    msgr.part("Saving snippet table...")
 
     failed_table.to_csv(
         Path(recording_data_dir).joinpath("failed_snippets.csv"),
@@ -282,8 +292,8 @@ def create_snippet_table(
 
 def _filter_snippet_table(
     snippet_table: pd.DataFrame,
-    snippet_parameter: dict,
-    label_calls: dict,
+    orcai_parameter: dict,
+    rng=np.random.default_rng(),
     msgr: Messenger = Messenger(verbosity=2),
 ):
     """Filters snippet table based on snippet parameter and label calls
@@ -292,10 +302,8 @@ def _filter_snippet_table(
     ----------
     snippet_table : pd.DataFrame
         snippet_table with columns recording, data_type, row_start, row_stop and call names
-    snippet_parameter : dict
-        dict containing snippet parameter
-    label_calls : dict
-        dict containing calls for labeling
+    orcai_parameter : dict
+        dict containing orcai parameter
     msgr : Messenger
         Messenger object for messages
 
@@ -306,7 +314,9 @@ def _filter_snippet_table(
     """
     msgr.part("Filtering snippet table")
 
-    snippet_stats = _compute_snippet_stats(snippet_table, for_calls=label_calls)
+    snippet_stats = _compute_snippet_stats(
+        snippet_table, for_calls=orcai_parameter["calls"]
+    )
     snippet_stats_duration = snippet_stats.filter(regex=".*(?<!_ef)$", axis=1).map(
         seconds_to_hms
     )
@@ -314,7 +324,7 @@ def _filter_snippet_table(
     msgr.info(snippet_stats_duration, indent=-1)
 
     snippets_no_label = snippet_table[
-        snippet_table[label_calls].sum(axis=1) <= 0.0000001
+        snippet_table[orcai_parameter["calls"]].sum(axis=1) <= 0.0000001
     ]
     p_no_label_before = np.around(
         100 * len(snippets_no_label) / snippet_table.shape[0], 2
@@ -325,17 +335,20 @@ def _filter_snippet_table(
 
     # removing rows from extracted_snippets where there is no label present
     msgr.info(
-        f"removing {np.around(snippet_parameter['fraction_removal'] * 100, 2)}% of snippets without label"
+        f"removing {np.around(orcai_parameter['snippets']['fraction_removal'] * 100, 2)}% of snippets without label"
     )
-    indices_to_drop = np.random.choice(
+
+    indices_to_drop = rng.choice(
         snippets_no_label.index,
-        size=int(snippet_parameter["fraction_removal"] * len(snippets_no_label)),
+        size=int(
+            orcai_parameter["snippets"]["fraction_removal"] * len(snippets_no_label)
+        ),
         replace=False,
     )
     snippet_table = snippet_table.drop(indices_to_drop, axis=0)
 
     snippets_no_label = snippet_table[
-        snippet_table[label_calls].sum(axis=1) <= 0.0000001
+        snippet_table[orcai_parameter["calls"]].sum(axis=1) <= 0.0000001
     ]
     p_no_label_after = np.around(
         100 * len(snippets_no_label) / snippet_table.shape[0], 2
@@ -387,34 +400,42 @@ def create_tvt_snippet_tables(
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
-    snippet_parameter = orcai_parameter["snippets"]
-    label_calls = orcai_parameter["calls"]
 
     if snippet_table is None:
         snippet_table = Path(recording_data_dir).joinpath("all_snippets.csv.gz")
     if isinstance(snippet_table, (Path | str)):
         snippet_table = pd.read_csv(snippet_table)
 
+    rng = np.random.default_rng(
+        seed=[2, orcai_parameter["seed"]]
+    )  # magic 2 to make this seed unique to this function
     snippet_table_filtered = _filter_snippet_table(
         snippet_table,
-        snippet_parameter=snippet_parameter,
-        label_calls=label_calls,
+        orcai_parameter=orcai_parameter,
+        rng=rng,
         msgr=msgr,
     )
 
     for itype in ["train", "val", "test"]:
-        n_snippets = snippet_parameter[f"n_{itype}"]
-        msgr.info(f"Extracting {n_snippets} {itype} snippets")
+        n_snippets = (
+            orcai_parameter["model"][f"n_batch_{itype}"]
+            * orcai_parameter["model"]["batch_size"]
+        )
+        msgr.info(f"Extracting {n_snippets} random {itype} snippets")
         snippet_table_i = snippet_table_filtered[
             snippet_table_filtered["data_type"] == itype
         ]
-        try:
-            snippets_itype = snippet_table_i.sample(n=n_snippets, replace=False)
-        except ValueError as e:
+        if len(snippet_table_i) < n_snippets:
             msgr.error(
                 f"Number of {itype} snippets ({n_snippets}) larger than available snippets ({len(snippet_table_i)})."
             )
-            raise e
+            msgr.error("Skipping.")
+            continue
+
+        snippets_itype = snippet_table_i.sample(
+            n=n_snippets, replace=False, random_state=rng
+        )
+
         snippets_itype[["recording_data_dir", "row_start", "row_stop"]].to_csv(
             Path(output_dir, f"{itype}.csv.gz"), compression="gzip", index=False
         )
@@ -446,70 +467,80 @@ def create_tvt_data(
     """
     msgr = Messenger(verbosity=verbosity)
     msgr.part("Creating train, validation and test data")
+    data_types = ["train", "val", "test"]
+
+    dataset_paths = {
+        itype: Path(tvt_dir, f"{itype}_dataset.tfrecord.gz") for itype in data_types
+    }
+
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
-    model_parameter = orcai_parameter["model"]
 
-    csv_paths = [Path(tvt_dir, f"{itype}.csv.gz") for itype in ["train", "val", "test"]]
+    csv_paths = {itype: Path(tvt_dir, f"{itype}.csv.gz") for itype in data_types}
 
     msgr.info("Reading in dataframes with snippets and generating loaders", indent=1)
     start_time = time.time()
-    loaders, spectrogram_chunk_shape, label_chunk_shape = load_data_from_snippet_csv(
-        csv_paths, model_parameter, msgr=msgr
-    )
-    msgr.info(
-        f"Dataframes read and loaders generated in {seconds_to_hms(time.time() - start_time)}"
-    )
-    msgr.info(f"Spectrogram chunk shape: {spectrogram_chunk_shape}")
-    msgr.info(f"Original label chunk shape: {label_chunk_shape}")
-    msgr.print_memory_usage(indent=-1)
 
-    msgr.info("Data characteristics:", indent=1)
-    start_time = time.time()
-    spectrogram_batch, label_batch = loaders["train"][0]
-    msgr.info(f"Data loading time per batch: {time.time() - start_time:.2f} seconds")
-    msgr.info(f"Input spectrogram batch shape: {spectrogram_batch.shape}")
-    msgr.info(f"Input label batch shape: {label_batch.shape}", indent=-1)
+    loader = {
+        key: DataLoader.from_csv(path, len(orcai_parameter["model"]["filters"]))
+        for key, path in csv_paths.items()
+    }
+
+    msgr.info("Data shape:", indent=1)
+    spectrogram_sample, label_sample = loader[data_types[0]][0]
+    msgr.info(f"Input spectrogram batch shape: {spectrogram_sample.shape}")
+    msgr.info(f"Input label batch shape: {label_sample.shape}", indent=-1)
 
     msgr.info("Creating test, validation and training datasets", indent=1)
-    start_time = time.time()
     dataset = {}
-    for itype in ["train", "val", "test"]:
+    for itype in data_types:
         dataset[itype] = tf.data.Dataset.from_generator(
-            lambda: data_generator(loaders[itype]),
+            loader[itype].__iter__,
             output_signature=(
                 tf.TensorSpec(
-                    shape=(
-                        spectrogram_batch.shape[1],
-                        spectrogram_batch.shape[2],
-                        1,
-                    ),
+                    shape=spectrogram_sample.shape,
                     dtype=tf.float32,
                 ),
                 tf.TensorSpec(
-                    shape=(label_batch.shape[1], label_batch.shape[2]),
+                    shape=label_sample.shape,
                     dtype=tf.float32,
                 ),
             ),
         )
-        msgr.info(f"{itype.capitalize()} dataset created")
-    msgr.info(f"Datasets created in {seconds_to_hms(time.time() - start_time)}")
-    msgr.print_memory_usage(indent=-1)
+        dataset[itype] = dataset[itype].prefetch(tf.data.experimental.AUTOTUNE)
+        msgr.info(f"{itype.capitalize()} dataset created. Length {len(loader[itype])}.")
+    msgr.info(
+        f"Dataset generators created in {seconds_to_hms(time.time() - start_time)}",
+        indent=-1,
+    )
 
-    msgr.info("Saving datasets to disk", indent=1)
+    msgr.part("Saving datasets to disk", indent=1)
 
-    # TODO: test saving
-    for itype in ["train", "val", "test"]:
-        start_time = time.time()
-        dataset_path = Path(tvt_dir, f"{itype}_dataset")
-        dataset[itype].save(
-            path=str(dataset_path)  # TODO: check path before trying to save
-        )  # deadlocks silently on error https://github.com/tensorflow/tensorflow/issues/61736
-        msgr.info(
-            f"{itype.capitalize()} dataset saved to disk in {seconds_to_hms(time.time() - start_time)}"
-        )
-        msgr.print_directory_size(dataset_path)
+    tfr_options = tf.io.TFRecordOptions(compression_type="GZIP")
+    for itype in data_types:
+        if dataset_paths[itype].exists():
+            msgr.warning(f"Dataset {itype} already exists. Skipping.")
+            next
 
+        with tf.io.TFRecordWriter(
+            str(dataset_paths[itype]), options=tfr_options
+        ) as writer:
+            for x, y in tqdm(
+                dataset[itype],
+                desc=f"Saving {itype} dataset",
+                total=len(loader[itype]),
+                unit="sample",
+            ):
+                writer.write(serialize_example(x, y))
+        msgr.print_file_size(dataset_paths[itype])
+
+    write_json(
+        {
+            "spectrogram": spectrogram_sample.shape.as_list(),
+            "label": label_sample.shape.as_list(),
+        },
+        Path(tvt_dir, "dataset_shapes.json"),
+    )
     msgr.success("Train, validation and test datasets created and saved to disk")
 
     return

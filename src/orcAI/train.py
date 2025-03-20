@@ -4,19 +4,18 @@ from importlib.resources import files
 from functools import partial
 import numpy as np
 import click
-
 import tensorflow as tf
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import keras_tuner as kt
 
+tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 # import local
-from orcAI.auxiliary import Messenger, read_json, write_json, compute_confusion_matrix
+from orcAI.auxiliary import Messenger, read_json, write_json
 from orcAI.architectures import (
     build_model,
     masked_binary_accuracy,
     masked_binary_crossentropy,
-    masked_f1_score,
 )
 from orcAI.load import reload_dataset
 

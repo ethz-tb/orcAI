@@ -5,9 +5,10 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import json
-
-import tensorflow as tf
 from sklearn.metrics import confusion_matrix
+import tensorflow as tf
+
+tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 from orcAI.auxiliary import (
     Messenger,
@@ -18,7 +19,7 @@ from orcAI.architectures import (
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
-from orcAI.load import reload_dataset, data_generator, ChunkedMultiZarrDataLoader
+from orcAI.load import reload_dataset, data_generator, DataLoader
 
 
 def _stack_batch(batch):
@@ -385,7 +386,7 @@ def test_model(
     sampled_test_snippets = all_test_snippets.sample(
         test_data_sample_size, replace=False
     ).reset_index()
-    sampled_test_snippets_loader = ChunkedMultiZarrDataLoader(
+    sampled_test_snippets_loader = DataLoader(
         sampled_test_snippets,
         batch_size=model_parameter["batch_size"],
         n_filters=len(model_parameter["filters"]),

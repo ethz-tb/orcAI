@@ -16,6 +16,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "create-label-arrays",
                 "create-snippet-table",
                 "create-tvt-snippet-tables",
+                "create-tvt-data",
             ],
         },
         {
@@ -465,3 +466,33 @@ def cli_create_tvt_snippet_tables(**kwargs):
     from orcAI.snippets import create_tvt_snippet_tables
 
     create_tvt_snippet_tables(**kwargs)
+
+
+@cli.command(
+    name="create-tvt-data",
+    help="Creates training, validation and test datasets from snippet tables in TVT_DIR.",
+    short_help="Creates TVT datasets.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("tvt_dir", type=ClickDirPathR)
+@click.option(
+    "--orcai_parameter",
+    "-p",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    show_default="default_orcai_parameter.json",
+    help="Path to the snippet parameter file.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_create_tvt_data(**kwargs):
+    from orcAI.snippets import create_tvt_data
+
+    create_tvt_data(**kwargs)

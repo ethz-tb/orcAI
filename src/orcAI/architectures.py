@@ -2,6 +2,8 @@ import tensorflow as tf
 from keras import layers
 from keras.saving import register_keras_serializable
 
+tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
+
 from orcAI.auxiliary import Messenger
 
 # TODO: docstrings for functions, try pyment
