@@ -393,7 +393,7 @@ def cli_create_spectrograms(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_label_arrays(**kwargs):
-    from orcAI.annotation import create_label_arrays
+    from orcAI.labels import create_label_arrays
 
     create_label_arrays(**kwargs)
 
