@@ -133,6 +133,7 @@ def create_label_arrays(
         "default_orcai_parameter.json"
     ),
     call_equivalences: (Path | str) | dict = None,
+    overwrite: bool = False,
     verbosity: int = 2,
 ):
     """Makes label arrays for all files in recording_table
@@ -164,15 +165,22 @@ def create_label_arrays(
 
     not_annotated = recording_table["base_dir_annotation"].isna()
     if any(not_annotated):
-        msgr.info(
-            f"Missing annotation files for {sum(not_annotated)} recordings. Skipping these recordings."
-        )
+        msgr.info(f"Skipping {sum(not_annotated)} because of missing annotation files.")
         recording_table = recording_table[~not_annotated]
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
     recordings_no_labels = []
     label_calls = orcai_parameter["calls"]
+
+    if not overwrite:
+        existing_labels = recording_table["recording"].apply(
+            lambda x: Path(output_dir).joinpath(x, "labels").exists()
+        )
+        msgr.info(
+            f"Skipping {sum(existing_labels)} recordings because they already have Labels."
+        )
+        recording_table = recording_table[~existing_labels]
 
     for i in tqdm(
         recording_table.index,
@@ -212,6 +220,6 @@ def create_label_arrays(
             recordings_no_labels.append(recording_table.loc[i, "recording"])
 
     if len(recordings_no_labels) > 0:
-        msgr.warning(f"No labels present in {recordings_no_labels}")
+        msgr.warning(f"No valid labels present in {recordings_no_labels}")
     msgr.success("Finished making label arrays")
     return

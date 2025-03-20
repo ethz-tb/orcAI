@@ -378,6 +378,12 @@ def cli_create_spectrograms(**kwargs):
     help="Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels.",
 )
 @click.option(
+    "--overwrite",
+    "-ow",
+    is_flag=True,
+    help="Recreate existing label arrays.",
+)
+@click.option(
     "--verbosity",
     "-v",
     type=click.IntRange(0, 3),
