@@ -297,66 +297,6 @@ def filter_filepaths(
     return filepaths
 
 
-def compute_confusion_matrix(
-    y_true_batch,
-    y_pred_batch,
-    label_names,
-):
-    """
-    Compute the confusion matrix for each label across the entire batch.
-
-    Args:
-        y_true_batch (np.ndarray): Ground truth binary labels with shape (batch_size, time_steps, num_labels).
-        y_pred_batch (np.ndarray): Predicted  labels with shape (batch_size, time_steps, num_labels).
-
-    Returns:
-        dict: A dictionary where keys are label indices and values are confusion matrices (2x2 numpy arrays).
-    """
-    mask_value = -1
-    # Ensure inputs are numpy arrays
-    y_true_batch = np.array(y_true_batch)
-    y_pred_binary_batch = (y_pred_batch >= 0.5).astype(int)
-    y_pred_binary_batch = np.array(y_pred_binary_batch)
-
-    # Validate input shapes
-    assert (
-        y_true_batch.shape == y_pred_binary_batch.shape
-    ), "Shapes of y_true_batch and y_pred_binary_batch must match"
-
-    # Extract the number of labels
-    num_labels = y_true_batch.shape[-1]
-
-    # Initialize a dictionary to store confusion matrices for each label
-    confusion_matrices = {}
-
-    for label_idx in range(len(label_names)):
-        # Flatten the predictions and ground truth for the current label
-        y_true_flat = y_true_batch[:, :, label_idx].flatten()
-        y_pred_flat = y_pred_binary_batch[:, :, label_idx].flatten()
-
-        # Apply the mask to exclude masked values
-        mask = y_true_flat != mask_value
-        y_true_filtered = y_true_flat[mask]
-        y_pred_filtered = y_pred_flat[mask]
-
-        # Compute the confusion matrix for the current label
-        [tn, fp], [fn, tp] = confusion_matrix(
-            y_true_filtered, y_pred_filtered, labels=[0, 1]
-        )
-        tot = tn + fp + fn + tp
-        cm = {
-            "TP": float(tp / tot),
-            "FN": float(fn / tot),
-            "FP": float(fp / tot),
-            "TN": float(tn / tot),
-            "Total": int(tot),
-        }
-        # Store the confusion matrix
-        confusion_matrices[label_names[label_idx]] = cm
-
-    return confusion_matrices
-
-
 def seconds_to_hms(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
