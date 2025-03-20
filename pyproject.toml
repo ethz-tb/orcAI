@@ -39,7 +39,7 @@ dependencies = [
 Repository = "https://gitlab.ethz.ch/tb/orcai"
 
 [project.scripts]
-orcAI = "orcAI.cli:cli"
+orcai = "orcAI.cli:cli"
 
 [tool.setuptools.package-data]
 "orcAI.defaults" = ["*.json"]
