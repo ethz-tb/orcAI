@@ -193,9 +193,7 @@ def _predict_wav(
 ):
     if output_path is not None:
         if output_path == "default":
-            filename = (
-                recording_path.stem + "_" + orcai_parameter["name"] + "_predicted.txt"
-            )
+            filename = f"{recording_path.stem}_c{channel}_{orcai_parameter['name']}_predicted.txt"
             output_path = recording_path.with_name(filename)
         else:
             output_path = Path(output_path)
@@ -320,7 +318,7 @@ def _predict_wav(
         msgr.success(f"Predictions saved to {output_path}")
         if save_prediction_probabilities:
             predictions_path = output_path.with_name(
-                output_path.stem + "_probabilities.csv.gz"
+                f"{output_path.stem}_probabilities.csv.gz"
             )
 
             delta_t * time_steps_per_output_step * range(len(aggregated_predictions))
