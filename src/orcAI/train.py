@@ -17,7 +17,7 @@ from orcAI.architectures import (
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
-from orcAI.load import reload_dataset
+from orcAI.io import reload_dataset
 
 
 # model parameters
@@ -97,9 +97,7 @@ def train(
     val_dataset = reload_dataset(
         file_paths["validation_data"], model_parameter["batch_size"]
     )
-    test_dataset = reload_dataset(
-        file_paths["test_data"], model_parameter["batch_size"]
-    )
+
     msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")
 
     # Verify the val dataset and obtain shape
