@@ -3,8 +3,9 @@ import shutil
 from pathlib import Path
 from importlib.resources import files
 import pandas as pd
+from numpy.random import SeedSequence
 
-from orcAI.auxiliary import Messenger, filter_filepaths, read_json
+from orcAI.auxiliary import Messenger, filter_filepaths, read_json, write_json
 
 
 def init_project(
@@ -27,6 +28,19 @@ def init_project(
             file,
             new_file_path,
         )
+
+    orcai_parameter_new = read_json(
+        project_dir.joinpath(
+            "default_orcai_parameter.json".replace("default", project_name)
+        )
+    )
+    orcai_parameter_new["seed"] = SeedSequence().entropy
+    write_json(
+        orcai_parameter_new,
+        project_dir.joinpath(
+            "default_orcai_parameter.json".replace("default", project_name)
+        ),
+    )
     msgr.success("Project initialized.")
 
 
@@ -90,7 +104,13 @@ def create_recording_table(
     if exclude_patterns is not None:
         if isinstance(exclude_patterns, (Path | str)):
             exclude_patterns = read_json(exclude_patterns)
+        msgr.info(f"Filtering {len(wav_files)} wav files...", indent=1)
         wav_files = filter_filepaths(wav_files, exclude_patterns, msgr=msgr)
+        msgr.info(
+            f"Filtering {len(annotation_files)} annotations files...",
+            set_indent=1,
+            indent=1,
+        )
         annotation_files = filter_filepaths(
             annotation_files, exclude_patterns, msgr=msgr
         )
