@@ -17,7 +17,7 @@ from orcAI.architectures import (
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
-from orcAI.io import reload_dataset
+from orcAI.io import load_dataset
 
 
 # model parameters
@@ -91,10 +91,10 @@ def train(
     msgr.info(f"Loading train, val and test datasets from {data_dir}", indent=1)
     tf.config.set_soft_device_placement(True)
     start_time = time.time()
-    train_dataset = reload_dataset(
+    train_dataset = load_dataset(
         file_paths["training_data"], model_parameter["batch_size"]
     )
-    val_dataset = reload_dataset(
+    val_dataset = load_dataset(
         file_paths["validation_data"], model_parameter["batch_size"]
     )
 
@@ -334,10 +334,10 @@ def hyperparameter_search(
     # load data sets from local disk
     msgr.info(f"Loading train and val datasets from {data_dir}", indent=1)
     start_time = time.time()
-    train_dataset = reload_dataset(
+    train_dataset = load_dataset(
         file_paths["training_data"], model_parameter["batch_size"]
     )
-    val_dataset = reload_dataset(
+    val_dataset = load_dataset(
         file_paths["validation_data"], model_parameter["batch_size"]
     )
     msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")

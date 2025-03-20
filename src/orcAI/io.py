@@ -162,7 +162,7 @@ def _load_dataset(file_path, dataset_shape):
 
 
 # reload tf dataset
-def reload_dataset(file_path, dataset_shape, batch_size, seed):
+def load_dataset(file_path, dataset_shape, batch_size, seed):
     dataset = (
         _load_dataset(file_path, dataset_shape)
         .shuffle(buffer_size=1000, seed=seed)

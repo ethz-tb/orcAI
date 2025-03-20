@@ -19,7 +19,7 @@ from orcAI.architectures import (
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
-from orcAI.io import reload_dataset, data_generator, DataLoader
+from orcAI.io import load_dataset, data_generator, DataLoader
 
 
 def _stack_batch(batch):
@@ -373,7 +373,7 @@ def test_model(
     )
 
     msgr.part("Testing model on test data")
-    test_dataset = reload_dataset(
+    test_dataset = load_dataset(
         model_data_dir.joinpath("test_dataset"), model_parameter["batch_size"]
     )
     results_test_dataset = _test_model_on_dataset(
