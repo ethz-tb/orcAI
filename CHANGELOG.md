@@ -7,6 +7,7 @@
 - **Breaking**: Combined default_calls.json, default_model_parameter.json, default_spectrogram_parameter.json, default_snippet_parameter.json into a single default_orcai_parameter.json file.
 - **Breaking**: new DataLoader
 - **Breaking**: new save format for data: TFRecord
+- **Breaking**: renamed module `load` to `io`, rename 'reload_dataset' to 'load_dataset'
 - Channel added to the prediction output filename
 
 
