@@ -5,6 +5,10 @@
 ### Changed
 
 - **Breaking**: Combined default_calls.json, default_model_parameter.json, default_spectrogram_parameter.json, default_snippet_parameter.json into a single default_orcai_parameter.json file.
+- **Breaking**: new DataLoader
+- **Breaking**: new save format for data: TFRecord
+- Channel added to the prediction output filename
+
 
 ### Added
 
@@ -14,6 +18,7 @@
 - added cli for creating label arrays
 - added cli for creating snippet table
 - added cli for create-tvt-snippet-tables
+- added cli for create-tvt-data
 
 ## [0.3.0] - 2025-03-14
 
