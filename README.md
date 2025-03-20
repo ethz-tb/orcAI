@@ -15,8 +15,9 @@ OrcAI is a software package to detect acoustic signals in spectrograms generated
 OrcAI uses audio recordings together with annotations of the above sound types to train machine learning models which can then be used to predict annotation of sounds patterns found in recordings that have not yet been annotated.
 
 The package contains code to perform to distinct three sets of tasks:
-- The first set concerns the production of data for training, validation and testing of the machine learning models from the raw audio files and accompanying annotations. 
-- The second set uses the generated training, validation and test data to develop and train models for prediction 
+
+- The first set concerns the production of data for training, validation and testing of the machine learning models from the raw audio files and accompanying annotations.
+- The second set uses the generated training, validation and test data to develop and train models for prediction
 - The third set is to apply these models to predict annotation in as of yet unannotated recordings and, in as far as this is required, to post-process the predicted annotations.
 
 
@@ -52,7 +53,7 @@ Helpers
 
 ## Usage for Prediction
 
-#### `orcai predict`
+### `orcai predict`
 
 Basic usage:
 
@@ -74,7 +75,7 @@ A appropriate recording table can be created using the `orcai create-recording-t
 
 See `orcai predict --help` for more options.
 
-#### `orcai filter-predictions`
+### `orcai filter-predictions`
 
 Example usage:
 
