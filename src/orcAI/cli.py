@@ -485,6 +485,12 @@ def cli_create_tvt_snippet_tables(**kwargs):
     help="Path to the snippet parameter file.",
 )
 @click.option(
+    "--overwrite",
+    "-ow",
+    is_flag=True,
+    help="Recreate existing data.",
+)
+@click.option(
     "--verbosity",
     "-v",
     type=click.IntRange(0, 3),

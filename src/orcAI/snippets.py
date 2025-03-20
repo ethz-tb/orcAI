@@ -446,9 +446,12 @@ def create_tvt_snippet_tables(
 
 
 def create_tvt_data(
-    tvt_dir,
-    orcai_parameter=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
-    verbosity=2,
+    tvt_dir: str | Path,
+    orcai_parameter: dict | (str | Path) = files("orcAI.defaults").joinpath(
+        "default_orcai_parameter.json"
+    ),
+    overwrite: bool = False,
+    verbosity: int = 2,
 ):
     """Creates train, validation and test datasets from snippet tables and saves them to disk
 
@@ -518,29 +521,28 @@ def create_tvt_data(
 
     tfr_options = tf.io.TFRecordOptions(compression_type="GZIP")
     for itype in data_types:
-        if dataset_paths[itype].exists():
+        if dataset_paths[itype].exists() and overwrite is False:
             msgr.warning(f"Dataset {itype} already exists. Skipping.")
-            next
-
-        with tf.io.TFRecordWriter(
-            str(dataset_paths[itype]), options=tfr_options
-        ) as writer:
-            for x, y in tqdm(
-                dataset[itype],
-                desc=f"Saving {itype} dataset",
-                total=len(loader[itype]),
-                unit="sample",
-            ):
-                writer.write(serialize_example(x, y))
-        msgr.print_file_size(dataset_paths[itype])
+        else:
+            with tf.io.TFRecordWriter(
+                str(dataset_paths[itype]), options=tfr_options
+            ) as writer:
+                for x, y in tqdm(
+                    dataset[itype],
+                    desc=f"Saving {itype} dataset",
+                    total=len(loader[itype]),
+                    unit="sample",
+                ):
+                    writer.write(serialize_example(x, y))
+            msgr.print_file_size(dataset_paths[itype])
 
     write_json(
         {
             "spectrogram": spectrogram_sample.shape.as_list(),
-            "label": label_sample.shape.as_list(),
+            "labels": label_sample.shape.as_list(),
         },
         Path(tvt_dir, "dataset_shapes.json"),
     )
     msgr.success("Train, validation and test datasets created and saved to disk")
 
-    return
+    return dataset
