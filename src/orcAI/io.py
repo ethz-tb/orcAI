@@ -1,6 +1,7 @@
 from pathlib import Path
 import zarr
 import tensorflow as tf
+import numpy as np
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -135,25 +136,36 @@ def serialize_example(spectrogram, labels):
     return example_proto.SerializeToString()
 
 
-def parse_example(proto, shape):
+def parse_example(proto, dataset_shape):
     feature_description = {
-        "spectrogram": tf.io.FixedLenFeature([736 * 171], tf.float32),
-        "labels": tf.io.FixedLenFeature([46 * 7], tf.float32),
+        "spectrogram": tf.io.FixedLenFeature(
+            np.prod(dataset_shape["spectrogram"]), tf.float32
+        ),
+        "labels": tf.io.FixedLenFeature(np.prod(dataset_shape["labels"]), tf.float32),
     }
     example = tf.io.parse_single_example(proto, feature_description)
 
-    spectrogram = tf.reshape(example["spectrogram"], (736, 171, 1))
-    labels = tf.reshape(example["labels"], (46, 7))
+    spectrogram = tf.reshape(example["spectrogram"], dataset_shape["spectrogram"])
+    labels = tf.reshape(example["labels"], dataset_shape["labels"])
 
     return spectrogram, labels
 
 
+def _load_dataset(file_path, dataset_shape):
+    """
+    Load a dataset from a TFRecord file. (seperate function mainly testing)
+    """
+    dataset = tf.data.TFRecordDataset(str(file_path), compression_type="GZIP").map(
+        lambda proto: parse_example(proto, dataset_shape)
+    )
+    return dataset
+
+
 # reload tf dataset
-def reload_dataset(file_path, shape, batch_size):
+def reload_dataset(file_path, dataset_shape, batch_size, seed):
     dataset = (
-        tf.data.TFRecordDataset(str(file_path))
-        .map(lambda proto: parse_example(proto, shape))
-        .shuffle(buffer_size=1000)
+        _load_dataset(file_path, dataset_shape)
+        .shuffle(buffer_size=1000, seed=seed)
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
