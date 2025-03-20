@@ -297,7 +297,6 @@ ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
 # build model from a choice of models
 def build_model(
     input_shape: tuple[int, int, int],
-    num_labels: int,
     orcai_parameter: dict,
     msgr: Messenger = Messenger(),
 ):
@@ -307,8 +306,6 @@ def build_model(
     ----------
     input_shape : tuple (int, int, int)
         Dimensions of the input data
-    num_labels : int
-        Number of labels to predict
     orcai_parameter : dict
         OrcAI parameter dictionary
     msgr : Messenger
@@ -320,7 +317,7 @@ def build_model(
         model : tf.keras.Model
             Model
     """
-
+    num_labels = len(orcai_parameter["calls"])
     if orcai_parameter["architecture"] in ORCAI_ARCHITECTURES:
         model = ORCAI_ARCHITECTURES_FN[orcai_parameter["architecture"]](
             input_shape, num_labels, **orcai_parameter["model"]
