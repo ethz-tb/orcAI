@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orcAI"
-version = "0.3.0"
+version = "0.4.0"
 authors = [
     { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
     { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
@@ -25,7 +25,6 @@ dependencies = [
     "numpy<3",
     "pandas<3",
     "tensorflow<3",
-    "tensorflow-macos<3; platform_system=='Darwin'",
     "tensorflow-metal; platform_system=='Darwin'",
     "keras_tuner<2",
     "keras<4",

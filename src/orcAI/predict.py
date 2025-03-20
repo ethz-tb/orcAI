@@ -6,15 +6,15 @@ from importlib.resources import files
 import time
 import keras
 from tqdm import tqdm
-from functools import partial
 
-from orcAI.auxiliary import Messenger, read_json, find_consecutive_ones
+from orcAI.auxiliary import Messenger, find_consecutive_ones
 from orcAI.architectures import (
     res_net_LSTM_arch,
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
 from orcAI.spectrogram import make_spectrogram
+from orcAI.io import read_json
 
 
 def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):
@@ -182,11 +182,10 @@ def _predict_wav(
     recording_path: Path | str,
     channel: int,
     model: keras.Model,
-    model_parameter: dict,
-    spectrogram_parameter: dict,
+    orcai_parameter: dict,
     shape: dict,
-    label_calls: list,
     output_path: Path | str = "default",
+    save_prediction_probabilities: bool = False,
     call_duration_limits: (Path | str) | dict = None,
     label_suffix: str = "*",
     msgr: Messenger = Messenger(verbosity=0),
@@ -194,30 +193,28 @@ def _predict_wav(
 ):
     if output_path is not None:
         if output_path == "default":
-            filename = (
-                recording_path.stem + "_" + model_parameter["name"] + "_predicted.txt"
-            )
+            filename = f"{recording_path.stem}_c{channel}_{orcai_parameter['name']}_predicted.txt"
             output_path = recording_path.with_name(filename)
         else:
             output_path = Path(output_path)
         msgr.info(f"Output file: {output_path}")
         if output_path.exists():
             msgr.error(f"Annotation file already exists: {output_path}")
-            sys.exit()
+            sys.exit()  # TODO: replace with return
 
     # Generating spectrogram
     if progressbar:
         progressbar.set_description(f"{recording_path.stem}: Generating spectrogram")
         progressbar.refresh()
     spectrogram, _, times = make_spectrogram(
-        recording_path, channel, spectrogram_parameter, msgr=msgr
+        recording_path, channel, orcai_parameter, msgr=msgr
     )
     if spectrogram.shape[1] != shape["input_shape"][1]:
         msgr.error(
             f"Frequency dimensions of spectrogram shape ({spectrogram.shape[1]}) "
             + f"not equal to frequency dimension of input shape ({shape['input_shape'][1]})"
         )
-        exit
+        sys.exit()  # TODO: replace with return
 
     # Prediction
     msgr.part(f"Prediction of annotations for wav_file: {recording_path.stem}")
@@ -228,7 +225,7 @@ def _predict_wav(
     # Parameters
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
     shift = snippet_length // 2  # Shift time steps for overlapping windows
-    time_steps_per_output_step = 2 ** len(model_parameter["filters"])
+    time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
     prediction_length = (
         snippet_length // time_steps_per_output_step
     )  # Output time steps per prediction
@@ -258,9 +255,7 @@ def _predict_wav(
         progressbar.refresh()
 
     total_time_steps = spectrogram.shape[0] // time_steps_per_output_step
-    aggregated_predictions = np.zeros(
-        (total_time_steps, shape["num_labels"])
-    )  # Shape: (3600 * 46, 7)
+    aggregated_predictions = np.zeros((total_time_steps, shape["num_labels"]))
     overlap_count = np.zeros(
         total_time_steps
     )  # To track the number of overlaps per time step
@@ -276,7 +271,7 @@ def _predict_wav(
 
     # Step 5: Average the overlapping predictions (or apply another pooling function)
     msgr.info("Computing binary predictions")
-    valid_mask = overlap_count > 0
+    valid_mask = overlap_count > 0  # removes zeros at end
     aggregated_predictions[valid_mask] /= overlap_count[valid_mask, np.newaxis]
     threshold = 0.5 / np.max(overlap_count)  # larger than 0.5 in at least one snippet
     binary_prediction = np.zeros((total_time_steps, shape["num_labels"])).astype(int)
@@ -288,7 +283,7 @@ def _predict_wav(
     row_starts = []
     row_stops = []
     label_names = []
-    for i, label_name in enumerate(label_calls):
+    for i, label_name in enumerate(orcai_parameter["calls"]):
         if sum(binary_prediction[:, i]) > 0:
             row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
             row_starts += list(row_start)
@@ -320,6 +315,22 @@ def _predict_wav(
     if output_path is not None:
         predicted_labels.round(4).to_csv(output_path, sep="\t", index=False)
         msgr.success(f"Prediction finished.\nPredictions saved to {output_path}")
+        msgr.success(f"Predictions saved to {output_path}")
+        if save_prediction_probabilities:
+            predictions_path = output_path.with_name(
+                f"{output_path.stem}_probabilities.csv.gz"
+            )
+
+            delta_t * time_steps_per_output_step * range(len(aggregated_predictions))
+
+            pd.DataFrame(
+                aggregated_predictions,
+                columns=orcai_parameter["calls"],
+                index=delta_t
+                * time_steps_per_output_step
+                * range(len(aggregated_predictions)),
+            ).to_csv(predictions_path, index_label="time", compression="gzip")
+            msgr.success(f"Prediction probabilities saved to {predictions_path}")
     else:
         msgr.success(f"Prediction finished.")
     return predicted_labels
@@ -330,6 +341,7 @@ def predict_wav(
     channel=1,
     model_path=files("orcAI.models").joinpath("orcai-V1"),
     output_path="default",
+    save_prediction_probabilities=False,
     call_duration_limits=None,
     label_suffix="*",
     msgr=None,
@@ -348,6 +360,8 @@ def predict_wav(
         Path to the model directory.
     output_path : (Path | Str) | "default" | None
         Path to the output file or "default" to save in the same directory as the wav file. None to not save predictions to disk.
+    save_prediction_probabilities : bool
+        Save prediction probabilities to a separate file. Defaults to False.
     call_duration_limits : (Path | Str) | dict
         Path to a JSON file containing a dictionary with call duration limits. Or a dictionary with call duration limits.
     label_suffix : str
@@ -371,26 +385,24 @@ def predict_wav(
     msgr.info(f"Model: {model_path.stem}")
     msgr.info(f"Wav file: {recording_path}")
 
-    label_calls = read_json(model_path.joinpath("trained_calls.json"))
+    orcai_parameter = read_json(model_path.joinpath("orcai_parameter.json"))
     msgr.debug("Calls for labeling:")
-    msgr.debug(label_calls)
+    msgr.debug(orcai_parameter["calls"])
 
     shape = read_json(model_path.joinpath("model_shape.json"))
     msgr.debug(f"Input shape:")
     msgr.debug(shape)
 
-    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
     msgr.debug(f"Model parameter:")
-    msgr.debug(model_parameter)
-    spectrogram_parameter = read_json(model_path.joinpath("spectrogram_parameter.json"))
+    msgr.debug(orcai_parameter["model"])
 
     msgr.debug(f"Spectrogram parameters:")
-    msgr.debug(spectrogram_parameter)
+    msgr.debug(orcai_parameter["spectrogram"])
 
     msgr.part(f"Loading model: {model_path.stem}")
 
     msgr.info("Building model architecture")
-    model = res_net_LSTM_arch(**shape, **model_parameter)
+    model = res_net_LSTM_arch(**shape, **orcai_parameter["model"])
 
     msgr.info("Loading model weights")
     model.load_weights(model_path.joinpath("model_weights.h5"))
@@ -410,11 +422,10 @@ def predict_wav(
         recording_path=recording_path,
         channel=channel,
         model=model,
-        model_parameter=model_parameter,
-        spectrogram_parameter=spectrogram_parameter,
+        orcai_parameter=orcai_parameter,
         shape=shape,
-        label_calls=label_calls,
         output_path=output_path,
+        save_prediction_probabilities=save_prediction_probabilities,
         call_duration_limits=call_duration_limits,
         label_suffix=label_suffix,
         msgr=msgr,
@@ -429,6 +440,7 @@ def predict(
     channel=1,
     model_path=files("orcAI.models").joinpath("orcai-V1"),
     output_path="default",
+    save_prediction_probabilities=False,
     base_dir_recording=None,
     call_duration_limits=None,
     label_suffix="*",
@@ -444,6 +456,7 @@ def predict(
             channel=channel,
             model_path=model_path,
             output_path=output_path,
+            save_prediction_probabilities=save_prediction_probabilities,
             call_duration_limits=call_duration_limits,
             label_suffix=label_suffix,
             msgr=msgr,
@@ -517,6 +530,7 @@ def predict(
             shape=shape,
             label_calls=label_calls,
             output_path=recording_table.loc[i, "output_path"],
+            save_prediction_probabilities=save_prediction_probabilities,
             call_duration_limits=call_duration_limits,
             label_suffix=label_suffix,
             msgr=Messenger(verbosity=0),

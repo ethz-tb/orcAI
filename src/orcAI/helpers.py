@@ -1,9 +1,48 @@
 import sys
+import shutil
 from pathlib import Path
 from importlib.resources import files
 import pandas as pd
+from numpy.random import SeedSequence
 
-from orcAI.auxiliary import Messenger, filter_filepaths, read_json
+from orcAI.auxiliary import Messenger, filter_filepaths
+from orcAI.io import read_json, write_json
+
+
+def init_project(
+    project_dir: Path | str, project_name: str, verbosity: int = 2
+) -> None:
+    """Initialize a new orcAI project."""
+
+    msgr = Messenger(verbosity=verbosity)
+    msgr.part("Initializing project")
+    msgr.info(f"Creating project directory: {project_dir}")
+    project_dir = Path(project_dir)
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy the default configuration files
+    default_files = files("orcAI.defaults").iterdir()
+    for file in default_files:
+        new_file_path = project_dir.joinpath(file.name.replace("default", project_name))
+        msgr.info(f"Creating {new_file_path.name}")
+        shutil.copy(
+            file,
+            new_file_path,
+        )
+
+    orcai_parameter_new = read_json(
+        project_dir.joinpath(
+            "default_orcai_parameter.json".replace("default", project_name)
+        )
+    )
+    orcai_parameter_new["seed"] = SeedSequence().entropy
+    write_json(
+        orcai_parameter_new,
+        project_dir.joinpath(
+            "default_orcai_parameter.json".replace("default", project_name)
+        ),
+    )
+    msgr.success("Project initialized.")
 
 
 def create_recording_table(
@@ -11,7 +50,7 @@ def create_recording_table(
     output_path: Path | str | None = None,
     base_dir_annotation: Path | str | None = None,
     default_channel: int = 1,
-    label_calls: Path | str | None = None,
+    orcai_parameter: Path | str | None = None,
     update_table: Path | str | None = None,
     update_paths: bool = True,
     exclude_patterns: Path | str | list[str] | None = None,
@@ -30,6 +69,8 @@ def create_recording_table(
         Base directory containing the annotations (if different from base_dir_recording).
     default_channel : int
         Default channel number for the recordings.
+    orcai_parameter : (Path | str) | None
+        Path to a JSON file containing orcAi parameter.
     update_table : (Path | str) | None
         Path to a .csv file with a previous table of recordings to update.
     update_paths : bool
@@ -64,13 +105,20 @@ def create_recording_table(
     if exclude_patterns is not None:
         if isinstance(exclude_patterns, (Path | str)):
             exclude_patterns = read_json(exclude_patterns)
+        msgr.info(f"Filtering {len(wav_files)} wav files...", indent=1)
         wav_files = filter_filepaths(wav_files, exclude_patterns, msgr=msgr)
+        msgr.info(
+            f"Filtering {len(annotation_files)} annotations files...",
+            set_indent=1,
+            indent=1,
+        )
         annotation_files = filter_filepaths(
             annotation_files, exclude_patterns, msgr=msgr
         )
 
-    if label_calls is not None:
-        call_possible = {call: pd.NA for call in read_json(label_calls)}
+    if orcai_parameter is not None:
+        label_calls = read_json(orcai_parameter)["calls"]
+        call_possible = {call: pd.NA for call in label_calls}
     else:
         call_possible = {}
 

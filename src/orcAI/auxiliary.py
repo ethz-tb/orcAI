@@ -1,12 +1,9 @@
 import os
-import time
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import json
-from sklearn.metrics import confusion_matrix
 import click
-import zarr
 
 
 class JsonEncoderExt(json.JSONEncoder):
@@ -124,15 +121,50 @@ class Messenger:
             **kwargs,
         )
 
+    def print_tf_devices(self, indent=0, set_indent=None, severity=2, **kwargs):
+        """print tensorflow devices"""
+        if self.verbosity < severity:
+            return
+        import tensorflow as tf
+
+        tf.get_logger().setLevel(
+            40
+        )  # suppress tensorflow logging (ERROR and worse only)
+
+        self.info(
+            f"Available TensorFlow devices: {print(tf.config.list_physical_devices())}",
+            indent=indent,
+            set_indent=set_indent,
+            severity=severity,
+            **kwargs,
+        )
+
     def print_memory_usage(self, indent=0, set_indent=None, severity=2, **kwargs):
         """print memory usage"""
         if self.verbosity < severity:
             return
         from psutil import Process
+        from humanize import naturalsize
 
         process = Process(os.getpid())
         self.info(
-            f"memory usage: {process.memory_info().rss / 1024 ** 2} MB",
+            f"memory usage: {naturalsize(process.memory_info().rss, format='%.2f')}",
+            indent=indent,
+            set_indent=set_indent,
+            severity=severity,
+            **kwargs,
+        )
+
+    def print_file_size(self, file, indent=0, set_indent=None, severity=2, **kwargs):
+        """print size of dataset"""
+        if self.verbosity < severity:
+            return
+        from humanize import naturalsize
+
+        file_size = Path(file).stat().st_size
+
+        self.info(
+            f"Size on disk of {Path(file).name}: {naturalsize(file_size, format='%.2f')}",
             indent=indent,
             set_indent=set_indent,
             severity=severity,
@@ -181,83 +213,6 @@ class Messenger:
         return indented_obj
 
 
-def write_vector_to_json(vector, filename):
-    """write out equally spaced vector in short form with min, max and length"""
-    dictionary = {"min": vector[0], "max": vector[-1], "length": len(vector)}
-    with open(filename, "w") as f:
-        json.dump(dictionary, f, indent=4)
-    return
-
-
-def read_json_to_vector(filename):
-    """read and generate equally spaced vector in short form from min, max and length"""
-    with open(filename, "r") as f:
-        dictionary = json.load(f)
-    return np.linspace(dictionary["min"], dictionary["max"], dictionary["length"])
-
-
-def read_json(filename):
-    """Read a JSON file into a dictionary"""
-    with open(filename, "r") as file:
-        dictionary = json.load(file)
-    return dictionary
-
-
-def write_json(dictionary, filename):
-    """write dictionary into json file"""
-    json_string = json.dumps(dictionary, indent=4)
-    with open(filename, "w") as file:
-        file.write(json_string)
-    return
-
-
-def save_as_zarr(obj, filename, msgr=Messenger(verbosity=2)):
-    """write object to zarr file"""
-    start_time = time.time()
-    zarr_file = zarr.open(
-        filename,
-        mode="w",
-        shape=obj.shape,
-        chunks=(2000, obj.shape[1]),
-        dtype="float32",
-        compressor=zarr.Blosc(cname="zlib"),
-    )
-    zarr_file[:] = obj
-    save_time = time.time()
-    msgr.info(f"Time for for saving to disk: {save_time - start_time:.2f} seconds")
-    return
-
-
-def resolve_file_paths(
-    directory, file_names, extension="", msgr=Messenger(verbosity=2)
-):
-    """
-    Resolve file paths for a list of file names in a directory.
-
-    Args:
-        directory (str): The root directory to search in.
-        file_names (list): A list of file names to resolve.
-        extension (str): The file extension to append to the file names.
-
-    Returns:
-        list: A list of full file paths for the specified file names.
-    """
-    file_paths = []
-    if extension[0] != ".":
-        extension = "." + extension
-    for file_name in file_names:
-        results = list(Path(directory).rglob(file_name + extension))
-        if len(results) == 0:
-            msgr.warning(f"No {extension} file found for {file_name}. Returning None.")
-            results = [None]
-        elif len(results) > 1:
-            msgr.warning(f"WARNING: Multiple files found for {file_name}", indent=1)
-            msgr.info(results)
-            msgr.warning(f"Returning the first path.", indent=-1)
-        file_paths.append(results[0])
-    return file_paths
-
-
 def resolve_recording_data_dir(recording, recording_data_dir):
     if Path(recording_data_dir, recording).exists():
         return Path(recording_data_dir, recording)
@@ -284,73 +239,12 @@ def filter_filepaths(
         filtered_filepaths = filter_filepaths(filepaths, exclude_pattern)
         # filtered_filepaths will be [Path("/path/to/file1.txt"), Path("/path/to/file3.txt")]
     """
-    msgr.info(f"Filtering {len(filepaths)} files...")
     for e in exclude_pattern:
         filepaths = [f for f in filepaths if e not in str(f)]
         msgr.info(
             f"Remaining files after filtering files that contain {e}: {len(filepaths)}"
         )
     return filepaths
-
-
-def compute_confusion_matrix(
-    y_true_batch,
-    y_pred_batch,
-    label_names,
-):
-    """
-    Compute the confusion matrix for each label across the entire batch.
-
-    Args:
-        y_true_batch (np.ndarray): Ground truth binary labels with shape (batch_size, time_steps, num_labels).
-        y_pred_batch (np.ndarray): Predicted  labels with shape (batch_size, time_steps, num_labels).
-
-    Returns:
-        dict: A dictionary where keys are label indices and values are confusion matrices (2x2 numpy arrays).
-    """
-    mask_value = -1
-    # Ensure inputs are numpy arrays
-    y_true_batch = np.array(y_true_batch)
-    y_pred_binary_batch = (y_pred_batch >= 0.5).astype(int)
-    y_pred_binary_batch = np.array(y_pred_binary_batch)
-
-    # Validate input shapes
-    assert (
-        y_true_batch.shape == y_pred_binary_batch.shape
-    ), "Shapes of y_true_batch and y_pred_binary_batch must match"
-
-    # Extract the number of labels
-    num_labels = y_true_batch.shape[-1]
-
-    # Initialize a dictionary to store confusion matrices for each label
-    confusion_matrices = {}
-
-    for label_idx in range(len(label_names)):
-        # Flatten the predictions and ground truth for the current label
-        y_true_flat = y_true_batch[:, :, label_idx].flatten()
-        y_pred_flat = y_pred_binary_batch[:, :, label_idx].flatten()
-
-        # Apply the mask to exclude masked values
-        mask = y_true_flat != mask_value
-        y_true_filtered = y_true_flat[mask]
-        y_pred_filtered = y_pred_flat[mask]
-
-        # Compute the confusion matrix for the current label
-        [tn, fp], [fn, tp] = confusion_matrix(
-            y_true_filtered, y_pred_filtered, labels=[0, 1]
-        )
-        tot = tn + fp + fn + tp
-        cm = {
-            "TP": float(tp / tot),
-            "FN": float(fn / tot),
-            "FP": float(fp / tot),
-            "TN": float(tn / tot),
-            "Total": int(tot),
-        }
-        # Store the confusion matrix
-        confusion_matrices[label_names[label_idx]] = cm
-
-    return confusion_matrices
 
 
 def seconds_to_hms(seconds):
@@ -378,13 +272,3 @@ def find_consecutive_ones(binary_vector):
 
     # Combine starts and ends into a list of tuples
     return starts, stops
-
-
-def recording_table_show_func(index, recording_table):
-    """Show the recording and channel for a given index in the recording table. Used for progress bars."""
-    if index is not None:
-        return (
-            recording_table.loc[index, "recording"]
-            + ", Ch "
-            + str(recording_table.loc[index, "channel"])
-        )

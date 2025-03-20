@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.4.0] - 2025-03-20
+
+### Changed
+
+- **Breaking**: Combined default_calls.json, default_model_parameter.json, default_spectrogram_parameter.json, default_snippet_parameter.json into a single default_orcai_parameter.json file.
+- **Breaking**: new DataLoader
+- **Breaking**: new save format for data: TFRecord
+- **Breaking**: renamed module `load` to `io`, rename 'reload_dataset' to 'load_dataset'
+- **Breaking**: renamed module `annotations` to `labels`
+- **Breaking**: moved io function from `auxiliary` to `io`
+- Channel added to the prediction output filename
+
+
+### Added
+
+- added function to initialize a project, copying the default parameter files
+- added option to `predict' to save predicted probabilities
+- added cli for making spectrograms
+- added cli for creating label arrays
+- added cli for creating snippet table
+- added cli for create-tvt-snippet-tables
+- added cli for create-tvt-data
+- added cli for train
+- added example pipeline
+
+### Known Issues
+
+- module `test` untested.
+
 ## [0.3.0] - 2025-03-14
 
 ### Changed
@@ -50,5 +79,5 @@ _First prerelease._
 [0.2.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.0
 [0.2.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.1
 [0.3.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.3.0
-
+[0.4.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.4.0
 
