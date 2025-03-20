@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.0] - unreleased
+## [0.4.0] - 2025-03-20
 
 ### Changed
 
@@ -23,6 +23,11 @@
 - added cli for create-tvt-snippet-tables
 - added cli for create-tvt-data
 - added cli for train
+- added example pipeline
+
+### Known Issues
+
+- module `test` untested.
 
 ## [0.3.0] - 2025-03-14
 
@@ -74,5 +79,5 @@ _First prerelease._
 [0.2.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.0
 [0.2.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.2.1
 [0.3.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.3.0
-
+[0.4.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.4.0
 

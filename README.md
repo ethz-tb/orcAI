@@ -26,13 +26,21 @@ pipx install git+https://gitlab.ethz.ch/tb/orcai.git --version python3.11
 
 The command line interface is available through the `orcai` and subcommands. The following subcommands are available:
 
-- Prediction
+- Predicting calls
   - `orcai predict` - Predict annotations in unannotated recordings based on a trained model. A trained model is included in the package.
   - `orcai filter-annotations` - Filter annotations based on minimum and maximum duration
-- Helpers
+- Training models
+  - `create-spectrograms`- Creates spectrograms.
+  - `create-label-arrays`- Creates label arrays.
+  - `create-snippet-table` - Creates snippet tables.
+  - `create-tvt-snippet-tables` - Creates TVT snippet tables.
+  - `create-tvt-data` - Creates TVT datasets.
+  - `train` -Trains a model.
+Helpers
+  - `init` - Initializes a new orcAI project.
   - `orcai create-recording-table` - Create a recording table from a directory of recordings
 
-### Prediction
+## Usage for Prediction
 
 #### `orcai predict`
 
@@ -67,24 +75,7 @@ orcai filter-predictions path/to/annotations.txt
 This will filter the annotations in the input file `path/to/annotations.txt` based on the minimum and maximum duration specified in the default configuration file. The output will be saved in the same directory as the input file with the same name but with the extension `_filtered.txt`. To pass a custom configuration file, use the `--call_duration_limits` option.
 See `orcai filter-predictions --help` for more options.
 
-### Helpers
+## Usage for Data preperation and training
 
-#### `orcai create-recording-table`
-
-Basic usage:
-
-```bash
-orcai create-recording-table path/to/recordings
-```
-
-This will create a recording table from the recordings in the directory `path/to/recordings`. The recording table will be saved in the same directory as the input directory with the name `recording_table.csv`.
-
-Advanced usage:
-
-```bash
-orcai create-recording-table path/to/recordings -o path/to/output_dir/my_recordings_table.csv -remove_duplicate_filenames
-```
-
-This will create a recording table from the recordings in the directory `path/to/recordings`. The recording table will be saved in the directory `path/to/output_dir` with the name `my_recordings_table.csv`. If the `-remove_duplicate_filenames` flag is set, the function will remove duplicate filenames from the recording table.
-
-For more options see `orcai create-recording-table --help`.
+All commands are documented, use `orcai command --help`.
+Please see [the example pipeline](orcai-v1.md) for a complete example of how to use orcAI to prepare data and train a model.
