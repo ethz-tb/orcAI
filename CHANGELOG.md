@@ -8,6 +8,8 @@
 - **Breaking**: new DataLoader
 - **Breaking**: new save format for data: TFRecord
 - **Breaking**: renamed module `load` to `io`, rename 'reload_dataset' to 'load_dataset'
+- **Breaking**: renamed module `annotations` to `labels`
+- **Breaking**: moved io function from `auxiliary` to `io`
 - Channel added to the prediction output filename
 
 
