@@ -19,7 +19,7 @@ from orcAI.architectures import (
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
-from orcAI.load import reload_dataset, data_generator, DataLoader
+from orcAI.io import reload_dataset, data_generator, DataLoader
 
 
 def _stack_batch(batch):

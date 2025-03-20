@@ -16,7 +16,7 @@ from orcAI.auxiliary import (
     seconds_to_hms,
     resolve_recording_data_dir,
 )
-from orcAI.load import DataLoader, serialize_example
+from orcAI.io import DataLoader, serialize_example
 
 
 def _make_snippet_table(
