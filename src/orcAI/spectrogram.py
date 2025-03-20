@@ -10,10 +10,8 @@ from tqdm import tqdm
 # import local
 from orcAI.auxiliary import (
     Messenger,
-    read_json,
-    save_as_zarr,
-    write_vector_to_json,
 )
+from orcAI.io import read_json, save_as_zarr, write_vector_to_json
 
 
 def make_spectrogram(

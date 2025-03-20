@@ -1,12 +1,9 @@
 import os
-import time
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import json
-from sklearn.metrics import confusion_matrix
 import click
-import zarr
 
 
 class JsonEncoderExt(json.JSONEncoder):
@@ -214,53 +211,6 @@ class Messenger:
             self.indent_str * self.n_indent + line for line in obj_string.splitlines()
         )
         return indented_obj
-
-
-def write_vector_to_json(vector, filename):
-    """write out equally spaced vector in short form with min, max and length"""
-    dictionary = {"min": vector[0], "max": vector[-1], "length": len(vector)}
-    with open(filename, "w") as f:
-        json.dump(dictionary, f, indent=4)
-    return
-
-
-def generate_times_from_spectrogram(filename):
-    """read and generate equally spaced vector in short form from min, max and length"""
-    with open(filename, "r") as f:
-        dictionary = json.load(f)
-    return np.linspace(dictionary["min"], dictionary["max"], dictionary["length"])
-
-
-def read_json(filename):
-    """Read a JSON file into a dictionary"""
-    with open(filename, "r") as file:
-        dictionary = json.load(file)
-    return dictionary
-
-
-def write_json(dictionary, filename):
-    """write dictionary into json file"""
-    json_string = json.dumps(dictionary, indent=4)
-    with open(filename, "w") as file:
-        file.write(json_string)
-    return
-
-
-def save_as_zarr(obj, filename, msgr=Messenger(verbosity=2)):
-    """write object to zarr file"""
-    start_time = time.time()
-    zarr_file = zarr.open(
-        filename,
-        mode="w",
-        shape=obj.shape,
-        chunks=(2000, obj.shape[1]),
-        dtype="float32",
-        compressor=zarr.Blosc(cname="zlib"),
-    )
-    zarr_file[:] = obj
-    save_time = time.time()
-    msgr.info(f"Time for for saving to disk: {save_time - start_time:.2f} seconds")
-    return
 
 
 def resolve_recording_data_dir(recording, recording_data_dir):

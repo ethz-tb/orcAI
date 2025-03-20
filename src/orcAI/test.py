@@ -10,16 +10,14 @@ import tensorflow as tf
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
-from orcAI.auxiliary import (
-    Messenger,
-    read_json,
-)
+from orcAI.auxiliary import Messenger
+
 from orcAI.architectures import (
     build_model,
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
-from orcAI.io import load_dataset, data_generator, DataLoader
+from orcAI.io import DataLoader, load_dataset, read_json
 
 
 def _stack_batch(batch):
@@ -388,12 +386,10 @@ def test_model(
     ).reset_index()
     sampled_test_snippets_loader = DataLoader(
         sampled_test_snippets,
-        batch_size=model_parameter["batch_size"],
         n_filters=len(model_parameter["filters"]),
-        shuffle=False,
     )
     test_sampled_dataset = tf.data.Dataset.from_generator(
-        lambda: data_generator(sampled_test_snippets_loader),
+        sampled_test_snippets_loader.__iter__,
         output_signature=(
             tf.TensorSpec(
                 shape=(model.input_shape[1], model.input_shape[2], 1),

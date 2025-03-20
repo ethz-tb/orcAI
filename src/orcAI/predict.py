@@ -6,15 +6,15 @@ from importlib.resources import files
 import time
 import keras
 from tqdm import tqdm
-from functools import partial
 
-from orcAI.auxiliary import Messenger, read_json, find_consecutive_ones
+from orcAI.auxiliary import Messenger, find_consecutive_ones
 from orcAI.architectures import (
     res_net_LSTM_arch,
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
 from orcAI.spectrogram import make_spectrogram
+from orcAI.io import read_json
 
 
 def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):

@@ -11,12 +11,10 @@ tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse onl
 
 from orcAI.auxiliary import (
     Messenger,
-    read_json,
-    write_json,
     seconds_to_hms,
     resolve_recording_data_dir,
 )
-from orcAI.io import DataLoader, serialize_example
+from orcAI.io import DataLoader, serialize_example, read_json, write_json
 
 
 def _make_snippet_table(

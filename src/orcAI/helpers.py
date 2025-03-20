@@ -5,7 +5,8 @@ from importlib.resources import files
 import pandas as pd
 from numpy.random import SeedSequence
 
-from orcAI.auxiliary import Messenger, filter_filepaths, read_json, write_json
+from orcAI.auxiliary import Messenger, filter_filepaths
+from orcAI.io import read_json, write_json
 
 
 def init_project(
