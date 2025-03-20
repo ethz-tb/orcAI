@@ -124,15 +124,50 @@ class Messenger:
             **kwargs,
         )
 
+    def print_tf_devices(self, indent=0, set_indent=None, severity=2, **kwargs):
+        """print tensorflow devices"""
+        if self.verbosity < severity:
+            return
+        import tensorflow as tf
+
+        tf.get_logger().setLevel(
+            40
+        )  # suppress tensorflow logging (ERROR and worse only)
+
+        self.info(
+            f"Available TensorFlow devices: {print(tf.config.list_physical_devices())}",
+            indent=indent,
+            set_indent=set_indent,
+            severity=severity,
+            **kwargs,
+        )
+
     def print_memory_usage(self, indent=0, set_indent=None, severity=2, **kwargs):
         """print memory usage"""
         if self.verbosity < severity:
             return
         from psutil import Process
+        from humanize import naturalsize
 
         process = Process(os.getpid())
         self.info(
-            f"memory usage: {process.memory_info().rss / 1024 ** 2} MB",
+            f"memory usage: {naturalsize(process.memory_info().rss, format='%.2f')}",
+            indent=indent,
+            set_indent=set_indent,
+            severity=severity,
+            **kwargs,
+        )
+
+    def print_file_size(self, file, indent=0, set_indent=None, severity=2, **kwargs):
+        """print size of dataset"""
+        if self.verbosity < severity:
+            return
+        from humanize import naturalsize
+
+        file_size = Path(file).stat().st_size
+
+        self.info(
+            f"Size on disk of {Path(file).name}: {naturalsize(file_size, format='%.2f')}",
             indent=indent,
             set_indent=set_indent,
             severity=severity,
@@ -284,7 +319,6 @@ def filter_filepaths(
         filtered_filepaths = filter_filepaths(filepaths, exclude_pattern)
         # filtered_filepaths will be [Path("/path/to/file1.txt"), Path("/path/to/file3.txt")]
     """
-    msgr.info(f"Filtering {len(filepaths)} files...")
     for e in exclude_pattern:
         filepaths = [f for f in filepaths if e not in str(f)]
         msgr.info(
