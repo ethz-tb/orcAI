@@ -25,7 +25,6 @@ dependencies = [
     "numpy<3",
     "pandas<3",
     "tensorflow<3",
-    "tensorflow-macos<3; platform_system=='Darwin'",
     "tensorflow-metal; platform_system=='Darwin'",
     "keras_tuner<2",
     "keras<4",
