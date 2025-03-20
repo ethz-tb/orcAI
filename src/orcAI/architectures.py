@@ -6,8 +6,6 @@ tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse onl
 
 from orcAI.auxiliary import Messenger
 
-# TODO: docstrings for functions, try pyment
-
 
 # CNN model with residual connection
 def res_net_1Dconv_arch(
@@ -181,7 +179,6 @@ def res_net_LSTM_arch(
     return tf.keras.Model(inputs, outputs)
 
 
-# define masked binary crossentropy and masked binary accuracy
 @register_keras_serializable(name="masked_binary_crossentropy")
 def masked_binary_crossentropy(y_true: any, y_pred: any):
     """Custom binary cross-entropy loss function with label masking.
