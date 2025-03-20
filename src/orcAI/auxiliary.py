@@ -263,36 +263,6 @@ def save_as_zarr(obj, filename, msgr=Messenger(verbosity=2)):
     return
 
 
-def resolve_file_paths(
-    directory, file_names, extension="", msgr=Messenger(verbosity=2)
-):
-    """
-    Resolve file paths for a list of file names in a directory.
-
-    Args:
-        directory (str): The root directory to search in.
-        file_names (list): A list of file names to resolve.
-        extension (str): The file extension to append to the file names.
-
-    Returns:
-        list: A list of full file paths for the specified file names.
-    """
-    file_paths = []
-    if extension[0] != ".":
-        extension = "." + extension
-    for file_name in file_names:
-        results = list(Path(directory).rglob(file_name + extension))
-        if len(results) == 0:
-            msgr.warning(f"No {extension} file found for {file_name}. Returning None.")
-            results = [None]
-        elif len(results) > 1:
-            msgr.warning(f"WARNING: Multiple files found for {file_name}", indent=1)
-            msgr.info(results)
-            msgr.warning(f"Returning the first path.", indent=-1)
-        file_paths.append(results[0])
-    return file_paths
-
-
 def resolve_recording_data_dir(recording, recording_data_dir):
     if Path(recording_data_dir, recording).exists():
         return Path(recording_data_dir, recording)
