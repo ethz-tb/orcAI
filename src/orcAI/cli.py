@@ -17,6 +17,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "create-snippet-table",
                 "create-tvt-snippet-tables",
                 "create-tvt-data",
+                "train",
             ],
         },
         {
@@ -482,7 +483,7 @@ def cli_create_tvt_snippet_tables(**kwargs):
     type=ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
-    help="Path to the snippet parameter file.",
+    help="Path to the OrcAI parameter file.",
 )
 @click.option(
     "--overwrite",
@@ -502,3 +503,40 @@ def cli_create_tvt_data(**kwargs):
     from orcAI.snippets import create_tvt_data
 
     create_tvt_data(**kwargs)
+
+
+@cli.command(
+    name="train",
+    help="Trains a model on the training dataset in DATA_DIR and saves it to OUTPUT_DIR.",
+    short_help="Trains a model.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitl. ab.ethz.ch/tb/orcai",
+)
+@click.argument("data_dir", type=ClickDirPathR)
+@click.argument("output_dir", type=ClickDirPathW)
+@click.option(
+    "--orcai_parameter",
+    "-p",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    show_default="default_orcai_parameter.json",
+    help="Path to the OrcAI parameter file.",
+)
+@click.option(
+    "--load_weights",
+    "-lw",
+    is_flag=True,
+    help="Load weights from previous training.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_train(**kwargs):
+    from orcAI.train import train
+
+    train(**kwargs)

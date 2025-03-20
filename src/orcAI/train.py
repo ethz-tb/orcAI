@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import keras_tuner as kt
+from tqdm.keras import TqdmCallback
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -35,11 +36,13 @@ def _count_params(trainable_weights: list) -> int:
 
 
 def train(
-    data_dir,
-    output_dir,
-    orcai_parameter=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
-    load_weights=False,
-    verbosity=1,
+    data_dir: Path | str,
+    output_dir: Path | str,
+    orcai_parameter: (Path | str) | dict = files("orcAI.defaults").joinpath(
+        "default_orcai_parameter.json"
+    ),
+    load_weights: bool = False,
+    verbosity: int = 1,
 ):
     """Trains an orcAI model
 
@@ -62,60 +65,54 @@ def train(
     msgr.part("OrcAI - training model")
     msgr.info(f"Output directory: {output_dir}")
     msgr.info(f"Data directory: {data_dir}")
+    output_dir = Path(output_dir)
+    data_dir = Path(data_dir)
 
     msgr.info("Loading parameter and data...", indent=1)
     msgr.debug("Model parameter")
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
+    model_name = orcai_parameter["name"]
     model_parameter = orcai_parameter["model"]
     label_calls = orcai_parameter["calls"]
 
     msgr.debug(model_parameter)
-    model_name = model_parameter["name"]
     msgr.debug("Calls for labeling")
     msgr.debug(label_calls, indent=-1)
-
-    file_paths = {
-        "training_data": Path(data_dir).joinpath("train_dataset"),
-        "validation_data": Path(data_dir).joinpath("val_dataset"),
-        "test_data": Path(data_dir).joinpath("test_dataset"),
-        "model": Path(output_dir).joinpath(model_name, model_name + ".h5"),
-        "model_dir": Path(output_dir).joinpath(model_name),
-        "weights": Path(output_dir).joinpath(model_name, model_name + ".weights.h5"),
-        "history": Path(output_dir).joinpath(model_name, "training_history.json"),
-        "confusion_matrices": Path(output_dir).joinpath("confusion_matrices.json"),
-    }
 
     # load data sets from local disk
     msgr.info(f"Loading train, val and test datasets from {data_dir}", indent=1)
     tf.config.set_soft_device_placement(True)
     start_time = time.time()
+    dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     train_dataset = load_dataset(
-        file_paths["training_data"], model_parameter["batch_size"]
+        data_dir.joinpath("train_dataset.tfrecord.gz"),
+        dataset_shape,
+        model_parameter["batch_size"],
+        orcai_parameter["seed"] + 1,
     )
     val_dataset = load_dataset(
-        file_paths["validation_data"], model_parameter["batch_size"]
+        data_dir.joinpath("val_dataset.tfrecord.gz"),
+        dataset_shape,
+        model_parameter["batch_size"],
+        orcai_parameter["seed"] + 2,
     )
-
     msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")
 
-    # Verify the val dataset and obtain shape
-    spectrogram, labels = val_dataset.take(1).element_spec
-    msgr.info(f"Spectrogram batch shape: {spectrogram.shape}")
-    msgr.info(f"Labels batch shape: {labels.shape}")
-
-    # Build model architecture
-    input_shape = tuple(spectrogram.shape[1:])  # shape
-    num_labels = labels.shape[2]  # Number of sound types
-
-    model = build_model(input_shape, num_labels, orcai_parameter, msgr=msgr)
+    model = build_model(
+        tuple(dataset_shape["spectrogram"]),
+        orcai_parameter,
+        msgr=msgr,
+    )
 
     # Compiling Model
-    # Loading model weights if required
     msgr.part("Compiling model: " + model_name)
+
+    # Loading model weights if required
+    weights_path = output_dir.joinpath(model_name, model_name + ".weights.h5")
     if load_weights:
         msgr.info("Loading weights from stored model: " + model_name)
-        model.load_weights(file_paths["weights"])
+        model.load_weights(weights_path)
     else:
         msgr.info("Learning weights from scratch")
 
@@ -134,15 +131,13 @@ def train(
     # Callbacks
     early_stopping = EarlyStopping(
         monitor="val_masked_binary_accuracy",
-        patience=model_parameter[
-            "patience"
-        ],  # Number of epochs to wait for improvement
-        mode="max",  # Stop when accuracy stops increasing
-        restore_best_weights=True,  # Restore weights from the best epoch
+        patience=model_parameter["patience"],
+        mode="max",
+        restore_best_weights=True,
         verbose=0 if verbosity < 3 else 1,
     )
     model_checkpoint = ModelCheckpoint(
-        file_paths["weights"],
+        weights_path,
         monitor="val_masked_binary_accuracy",
         save_best_only=True,
         save_weights_only=True,
@@ -150,10 +145,10 @@ def train(
     )
     reduce_lr = ReduceLROnPlateau(
         monitor="val_masked_binary_accuracy",
-        factor=0.5,  # Reduce learning rate by a factor of 0.5
-        patience=3,  # Wait for 3 epochs of no improvement
-        min_lr=1e-6,  # Set a lower limit for the learning rate
-        verbose=0 if verbosity < 3 else 1,  # Print updates to the console
+        factor=0.5,
+        patience=3,
+        min_lr=1e-6,
+        verbose=0 if verbosity < 3 else 1,
     )
 
     total_params = model.count_params()
@@ -174,26 +169,36 @@ def train(
             train_dataset,
             validation_data=val_dataset,
             epochs=model_parameter["epochs"],
-            callbacks=[early_stopping, model_checkpoint, reduce_lr],
-            verbose=1 if verbosity > 0 else 0,
+            callbacks=[
+                early_stopping,
+                model_checkpoint,
+                reduce_lr,
+                TqdmCallback(
+                    data_size=model_parameter["batch_size"]
+                    * model_parameter["n_batch_train"],
+                    batch_size=model_parameter["batch_size"],
+                    verbose=1,
+                    disable=verbosity < 2,
+                ),
+            ],
+            verbose=0,
         )
     msgr.info(f"total time for training: {time.time() - start_time:.2f} seconds")
 
     msgr.info(f"training history: {history.history}")
-    msgr.info(f"saving training history: {file_paths['history']}")
-    with open(file_paths["history"], "w") as f:
+    msgr.info("saving training history...")
+    with open(output_dir.joinpath(model_name, "training_history.json"), "w") as f:
         f.write(str(history.history))
 
     write_json(
         orcai_parameter,
-        file_paths["model_dir"].joinpath(f"orcai_parameter.json"),
-    )
-    write_json(
-        {"input_shape": input_shape, "num_labels": num_labels},
-        file_paths["model_dir"].joinpath("model_shape.json"),
+        output_dir.joinpath(model_name).joinpath(f"orcai_parameter.json"),
     )
     # TODO: Save model?
-    model.save(file_paths["model"], include_optimizer=True)
+    model.save(
+        output_dir.joinpath(model_name, model_name + ".keras"),
+        include_optimizer=True,
+    )
 
     msgr.success(
         f"OrcAI - training model finished. Model saved to {file_paths['model']}"

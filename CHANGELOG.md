@@ -22,6 +22,7 @@
 - added cli for creating snippet table
 - added cli for create-tvt-snippet-tables
 - added cli for create-tvt-data
+- added cli for train
 
 ## [0.3.0] - 2025-03-14
 
