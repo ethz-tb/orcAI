@@ -313,16 +313,22 @@ def cli_create_recordings_table(**kwargs):
     help="Path to the OrcAI parameter file.",
 )
 @click.option(
-    "--exclude_not_annotated",
+    "--include_not_annotated",
     "-en",
     is_flag=True,
-    help="Exclude recordings without annotations.",
+    help="Include recordings without annotations.",
 )
 @click.option(
-    "--exclude_no_possible_annotations",
+    "--include_no_possible_annotations",
     "-enp",
     is_flag=True,
-    help="Exclude recordings without possible annotations.",
+    help="Include recordings without possible annotations.",
+)
+@click.option(
+    "--overwrite",
+    "-ow",
+    is_flag=True,
+    help="Recreate existing spectrograms.",
 )
 @click.option(
     "--verbosity",

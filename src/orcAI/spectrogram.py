@@ -167,14 +167,10 @@ def save_spectrogram(
     return
 
 
-def _make_and_save_spectrogram(
-    recording_info,
-    orcai_parameter,
-    output_dir,
-    **kwargs,
-):
+def _make_and_save_spectrogram(recording_info, orcai_parameter, output_dir):
     """Helper function for creating and saving spectrograms for a single recording"""
     silent_msgr = Messenger(verbosity=0)
+
     spectrogram, frequencies, times = make_spectrogram(
         Path(recording_info.base_dir_recording).joinpath(
             recording_info.rel_recording_path
@@ -203,8 +199,9 @@ def create_spectrograms(
     output_dir,
     base_dir_recording=None,
     orcai_parameter=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
-    exclude_not_annotated=True,
-    exclude_no_possible_annotations=True,
+    include_not_annotated=False,
+    include_no_possible_annotations=False,
+    overwrite=False,
     verbosity=2,
 ):
     """Creates spectrograms for all files in recording table at recording_table_path
@@ -220,10 +217,12 @@ def create_spectrograms(
         Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.
     orcai_parameter : (Path | str) | dict
         Path to the orcai parameter file or a dictionary with parameters.
-    exclude_not_annotated: bool
-        Exclude recordings without annotations.
-    exclude_no_possible_annotations : bool
-        Exclude recordings without possible annotations.
+    include_not_annotated: bool
+        Include recordings without annotations.
+    include_no_possible_annotations : bool
+        Include recordings without possible annotations.
+    overwrite : bool
+        Recreate existing spectrograms.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
 
@@ -238,16 +237,15 @@ def create_spectrograms(
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
-    spectrogram_parameter = orcai_parameter["spectrogram"]
 
-    if exclude_not_annotated:
+    if not include_not_annotated:
         not_annotated = recording_table["base_dir_annotation"].isna()
         msgr.info(
             f"Excluded {not_annotated.sum()} recordings because they are not annotated."
         )
         recording_table = recording_table[~not_annotated]
 
-    if exclude_no_possible_annotations:
+    if not include_no_possible_annotations:
         label_calls = orcai_parameter["calls"]
         is_included = recording_table[label_calls].apply(lambda x: x.any(), axis=1)
         msgr.info(
@@ -255,6 +253,15 @@ def create_spectrograms(
         )
         msgr.info(str(recording_table[~is_included]["recording"].values), indent=-1)
         recording_table = recording_table[is_included]
+
+    if not overwrite:
+        existing_spectrograms = recording_table["recording"].apply(
+            lambda x: Path(output_dir).joinpath(x, "spectrogram").exists()
+        )
+        msgr.info(
+            f"Skipping {sum(existing_spectrograms)} recordings because they already have spectrograms."
+        )
+        recording_table = recording_table[~existing_spectrograms]
 
     if base_dir_recording is not None:
         recording_table["base_dir_recording"] = base_dir_recording
@@ -266,6 +273,6 @@ def create_spectrograms(
         desc="Making spectrograms",
         total=len(recording_table),
     ):
-        _make_and_save_spectrogram(recording, spectrogram_parameter, output_dir)
+        _make_and_save_spectrogram(recording, orcai_parameter, output_dir)
 
     return
