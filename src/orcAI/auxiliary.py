@@ -1,9 +1,12 @@
 import os
+import time
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import json
 import click
+from humanize import naturalsize
+from datetime import timedelta
 
 
 class JsonEncoderExt(json.JSONEncoder):
@@ -16,7 +19,14 @@ class JsonEncoderExt(json.JSONEncoder):
 class Messenger:
     """Class for printing messages with different levels of verbosity and indentation"""
 
-    def __init__(self, n_indent=0, verbosity=2, indent_str="    ", file=None):
+    def __init__(
+        self,
+        n_indent=0,
+        verbosity=2,
+        indent_str="    ",
+        show_part_times=True,
+        file=None,
+    ):
         """
         Initialize the Messenger object with the specified verbosity level and indentation.
 
@@ -30,6 +40,9 @@ class Messenger:
         self.verbosity = verbosity
         self.file = file
         self.indent_str = indent_str
+        self.show_part_times = show_part_times
+        self.start_time = time.time()
+        self.part_times = []
 
     def print(
         self, message, indent=0, set_indent=None, prepend="", severity=2, **kwargs
@@ -75,6 +88,17 @@ class Messenger:
 
     def part(self, message, indent=1, set_indent=0, severity=2, **kwargs):
         """Print a message in bold at indent 0 to indicate a new part"""
+
+        last_part_time = self.part_times.pop() if len(self.part_times) > 0 else None
+        self.part_times.append(time.time())
+        total_time = timedelta(seconds=round(self.part_times[-1] - self.start_time))
+        delta_time = (
+            ", 𝚫 " + str(timedelta(seconds=round(self.part_times[-1] - last_part_time)))
+            if last_part_time
+            else ""
+        )
+        if self.show_part_times:
+            message = f"{message} [{total_time}{delta_time}]"
         self.print(
             message,
             indent,
@@ -85,13 +109,12 @@ class Messenger:
             **kwargs,
         )
 
-    def success(self, message, indent=0, set_indent=0, severity=1, **kwargs):
+    def success(self, message, indent=0, set_indent=0, severity=2, **kwargs):
         """Print a success message."""
-        self.print(
+        self.part(
             message,
             indent,
             set_indent,
-            prepend="🐳 ",
             severity=severity,
             fg="green",
             **kwargs,
@@ -144,7 +167,6 @@ class Messenger:
         if self.verbosity < severity:
             return
         from psutil import Process
-        from humanize import naturalsize
 
         process = Process(os.getpid())
         self.info(
@@ -159,7 +181,6 @@ class Messenger:
         """print size of dataset"""
         if self.verbosity < severity:
             return
-        from humanize import naturalsize
 
         file_size = Path(file).stat().st_size
 
@@ -178,7 +199,6 @@ class Messenger:
 
         if self.verbosity < severity:
             return
-        from humanize import naturalsize
 
         total_size = sum(
             f.stat().st_size for f in Path(directory).rglob("*") if f.is_file()

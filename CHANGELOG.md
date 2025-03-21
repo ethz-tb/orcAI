@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.0] - unreleased
+
+### Changed
+
+### Added
+
+- Messenger now prints total duration and duration of the last parts for parts and success
+
+
 ## [0.4.0] - 2025-03-20
 
 ### Changed
