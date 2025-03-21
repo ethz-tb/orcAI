@@ -29,66 +29,79 @@ orcai init /path/to/orcai-v1 orcai-v1
 cd /path/to/orcai-v1
 ```
 
+```console
+🐳 Initializing project
+🐳 Creating project directory: /Volumes/4TB/orcai_project/orcai-v1-dca [0:00:02]
+    Creating orcai-v1_orcai_parameter.json
+    Creating orcai-v1_hps_parameter.json
+    Creating orcai-v1_call_duration_limits.json
+    Setting seed
+🐳 Project initialized. [0:00:02, 𝚫 0:00:00]
+```
+
 ## create/update recording table
 
 create recording table from directory with recordings.
 update original_recording_table (containing possibilities of calls entered by Chérine).
-Calls to label are in orcai-v1-dca_orcai_parameter.json.
-Files to exclude are in orcai-v1-dca_files_exclude.json.
+Calls to label are in orcai-v1_orcai_parameter.json.
+Files to exclude are in orcai-v1_files_exclude.json.
 
 ```bash
 orcai create-recording-table ../orca_recordings/Acoustics/ \
-  -o orcai-v1-dca_recording_table.csv \
+  -o orcai-v1_recording_table.csv \
   -ut original_recording_table.csv \
-  -p orcai-v1-dca_orcai_parameter.json \
-  -ep orcai-v1-dca_files_exclude.json \
+  -p orcai-v1_orcai_parameter.json \
+  -ep orcai-v1_files_exclude.json \
   -up
 ```
 
 ```console
 🐳 Creating recording table
-    Filtering 1552 wav files...
-        Remaining files after filtering files that contain ._: 961
-        Remaining files after filtering files that contain _ChB: 961
-        Remaining files after filtering files that contain _Chb: 961
-        Remaining files after filtering files that contain Movie: 961
-        Remaining files after filtering files that contain Norway: 961
-        Remaining files after filtering files that contain _acceleration: 961
-        Remaining files after filtering files that contain _depthtemp: 961
-        Remaining files after filtering files that contain _H.: 961
-        Remaining files after filtering files that contain _orig: 961
-        Remaining files after filtering files that contain _old: 961
-    Filtering 897 annotations files...
-        Filtering 897 annotation files...
-        Remaining files after filtering files that contain ._: 502
-        Remaining files after filtering files that contain _ChB: 501
-        Remaining files after filtering files that contain _Chb: 500
-        Remaining files after filtering files that contain Movie: 500
-        Remaining files after filtering files that contain Norway: 500
-        Remaining files after filtering files that contain _acceleration: 495
-        Remaining files after filtering files that contain _depthtemp: 490
-        Remaining files after filtering files that contain _H.: 463
-        Remaining files after filtering files that contain _orig: 426
-        Remaining files after filtering files that contain _old: 391
-🐳 Recordings table created.
-Total number of recordings: 961
-Total number of unique recordings: 961
+🐳 Resolving file paths [0:00:03]
+🐳 Filtering 1552 wav files... [0:00:03, 𝚫 0:00:00]
+    Remaining files after filtering files that contain ._: 961
+    Remaining files after filtering files that contain _ChB: 961
+    Remaining files after filtering files that contain _Chb: 961
+    Remaining files after filtering files that contain Movie: 961
+    Remaining files after filtering files that contain Norway: 961
+    Remaining files after filtering files that contain _acceleration: 961
+    Remaining files after filtering files that contain _depthtemp: 961
+    Remaining files after filtering files that contain _H.: 961
+    Remaining files after filtering files that contain _orig: 961
+    Remaining files after filtering files that contain _old: 961
+🐳 Filtering 897 annotations files... [0:00:03, 𝚫 0:00:00]
+    Remaining files after filtering files that contain ._: 502
+    Remaining files after filtering files that contain _ChB: 501
+    Remaining files after filtering files that contain _Chb: 500
+    Remaining files after filtering files that contain Movie: 500
+    Remaining files after filtering files that contain Norway: 500
+    Remaining files after filtering files that contain _acceleration: 495
+    Remaining files after filtering files that contain _depthtemp: 490
+    Remaining files after filtering files that contain _H.: 463
+    Remaining files after filtering files that contain _orig: 426
+    Remaining files after filtering files that contain _old: 391
+    ‼️ 4 annotations with missing recordings: {'oo21_202b007', 'oo21_184a006', 'oo21_184a007', 'oo21_189a011'}. These will be ignored.
+🐳 Saving recording table to orcai-v1_recording_table.csv [0:00:03, 𝚫 0:00:00]
+    Total recordings: 961
+    Total recordins with annotations: 387
+🐳 Recordings table created. [0:00:03, 𝚫 0:00:00]
 ```
 
-## make spectrograms
+## Make spectrograms
 
 Create all spectrograms in recording_table and save to recording_data.
-Use orcai-v1-dca_orcai_parameter.json for spectrogram parameters.
+Use orcai-v1_orcai_parameter.json for spectrogram parameters.
 Only for spectrograms with annotations (-en) and spectrograms with possible
 annotations (-enp).
 
 ```bash
-orcai create-spectrograms orcai-v1-dca_recording_table.csv recording_data \
-  -p orcai-v1-dca_orcai_parameter.json 
+orcai create-spectrograms orcai-v1_recording_table.csv recording_data2 \
+  -p orcai-v1_orcai_parameter.json 
 ```
 
 ```console
-🐳 Reading recordings table
+🐳 Creating spectrograms
+🐳 Reading recordings table [0:00:04]
     Excluded 574 recordings because they are not annotated.
     Excluded recordings because they lack any possible annotations:
         ['2015-07-29c' '2015-12-07l' '2015-13-07b' '2015-13-07c' '2015-17-07c'
@@ -103,7 +116,7 @@ orcai create-spectrograms orcai-v1-dca_recording_table.csv recording_data \
  'oo22_195a015' 'oo22_228a003' 'oo22_228a005' 'oo23_181a102'
  'oo23_181a105' 'oo23_188a098']
     Excluded 341 recordings because they already have spectrograms.
-🐳 Creating 1 spectrograms
+🐳 Creating 1 spectrograms [0:00:04, 𝚫 0:00:00]
 Making spectrograms: 100%|██████████████████████████████████| 1/1 [00:25<00:00, 25.62s/it]
 ```
 
@@ -113,13 +126,13 @@ Duration for all spectrograms: ~3h 55min (Apple M3 Pro, 18GB)
 
 Create all label arrasy for recordings in recording_table and save to
 recording_data.
-Use orcai-v1-dca_orcai_parameter.json parameters.
-Unify call labels according to orcai-v1-dca_call_equivalences.json.
+Use orcai-v1_orcai_parameter.json parameters.
+Unify call labels according to orcai-v1_call_equivalences.json.
 
 ```bash
-orcai create-label-arrays orcai-v1-dca_recording_table.csv recording_data \
-  -p orcai-v1-dca_orcai_parameter.json \
-  -ce orcai-v1-dca_call_equivalences.json
+orcai create-label-arrays orcai-v1_recording_table.csv recording_data \
+  -p orcai-v1_orcai_parameter.json \
+  -ce orcai-v1_call_equivalences.json
 ```
 
 ```console
@@ -136,8 +149,8 @@ Duration for all labels: ~2min (Apple M3 Pro, 18GB)
 ## create snippets
 
 ```bash
-orcai create-snippet-table orcai-v1-dca_recording_table.csv recording_data \
-  -p orcai-v1-dca_orcai_parameter.json
+orcai create-snippet-table orcai-v1_recording_table.csv recording_data \
+  -p orcai-v1_orcai_parameter.json
 ```
 
 ```console
@@ -152,14 +165,14 @@ Making snippet tables: 100%|█████████████████|
         missing label files              35
         shorter than segment_duration    19
 🐳 Saving snippet table ...
-🐳 Snippet table saved to /Volumes/4TB/orcai_project/orcai-v1-dca/recording_data/all_snippets.csv.gz
+🐳 Snippet table saved to /Volumes/4TB/orcai_project/orcai-v1/recording_data/all_snippets.csv.gz
 ```
 
 ## create tvt snippet tables
 
 ```bash
 orcai create-tvt-snippet-tables recording_data tvt_data \
-  -p orcai-v1-dca_orcai_parameter.json
+  -p orcai-v1_orcai_parameter.json
 ```
 
 Output:
@@ -193,7 +206,7 @@ Output:
 ## create tvt data
 
 ```bash
-orcai create-tvt-data tvt_data -p orcai-v1-dca_orcai_parameter.json
+orcai create-tvt-data tvt_data -p orcai-v1_orcai_parameter.json
 ```
 
 ```console
@@ -223,6 +236,6 @@ Saving test dataset: 100%|██████████████████
 ## train model
 
 ```bash
-orcai train tvt_data -p orcai-v1-dca_orcai_parameter.json
+orcai train tvt_data -p orcai-v1_orcai_parameter.json
 ```
 
