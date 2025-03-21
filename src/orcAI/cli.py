@@ -2,6 +2,7 @@ from pathlib import Path
 from importlib.resources import files
 from importlib.metadata import version
 import rich_click as click
+from orcAI.auxiliary import Messenger
 
 click.rich_click.COMMAND_GROUPS = {
     "orcai": [
@@ -202,6 +203,9 @@ def cli_filter_predictions(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_init_project(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"], title="Initializing project"
+    )
     from orcAI.helpers import init_project
 
     init_project(**kwargs)
@@ -284,6 +288,9 @@ def cli_init_project(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_recordings_table(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"], title="Creating recording table"
+    )
     from orcAI.helpers import create_recording_table
 
     create_recording_table(**kwargs)
@@ -297,7 +304,7 @@ def cli_create_recordings_table(**kwargs):
     epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
 )
 @click.argument("recording_table_path", type=ClickFilePathR)
-@click.argument("output_dir", type=ClickDirPathW)
+@click.argument("output_dir", type=ClickDirPathWcreate)
 @click.option(
     "--base_dir_recording",
     "-bdr",
@@ -341,6 +348,9 @@ def cli_create_recordings_table(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_spectrograms(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"], title="Creating spectrograms"
+    )
     from orcAI.spectrogram import create_spectrograms
 
     create_spectrograms(**kwargs)
@@ -394,6 +404,9 @@ def cli_create_spectrograms(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_label_arrays(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"], title="Creating label arrays"
+    )
     from orcAI.labels import create_label_arrays
 
     create_label_arrays(**kwargs)
@@ -425,6 +438,9 @@ def cli_create_label_arrays(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_snippet_table(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"], title="Creating snippet table"
+    )
     from orcAI.snippets import create_snippet_table
 
     create_snippet_table(**kwargs)
@@ -464,6 +480,10 @@ def cli_create_snippet_table(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_tvt_snippet_tables(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"],
+        title="Creating train, validation and test snippet tables",
+    )
     from orcAI.snippets import create_tvt_snippet_tables
 
     create_tvt_snippet_tables(**kwargs)
@@ -500,6 +520,10 @@ def cli_create_tvt_snippet_tables(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_tvt_data(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"],
+        title="Creating train, validation and test datasets",
+    )
     from orcAI.snippets import create_tvt_data
 
     create_tvt_data(**kwargs)
@@ -537,6 +561,10 @@ def cli_create_tvt_data(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_train(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"],
+        title="Training model",
+    )
     from orcAI.train import train
 
     train(**kwargs)

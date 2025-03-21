@@ -155,11 +155,11 @@ def parse_example(proto, dataset_shape):
 
 def _load_dataset(file_path, dataset_shape):
     """
-    Load a dataset from a TFRecord file. (seperate function mainly testing)
+    Load a dataset from a TFRecord file. (seperate function mainly for testing)
     """
-    dataset = tf.data.TFRecordDataset(str(file_path), compression_type="GZIP").map(
-        lambda proto: parse_example(proto, dataset_shape)
-    )
+    dataset = tf.data.TFRecordDataset(
+        str(file_path), num_parallel_reads=8, compression_type="GZIP"
+    ).map(lambda proto: parse_example(proto, dataset_shape))
     return dataset
 
 

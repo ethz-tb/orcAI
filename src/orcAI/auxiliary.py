@@ -21,6 +21,7 @@ class Messenger:
 
     def __init__(
         self,
+        title=None,
         n_indent=0,
         verbosity=2,
         indent_str="    ",
@@ -43,6 +44,8 @@ class Messenger:
         self.show_part_times = show_part_times
         self.start_time = time.time()
         self.part_times = []
+        if title is not None:
+            self.start(title, severity=2)
 
     def print(
         self, message, indent=0, set_indent=None, prepend="", severity=2, **kwargs
@@ -85,6 +88,18 @@ class Messenger:
     def info(self, message, indent=0, set_indent=None, severity=2, **kwargs):
         """Print a message."""
         self.print(message, indent, set_indent, severity=severity, **kwargs)
+
+    def start(self, message, indent=0, set_indent=0, severity=2, **kwargs):
+        """Print a message in bold at indent 0 to indicate the start of a script"""
+        self.print(
+            message,
+            indent,
+            set_indent,
+            prepend="🐳 ",
+            severity=severity,
+            bold=True,
+            **kwargs,
+        )
 
     def part(self, message, indent=1, set_indent=0, severity=2, **kwargs):
         """Print a message in bold at indent 0 to indicate a new part"""
@@ -154,8 +169,12 @@ class Messenger:
             40
         )  # suppress tensorflow logging (ERROR and worse only)
 
+        physical_devices = tf.config.list_physical_devices()
+        devices_string = ", ".join(
+            [i.name.replace("physical_device:", "") for i in physical_devices]
+        )
         self.info(
-            f"Available TensorFlow devices: {print(tf.config.list_physical_devices())}",
+            f"Available TensorFlow devices: {devices_string}",
             indent=indent,
             set_indent=set_indent,
             severity=severity,

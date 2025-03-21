@@ -1,7 +1,6 @@
 from pathlib import Path
 from importlib.resources import files
 import numpy as np
-import time
 import pandas as pd
 from librosa import load, stft, fft_frequencies, frames_to_time, amplitude_to_db
 from tqdm import tqdm
@@ -15,13 +14,14 @@ from orcAI.io import read_json, save_as_zarr, write_vector_to_json
 
 
 def make_spectrogram(
-    wav_file_path,
-    channel=1,
-    orcai_parameter=str(
-        files("orcAI.defaults").joinpath("default_orcai_parameter.json")
+    wav_file_path: Path | str,
+    channel: int = 1,
+    orcai_parameter: Path | str = files("orcAI.defaults").joinpath(
+        "default_orcai_parameter.json"
     ),
-    msgr=Messenger(),
-):
+    verbosity: int = 2,
+    msgr: Messenger | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Makes spectrogram from .wav file according to orcai_parameter
 
     Parameters
@@ -30,10 +30,12 @@ def make_spectrogram(
         Path to the wav file.
     channel : int
         Channel of wav_file to use for the spectrogram.
-    orcai_parameter : dict | (str | Path)
+    orcai_parameter : dict | (Path | str)
         Dictionary with orcai parameters or path to JSON containing the same. Defaults to default_orcai_parameter.json.
+    verbosity : int
+        Verbosity level. 0: only errors, 1: only warnings, 2: info, 3: debug.
     msgr : Messenger
-        Messenger object for logging.
+        Messenger object for logging. If None, a new Messenger object is created.
 
     Returns
     -------
@@ -44,18 +46,17 @@ def make_spectrogram(
     np.ndarray
         Times of the spectrogram.
     """
-
-    msgr.part("Creating spectrogram")
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity, title="Making spectrogram")
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
     spectrogram_parameter = orcai_parameter["spectrogram"]
 
-    msgr.info(
-        f"Loading & resampling (to {spectrogram_parameter['sampling_rate']/1000:.2f} kHz) wav file: {wav_file_path.name}"
+    msgr.part(
+        f"Loading & resampling (to {spectrogram_parameter['sampling_rate']/1000:.2f} kHz) wav file: {wav_file_path.stem}"
     )
 
-    start_time = time.time()
     wav_file, _ = load(
         wav_file_path,
         sr=spectrogram_parameter["sampling_rate"],
@@ -65,8 +66,7 @@ def make_spectrogram(
         msgr.info(f"Multiple channels found, using channel {channel}")
         wav_file = wav_file[channel - 1]
 
-    load_time = time.time()
-    msgr.info(f"Time for loading wav file: {load_time - start_time:.2f} seconds")
+    msgr.part("Calculating power spectrogram by STFT")
 
     # create spectrogram
     spectrogram = stft(
@@ -90,8 +90,8 @@ def make_spectrogram(
     spectrogram = amplitude_to_db(
         np.abs(spectrogram), ref=np.max
     )  # Convert to power spectrogram (magnitude squared)
-    spec_time = time.time()
-    msgr.info(f"Time for generating spectrogram: {spec_time - load_time:.2f} seconds")
+
+    msgr.part("Extracting frequency range and clipping spectrogram")
 
     # extract frequency range, clip according to quantiles, and normalise
     freqMinInd = np.argwhere(frequencies <= spectrogram_parameter["freq_range"][0])[0][
@@ -110,31 +110,29 @@ def make_spectrogram(
     )
 
     # Clip the spectrogram to the computed percentiles
-    start_time = time.time()
     spectrogram = np.clip(spectrogram, lower_percentile, upper_percentile)
-    clip_time = time.time()
-    msgr.info(f"Time for clipping: {clip_time - start_time:.2f} seconds")
+
+    msgr.part("Normailizing spectrogram")
 
     # Normalize the spectrogram to range [0, 1]
     min_val = np.min(spectrogram)
     max_val = np.max(spectrogram)
     spectrogram = (spectrogram - min_val) / (max_val - min_val)
-    spec_time = time.time()
-    msgr.info(f"Time for normalisation: {spec_time - clip_time:.2f} seconds")
 
     # transpose spectogram
     spectrogram = spectrogram.T
-
+    msgr.success("Spectrogram created.")
     return spectrogram, frequencies, times
 
 
 def save_spectrogram(
-    spectrogram,
-    frequencies,
-    times,
-    output_dir,
-    msgr=Messenger(),
-):
+    spectrogram: np.ndarray,
+    frequencies: np.ndarray,
+    times: np.ndarray,
+    output_dir: Path | str,
+    verbosity: int = 2,
+    msgr: Messenger | None = None,
+) -> None:
     """Saves spectrogram as zarr file and frequency and time vectors as json files in output_dir
 
     Parameters
@@ -145,9 +143,20 @@ def save_spectrogram(
         Frequencies of the spectrogram.
     times : np.ndarray
         Times of the spectrogram.
+    output_dir : Path | str
+        Output directory for the spectrogram.
+    verbosity : int
+        Verbosity level. 0: only errors, 1: only warnings, 2: info, 3: debug.
     msgr : Messenger
-        Messenger object for logging.
+        Messenger object for logging. If None, a new Messenger object is created.
+
+    Returns
+    -------
+    None
+        Saves spectrogram in output_dir
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity, title="Saving spectrogram")
 
     msgr.part("Saving spectrogram")
     # Save spectrogram with Zarr
@@ -162,6 +171,7 @@ def save_spectrogram(
         times,
         Path(output_dir, "times.json"),
     )
+    msgr.success("Spectrogram saved.")
     return
 
 
@@ -193,23 +203,26 @@ def _make_and_save_spectrogram(recording_info, orcai_parameter, output_dir):
 
 
 def create_spectrograms(
-    recording_table_path,
-    output_dir,
-    base_dir_recording=None,
-    orcai_parameter=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
-    include_not_annotated=False,
-    include_no_possible_annotations=False,
-    overwrite=False,
-    verbosity=2,
-):
+    recording_table_path: Path | str,
+    output_dir: Path | str,
+    base_dir_recording: Path | str | None = None,
+    orcai_parameter: Path | str | None = files("orcAI.defaults").joinpath(
+        "default_orcai_parameter.json"
+    ),
+    include_not_annotated: bool = False,
+    include_no_possible_annotations: bool = False,
+    overwrite: bool = False,
+    verbosity: int = 2,
+    msgr: Messenger | None = None,
+) -> None:
     """Creates spectrograms for all files in recording table at recording_table_path
 
     Parameters
     ----------
-    recording_table_path : Path
+    recording_table_path : Path | str
         Path to .csv table with columns 'recording', 'channel', 'base_dir_recording',
         'rel_recording_path' and columns indicating possibility of presence of calls (True/False).
-    output_dir : Path
+    output_dir : Path | str
         Output directory for the spectrograms. Spectograms are stored in subdirectories named '<recording>/spectrogram'
     base_dir_recording : Path
         Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.
@@ -222,16 +235,22 @@ def create_spectrograms(
     overwrite : bool
         Recreate existing spectrograms.
     verbosity : int
-        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+        Verbosity level. 0: only errors, 1: only warnings, 2: info, 3: debug.
+    msgr : Messenger
+        Messenger object for logging. If None, a new Messenger object is created.
+
 
     Returns
     -------
     None
         Saves spectrograms in output_dir
     """
-    msgr = Messenger(verbosity=verbosity)
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity, title="Creating spectrograms")
+
     msgr.part("Reading recordings table")
     recording_table = pd.read_csv(recording_table_path)
+    output_dir = Path(output_dir)
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
@@ -254,7 +273,7 @@ def create_spectrograms(
 
     if not overwrite:
         existing_spectrograms = recording_table["recording"].apply(
-            lambda x: Path(output_dir).joinpath(x, "spectrogram").exists()
+            lambda x: output_dir.joinpath(x, "spectrogram").exists()
         )
         msgr.info(
             f"Skipping {sum(existing_spectrograms)} recordings because they already have spectrograms."
@@ -273,4 +292,5 @@ def create_spectrograms(
     ):
         _make_and_save_spectrogram(recording, orcai_parameter, output_dir)
 
+    msgr.success("Spectrograms created.")
     return

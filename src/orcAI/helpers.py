@@ -10,13 +10,32 @@ from orcAI.io import read_json, write_json
 
 
 def init_project(
-    project_dir: Path | str, project_name: str, verbosity: int = 2
+    project_dir: Path | str,
+    project_name: str,
+    verbosity: int = 2,
+    msgr: Messenger | None = None,
 ) -> None:
-    """Initialize a new orcAI project."""
+    """Initialize a new orcAI project.
 
-    msgr = Messenger(verbosity=verbosity)
-    msgr.part("Initializing project")
-    msgr.info(f"Creating project directory: {project_dir}")
+    Parameters
+    ----------
+    project_dir : Path | str
+        Path to the project directory.
+    project_name : str
+        Name of the project.
+    verbosity : int
+        Verbosity level. 0: only errors, 1: only warnings, 2: info, 3: debug.
+    msgr : Messenger
+        Messenger object for logging. If None, a new Messenger object is created.
+
+    Returns
+    -------
+    None
+        Creates new project directory with default configuration files.
+    """
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity, title="Initializing project")
+    msgr.part(f"Creating project directory: {project_dir}")
     project_dir = Path(project_dir)
     project_dir.mkdir(parents=True, exist_ok=True)
 
@@ -35,6 +54,7 @@ def init_project(
             "default_orcai_parameter.json".replace("default", project_name)
         )
     )
+    msgr.info(f"Setting seed")
     orcai_parameter_new["seed"] = SeedSequence().entropy
     write_json(
         orcai_parameter_new,
@@ -56,6 +76,7 @@ def create_recording_table(
     exclude_patterns: Path | str | list[str] | None = None,
     remove_duplicate_filenames: bool = False,
     verbosity: int = 2,
+    msgr: Messenger | None = None,
 ) -> pd.DataFrame:
     """Create a table of recordings for use with other orcAI functions.
 
@@ -77,6 +98,12 @@ def create_recording_table(
         If True the paths in the table to update are updated with the new paths. Only valid if update_table is not None.
     exclude_patterns : (Path | str) | array | None
         Path to a JSON file containing filenames to exclude from the table or an array containing the same.
+    remove_duplicate_filenames : bool
+        If True, remove duplicate filenames from the table.
+    verbosity : int
+        Verbosity level. 0: only errors, 1: only warnings, 2: info, 3: debug.
+    msgr : Messenger
+        Messenger object for logging. If None, a new Messenger object is created.
 
     Returns
     -------
@@ -86,7 +113,10 @@ def create_recording_table(
         If updating a table (ie. update_table is not None), additional columns from the previous table are also included.
 
     """
-    msgr = Messenger(verbosity=verbosity)
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity, title="Creating recording table")
+
+    msgr.part("Resolving file paths")
     if output_path is None:
         output_path = Path(base_dir_recording).joinpath("recording_table.csv")
     else:
@@ -94,7 +124,6 @@ def create_recording_table(
     if output_path.exists():
         msgr.error(f"Output path {output_path} already exists!")
         sys.exit()
-    msgr.part("Creating recording table")
 
     wav_files = list(Path(base_dir_recording).glob("**/*.wav"))
 
@@ -105,12 +134,10 @@ def create_recording_table(
     if exclude_patterns is not None:
         if isinstance(exclude_patterns, (Path | str)):
             exclude_patterns = read_json(exclude_patterns)
-        msgr.info(f"Filtering {len(wav_files)} wav files...", indent=1)
+        msgr.part(f"Filtering {len(wav_files)} wav files...")
         wav_files = filter_filepaths(wav_files, exclude_patterns, msgr=msgr)
-        msgr.info(
+        msgr.part(
             f"Filtering {len(annotation_files)} annotations files...",
-            set_indent=1,
-            indent=1,
         )
         annotation_files = filter_filepaths(
             annotation_files, exclude_patterns, msgr=msgr
@@ -147,10 +174,16 @@ def create_recording_table(
         )
     ).set_index("recording")
 
+    missing_recording = set(annotations_table.index) - set(recording_table.index)
+    if len(missing_recording) > 0:
+        msgr.warning(
+            f"{len(missing_recording)} annotations with missing recordings: {missing_recording}. These will be ignored."
+        )
+
     recording_table = recording_table.join(annotations_table, how="left")
     recording_table["duplicate"] = recording_table.index.duplicated(keep=False)
-
-    if recording_table["duplicate"].any():
+    n_duplicates = recording_table["duplicate"].sum()
+    if n_duplicates > 0:
         if remove_duplicate_filenames:
             recording_table = recording_table[~recording_table["duplicate"]]
         else:
@@ -190,12 +223,20 @@ def create_recording_table(
         ]
     ]
 
+    msgr.part(f"Saving recording table to {output_path.relative_to(Path.cwd())}")
     recording_table.to_csv(output_path)
+    msgr.info(
+        f"Total recordings: {len(recording_table)}",
+        set_indent=1,
+    )
+    if n_duplicates > 0:
+        msgr.info(
+            f"Number of duplicate recordings: {recording_table['duplicate'].sum()}"
+        )
+    msgr.info(
+        f"Total recordins with annotations: {recording_table['rel_annotation_path'].count()}"
+    )
 
     msgr.success("Recordings table created.")
-    msgr.info(f"Total number of recordings: {len(recording_table)}")
-    msgr.info(
-        f"Total number of unique recordings: {len(recording_table.index.unique())}"
-    )
 
     return recording_table

@@ -42,7 +42,8 @@ def train(
         "default_orcai_parameter.json"
     ),
     load_weights: bool = False,
-    verbosity: int = 1,
+    verbosity: int = 2,
+    msgr: Messenger | None = None,
 ):
     """Trains an orcAI model
 
@@ -59,16 +60,19 @@ def train(
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     """
-    # Initialize messenger
-    msgr = Messenger(verbosity=verbosity)
+    if msgr is None:
+        msgr = Messenger(
+            verbosity=verbosity,
+            title="Training model",
+        )
 
-    msgr.part("OrcAI - training model")
+    msgr.part("Loading parameter")
+
     msgr.info(f"Output directory: {output_dir}")
     msgr.info(f"Data directory: {data_dir}")
     output_dir = Path(output_dir)
     data_dir = Path(data_dir)
 
-    msgr.info("Loading parameter and data...", indent=1)
     msgr.debug("Model parameter")
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
@@ -81,9 +85,8 @@ def train(
     msgr.debug(label_calls, indent=-1)
 
     # load data sets from local disk
-    msgr.info(f"Loading train, val and test datasets from {data_dir}", indent=1)
+    msgr.part(f"Loading train, val and test datasets from {data_dir}")
     tf.config.set_soft_device_placement(True)
-    start_time = time.time()
     dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     train_dataset = load_dataset(
         data_dir.joinpath("train_dataset.tfrecord.gz"),
@@ -97,8 +100,9 @@ def train(
         model_parameter["batch_size"],
         orcai_parameter["seed"] + 2,
     )
-    msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")
+    msgr.info(f"Batch sieze {model_parameter['batch_size']}")
 
+    msgr.part("Building model")
     model = build_model(
         tuple(dataset_shape["spectrogram"]),
         orcai_parameter,
@@ -161,8 +165,8 @@ def train(
     msgr.print_memory_usage()
 
     # Train model
-    msgr.part(f"Training model: {model_name}")
-    start_time = time.time()
+    msgr.part(f"Fitting model: {model_name}")
+    msgr.print_tf_devices()
 
     with tf.device("/GPU:0"):
         history = model.fit(
@@ -177,16 +181,15 @@ def train(
                     data_size=model_parameter["batch_size"]
                     * model_parameter["n_batch_train"],
                     batch_size=model_parameter["batch_size"],
-                    verbose=1,
-                    disable=verbosity < 2,
+                    verbose=1 if verbosity > 1 else 0,
                 ),
             ],
             verbose=0,
         )
-    msgr.info(f"total time for training: {time.time() - start_time:.2f} seconds")
 
     msgr.info(f"training history: {history.history}")
-    msgr.info("saving training history...")
+    msgr.part("Saving Model")
+
     with open(output_dir.joinpath(model_name, "training_history.json"), "w") as f:
         f.write(str(history.history))
 
@@ -194,14 +197,14 @@ def train(
         orcai_parameter,
         output_dir.joinpath(model_name).joinpath(f"orcai_parameter.json"),
     )
-    # TODO: Save model?
+    model.save_weights(weights_path)
     model.save(
         output_dir.joinpath(model_name, model_name + ".keras"),
         include_optimizer=True,
     )
 
     msgr.success(
-        f"OrcAI - training model finished. Model saved to {file_paths['model']}"
+        f"OrcAI - training model finished. Model saved to {model_name + '.keras'}"
     )
     return
 
@@ -285,7 +288,8 @@ def hyperparameter_search(
     ),
     parallel: bool = False,
     verbosity: int = 2,
-):
+    msgr: Messenger | None = None,
+) -> None:
     """Perform hyperparameter search
     Parameters
     ----------
@@ -301,18 +305,19 @@ def hyperparameter_search(
         Run hyperparameter search on multiple GPUs
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+    msgr : Messenger
+        Messenger object for logging. If None, a new Messenger object is created.
 
     Returns
     -------
     None
     """
 
-    msgr = Messenger(verbosity=verbosity)
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity, title="Hyperparameter Search")
 
-    msgr.part("Running Hyperparameter Search")
-    msgr.info(f"Data directory: {data_dir}")
+    msgr.part("Loading Hyperparameter search parameter")
 
-    msgr.info("Loading parameter and data...", indent=1)
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
     model_parameter = orcai_parameter["model"]
@@ -320,15 +325,12 @@ def hyperparameter_search(
     msgr.debug(model_parameter)
     model_name = model_parameter["name"]
 
-    msgr.info("Loading hyperparameter search parameter...", indent=1)
     if isinstance(hps_parameter, (Path | str)):
         hps_parameter = read_json(hps_parameter)
     msgr.debug("Hyperparameter search parameter")
     msgr.debug(hps_parameter)
 
     file_paths = {
-        "training_data": Path(data_dir).joinpath("train_dataset"),
-        "validation_data": Path(data_dir).joinpath("val_dataset"),
         "test_data": Path(data_dir).joinpath("test_dataset"),
         "model_dir": Path(output_dir).joinpath(model_name),
         "hps_dir": Path(output_dir).joinpath(model_name, "hps"),
@@ -336,15 +338,14 @@ def hyperparameter_search(
     }
 
     # load data sets from local disk
-    msgr.info(f"Loading train and val datasets from {data_dir}", indent=1)
+    msgr.part(f"Loading train and val datasets from {data_dir}")
     start_time = time.time()
     train_dataset = load_dataset(
-        file_paths["training_data"], model_parameter["batch_size"]
+        Path(data_dir).joinpath("train_dataset"), model_parameter["batch_size"]
     )
     val_dataset = load_dataset(
-        file_paths["validation_data"], model_parameter["batch_size"]
+        Path(data_dir).joinpath("val_dataset"), model_parameter["batch_size"]
     )
-    msgr.info(f"time to load datasets: {time.time() - start_time:.2f} seconds")
 
     # Verify the val dataset and obtain shape
     spectrogram, labels = val_dataset.take(1).element_spec
@@ -354,6 +355,7 @@ def hyperparameter_search(
     input_shape = tuple(spectrogram.shape[1:])  #  shape
     num_labels = labels.shape[2]  # Number of sound types
 
+    msgr.part("Searching hyperparameters")
     if parallel:
         gpus = tf.config.list_physical_devices("GPU")
         msgr.info(f"Prallel - running on {len(gpus)} GPU")
@@ -396,7 +398,7 @@ def hyperparameter_search(
         verbose=0 if verbosity < 3 else 1,
     )
     model_checkpoint = ModelCheckpoint(
-        file_paths["hps_dir"].joinpath(model_name + ".weights.h5"),
+        Path(output_dir).joinpath(model_name, "hps", model_name + ".weights.h5"),
         monitor="val_masked_binary_accuracy",
         save_best_only=True,
         save_weights_only=True,
@@ -408,6 +410,6 @@ def hyperparameter_search(
         callbacks=[early_stopping, model_checkpoint],
         verbose=verbosity,
     )
-    msgr.info(f"Time for hyperparameter search: {time.time() - start_time:.2f} seconds")
+
     msgr.success("Hyperparameter search completed")
     return

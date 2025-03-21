@@ -27,7 +27,7 @@ def read_annotation_file(annotation_file_path):
     return annotation_file[["recording", "start", "stop", "origlabel"]]
 
 
-def convert_annotation(
+def _convert_annotation(
     annotation_file_path: Path | str,
     recording_data_dir: Path | str,
     labels_present: list,
@@ -134,6 +134,7 @@ def create_label_arrays(
     call_equivalences: (Path | str) | dict = None,
     overwrite: bool = False,
     verbosity: int = 2,
+    msgr: Messenger | None = None,
 ):
     """Makes label arrays for all files in recording_table
 
@@ -153,9 +154,14 @@ def create_label_arrays(
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+    msgr : Messenger
+        Messenger object for logging. If None, a new Messenger object is created.
+
     """
-    msgr = Messenger(verbosity=verbosity)
-    msgr.part("Making label arrays")
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity, title="Making label arrays")
+
+    msgr.part("Reading recordings table")
 
     recording_table = pd.read_csv(recording_table_path)
 
@@ -180,10 +186,10 @@ def create_label_arrays(
             f"Skipping {sum(existing_labels)} recordings because they already have Labels."
         )
         recording_table = recording_table[~existing_labels]
-
+    msgr.part("Making label arrays")
     for i in tqdm(
         recording_table.index,
-        desc="Converting annotation files",
+        desc="Making label arrays",
         total=len(recording_table),
         unit="recording",
     ):
@@ -192,7 +198,7 @@ def create_label_arrays(
 
         if len(labels_present) > 0:
             labels_masked = list(set(label_calls).difference(labels_present))
-            annotations_array, label_list = convert_annotation(
+            annotations_array, label_list = _convert_annotation(
                 Path(recording_table.loc[i, "base_dir_annotation"]).joinpath(
                     recording_table.loc[i, "rel_annotation_path"]
                 ),
