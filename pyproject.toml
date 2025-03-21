@@ -24,7 +24,9 @@ dependencies = [
     "zarr<3",
     "numpy<3",
     "pandas<3",
-    "tensorflow<3",
+    "tensorflow[and-cuda]<3; platform_system=='Windows'",
+    "tensorflow[and-cuda]<3; platform_system=='Linux'",
+    "tensorflow<3; platform_system=='Darwin'",
     "tensorflow-metal; platform_system=='Darwin'",
     "keras_tuner<2",
     "keras<4",
@@ -34,6 +36,8 @@ dependencies = [
     "humanize<5",
     "tqdm>=4.42.0, <5",
 ]
+[project.optional-dependencies]
+dev = ["ipython", "black"]
 
 [project.urls]
 Repository = "https://gitlab.ethz.ch/tb/orcai"
