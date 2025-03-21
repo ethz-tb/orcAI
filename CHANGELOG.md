@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2] - 2025-03-21
+
+### Changed
+
+- updated pyproject toml to include cuda and tensorrt for linux and windows
+- minor fixes to logging
+
 ## [0.4.1] - 2025-03-21
 
 ### Changed
