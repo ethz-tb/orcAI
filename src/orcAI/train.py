@@ -100,7 +100,7 @@ def train(
         model_parameter["batch_size"],
         orcai_parameter["seed"] + 2,
     )
-    msgr.info(f"Batch sieze {model_parameter['batch_size']}")
+    msgr.info(f"Batch size {model_parameter['batch_size']}")
 
     msgr.part("Building model")
     model = build_model(
@@ -181,9 +181,10 @@ def train(
                     data_size=model_parameter["batch_size"]
                     * model_parameter["n_batch_train"],
                     batch_size=model_parameter["batch_size"],
-                    verbose=1 if verbosity > 1 else 0,
+                    verbose=1 if verbosity > 2 else 0,
                 ),
             ],
+            steps_per_epoch=model_parameter["n_batch_train"],
             verbose=0,
         )
 
