@@ -561,7 +561,7 @@ def create_tvt_data(
                     unit="sample",
                 ):
                     writer.write(serialize_example(x, y))
-            msgr.print_file_size(dataset_paths[itype])
+        msgr.print_file_size(dataset_paths[itype])
 
     write_json(
         {

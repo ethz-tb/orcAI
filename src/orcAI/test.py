@@ -378,8 +378,10 @@ def test_model(
     )
 
     msgr.part("Testing model on test data")
+    dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     test_dataset = load_dataset(
-        data_dir.joinpath("test_dataset"),
+        data_dir.joinpath("test_dataset.tfrecord.gz"),
+        dataset_shape,
         model_parameter["batch_size"],
         orcai_parameter["seed"] + 3,
     )
