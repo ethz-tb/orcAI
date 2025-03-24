@@ -192,7 +192,7 @@ def cli_filter_predictions(**kwargs):
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
 )
-@click.argument("project_dir", type=ClickDirPathW)
+@click.argument("project_dir", type=ClickDirPathWcreate)
 @click.argument("project_name", type=str)
 @click.option(
     "--verbosity",
