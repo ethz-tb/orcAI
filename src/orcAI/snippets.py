@@ -14,7 +14,7 @@ from orcAI.auxiliary import (
     seconds_to_hms,
     resolve_recording_data_dir,
 )
-from orcAI.io import DataLoader, serialize_example, read_json, write_json
+from orcAI.io import DataLoader, read_json, write_json
 
 
 def _make_snippet_table(
@@ -544,7 +544,6 @@ def create_tvt_data(
 
     msgr.part("Saving datasets to disk")
 
-    tfr_options = tf.io.TFRecordOptions(compression_type="GZIP")
     for itype in data_types:
         if dataset_paths[itype].exists() and overwrite is False:
             msgr.warning(f"Dataset {itype} already exists. Skipping.")
@@ -552,7 +551,7 @@ def create_tvt_data(
             msgr.info(f"Saving {itype} dataset to {dataset_paths[itype]}...")
             dataset[itype].save(path=str(dataset_paths[itype]), compression="GZIP")
 
-            msgr.print_directory_size(dataset_paths[itype])
+        msgr.print_directory_size(dataset_paths[itype])
 
     write_json(
         {
