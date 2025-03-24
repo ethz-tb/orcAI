@@ -551,17 +551,8 @@ def create_tvt_data(
         else:
             msgr.info(f"Saving {itype} dataset to {dataset_paths[itype]}...")
             dataset[itype].save(path=str(dataset_paths[itype]), compression="GZIP")
-            # with tf.io.TFRecordWriter(
-            #     str(dataset_paths[itype]) + ".tfrecord.gz", options=tfr_options
-            # ) as writer:
-            #     for x, y in tqdm(
-            #         dataset[itype],
-            #         desc=f"Saving {itype} dataset",
-            #         total=len(loader[itype]),
-            #         unit="sample",
-            #     ):
-            #         writer.write(serialize_example(x, y))
-            msgr.print_file_size(dataset_paths[itype])
+
+            msgr.print_directory_size(dataset_paths[itype])
 
     write_json(
         {
