@@ -173,6 +173,7 @@ def train(
             train_dataset,
             validation_data=val_dataset,
             epochs=model_parameter["epochs"],
+            shuffle=True,
             callbacks=[
                 early_stopping,
                 model_checkpoint,
