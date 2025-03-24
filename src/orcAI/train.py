@@ -185,6 +185,7 @@ def train(
                 ),
             ],
             steps_per_epoch=model_parameter["n_batch_train"],
+            validation_steps=model_parameter["n_batch_val"],
             verbose=0,
         )
 
