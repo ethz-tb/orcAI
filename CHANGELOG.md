@@ -11,7 +11,7 @@
 
 ### Changes
 
-- revert to using TFRecordWriter for saving datasets. The warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` pprobably is not relevant?
+- **Breaking** revert to using TFRecordWriter for saving datasets. The warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` pprobably is not relevant?
 
 ## [0.5.0] - 2025-03-24
 
@@ -126,6 +126,7 @@ _First prerelease._
 [0.4.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.4.1
 [0.5.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.5.0
 [0.6.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.6.0
+[0.6.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.6.1
 
 ```
 
