@@ -506,7 +506,9 @@ def create_tvt_data(
 
     data_types = ["train", "val", "test"]
 
-    dataset_paths = {itype: Path(tvt_dir, f"{itype}_dataset") for itype in data_types}
+    dataset_paths = {
+        itype: Path(tvt_dir, f"{itype}_dataset.tfrecord.gz") for itype in data_types
+    }
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
@@ -548,10 +550,17 @@ def create_tvt_data(
         if dataset_paths[itype].exists() and overwrite is False:
             msgr.warning(f"Dataset {itype} already exists. Skipping.")
         else:
-            msgr.info(f"Saving {itype} dataset to {dataset_paths[itype]}...")
-            dataset[itype].save(path=str(dataset_paths[itype]), compression="GZIP")
-
-        msgr.print_directory_size(dataset_paths[itype])
+            with tf.io.TFRecordWriter(
+                str(dataset_paths[itype]), options=tfr_options
+            ) as writer:
+                for x, y in tqdm(
+                    dataset[itype],
+                    desc=f"Saving {itype} dataset",
+                    total=len(loader[itype]),
+                    unit="sample",
+                ):
+                    writer.write(serialize_example(x, y))
+            msgr.print_file_size(dataset_paths[itype])
 
     write_json(
         {

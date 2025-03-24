@@ -89,12 +89,14 @@ def train(
     tf.config.set_soft_device_placement(True)
     dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     train_dataset = load_dataset(
-        data_dir.joinpath("train_dataset"),
+        data_dir.joinpath("train_dataset.tfrecord.gz"),
+        dataset_shape,
         model_parameter["batch_size"],
         orcai_parameter["seed"] + 1,
     )
     val_dataset = load_dataset(
-        data_dir.joinpath("val_dataset"),
+        data_dir.joinpath("val_dataset.tfrecord.gz"),
+        dataset_shape,
         model_parameter["batch_size"],
         orcai_parameter["seed"] + 2,
     )
@@ -186,6 +188,7 @@ def train(
             verbose=0,
         )
 
+    msgr.info(f"training history: {history.history}")
     msgr.part("Saving Model")
 
     with open(output_dir.joinpath(model_name, "training_history.json"), "w") as f:
@@ -201,7 +204,9 @@ def train(
         include_optimizer=True,
     )
 
-    msgr.success(f"Training model finished. Model saved to {model_name + '.keras'}")
+    msgr.success(
+        f"OrcAI - training model finished. Model saved to {model_name + '.keras'}"
+    )
     return
 
 

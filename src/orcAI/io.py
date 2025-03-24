@@ -125,10 +125,48 @@ class DataLoader:
         return (spectrogram_chunk, label_chunk)
 
 
+def serialize_example(spectrogram, labels):
+    feature_dict = {
+        "spectrogram": tf.train.Feature(
+            float_list=tf.train.FloatList(value=spectrogram.numpy().flatten())
+        ),
+        "labels": tf.train.Feature(
+            float_list=tf.train.FloatList(value=labels.numpy().flatten())
+        ),
+    }
+    example_proto = tf.train.Example(features=tf.train.Features(feature=feature_dict))
+    return example_proto.SerializeToString()
+
+
+def parse_example(proto, dataset_shape):
+    feature_description = {
+        "spectrogram": tf.io.FixedLenFeature(
+            np.prod(dataset_shape["spectrogram"]), tf.float32
+        ),
+        "labels": tf.io.FixedLenFeature(np.prod(dataset_shape["labels"]), tf.float32),
+    }
+    example = tf.io.parse_single_example(proto, feature_description)
+
+    spectrogram = tf.reshape(example["spectrogram"], dataset_shape["spectrogram"])
+    labels = tf.reshape(example["labels"], dataset_shape["labels"])
+
+    return spectrogram, labels
+
+
+def _load_dataset(file_path, dataset_shape):
+    """
+    Load a dataset from a TFRecord file. (seperate function mainly for testing)
+    """
+    dataset = tf.data.TFRecordDataset(
+        str(file_path), num_parallel_reads=8, compression_type="GZIP"
+    ).map(lambda proto: parse_example(proto, dataset_shape))
+    return dataset
+
+
 # reload tf dataset
-def load_dataset(file_path, batch_size, seed):
+def load_dataset(file_path, dataset_shape, batch_size, seed):
     dataset = (
-        tf.data.Dataset.load(str(file_path))
+        _load_dataset(file_path, dataset_shape)
         .shuffle(buffer_size=1000, seed=seed)
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
