@@ -568,3 +568,54 @@ def cli_train(**kwargs):
     from orcAI.train import train
 
     train(**kwargs)
+
+
+@cli.command(
+    name="test",
+    help="Tests a model at MODEL_DIR on the test dataset in DATA_DIR and saves the results to OUTPUT_DIR.",
+    short_help="Tests a model.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("model_dir", type=ClickDirPathR)
+@click.argument("data_dir", type=ClickDirPathR)
+@click.option(
+    "--output_dir",
+    "-o",
+    type=ClickDirPathWcreate,
+    default=None,
+    show_default="None",
+    help="Path to the output directory. None to save in the same directory as the model.",
+)
+@click.option(
+    "--recording_data_dir",
+    "-rdd",
+    type=ClickDirPathR,
+    default=None,
+    show_default="None",
+    help="Path to the recording data directory for additional test samples.",
+)
+@click.option(
+    "--n_batches_additional",
+    "-nba",
+    type=int,
+    default=3200,
+    show_default=3200,
+    help="Number of additional batches of unfiltered samples to use for testing. Only valid if recording_data_dir is given.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def cli_test(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"],
+        title=f"Testing model {kwargs['model_dir'].name}",
+    )
+    from orcAI.test import test_model
+
+    test_model(**kwargs)

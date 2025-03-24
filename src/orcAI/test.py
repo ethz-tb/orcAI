@@ -1,12 +1,11 @@
-import zarr
 from pathlib import Path
-import random
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import json
 from sklearn.metrics import confusion_matrix
 import tensorflow as tf
+from keras.saving import load_model
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -223,6 +222,7 @@ def _test_model_on_dataset(
     dataset: tf.data.Dataset,
     label_names: list[str],
     dataset_name: str,
+    dataset_length: int,
     msgr: Messenger,
 ):
     """Test a model on a dataset."""
@@ -242,7 +242,10 @@ def _test_model_on_dataset(
     data_true = []
 
     for spectrogram_batch, label_batch in tqdm(
-        dataset, disable=True if msgr.verbosity < 2 else None
+        dataset,
+        disable=True if msgr.verbosity < 2 else None,
+        desc="predicting data",
+        total=dataset_length,
     ):
         data_true.append(label_batch.numpy())
         data_predicted.append(model.predict(spectrogram_batch, verbose=0))
@@ -306,31 +309,36 @@ def _save_test_results(
                 dataset_name + "_" + "misclassification_table_" + key + ".csv"
             )
         )
-    msgr.part(f"saved test results to {save_results_dir}")
     return
 
 
 def test_model(
-    model_path: Path | str,
-    model_data_dir: Path | str,
-    test_data_sample_size: int = 100000,
-    save_results_dir: None | Path | str = None,
+    model_dir: Path | str,
+    data_dir: Path | str,
+    recording_data_dir: Path | str | None = None,
+    n_batches_additional: int = 3200,
+    output_dir: None | Path | str = None,
     verbosity: int = 2,
-):
+    msgr: Messenger | None = None,
+) -> None:
     """Test a trained model on test data and a sample of test snippets."
     Parameters
     ----------
-    model_path : Path | str
+    model_dir : Path | str
         Path to the model directory.
-    model_data_dir : Path | str
+    data_dir : Path | str
         Path to the model data directory containing the training, valdidation
         and testing data.
+    recording_data_dir : (Path | str)
+        Path to the recording data directory
     test_data_sample_size : int
         Number of test snippets to sample from the complete test data for testing. Default is 100000.
-    save_results_dir : None | Path | str
-        Directory to save the test results. Default is None (no saving).
+    output_dir : None | Path | str
+        Directory to save the test results. Default is saving to model_dir.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+    msgr : Messenger
+        Messenger object for logging. If None, a new Messenger object is created.
 
     Returns
     -------
@@ -339,80 +347,108 @@ def test_model(
     """
 
     # Initialize messenger
-    msgr = Messenger(verbosity=verbosity)
-    model_data_dir = Path(model_data_dir)
-    model_path = Path(model_path)
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity, title="Testing model")
+    data_dir = Path(data_dir)
+    model_dir = Path(model_dir)
+    if output_dir is None:
+        output_dir = model_dir
+    else:
+        output_dir = Path(output_dir)
 
-    msgr.part("OrcAI - testing model")
-    msgr.info(f"Model directory: {model_path}")
-    msgr.info(f"Model data directory: {model_data_dir}")
+    msgr.part("Loading parameter and data")
+    msgr.info(f"Model directory: {model_dir}")
+    msgr.info(f"Model data directory: {data_dir}")
 
-    msgr.info("Loading parameter and data...", indent=1)
-    orcai_parameter = read_json(Path(model_path).joinpath("orcai_parameter.json"))
+    orcai_parameter = read_json(Path(model_dir).joinpath("orcai_parameter.json"))
     model_parameter = orcai_parameter["model"]
     msgr.debug("Model parameter")
     msgr.debug(model_parameter)
 
-    model_shape = read_json(model_path.joinpath("model_shape.json"))
     trained_calls = orcai_parameter["calls"]
 
     # LOAD MODEL #TODO: load from .keras file?
-    msgr.part("Compiling model")
-    model = build_model(**model_shape, orcai_parameter=orcai_parameter, msgr=msgr)
-    model.load_weights(model_path.joinpath("model_weights.h5"))
-    masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
-        fn=masked_binary_accuracy,
-        name="masked_binary_accuracy",
-    )
-    model.compile(
-        optimizer="adam",
-        loss=masked_binary_crossentropy,
-        metrics=[masked_binary_accuracy_metric],
+    msgr.part("Loading model")
+
+    model = load_model(
+        model_dir.joinpath(orcai_parameter["name"] + ".keras"),
+        custom_objects=None,
+        compile=True,
+        safe_mode=True,
     )
 
     msgr.part("Testing model on test data")
     test_dataset = load_dataset(
-        model_data_dir.joinpath("test_dataset"), model_parameter["batch_size"]
+        data_dir.joinpath("test_dataset"),
+        model_parameter["batch_size"],
+        orcai_parameter["seed"] + 3,
     )
     results_test_dataset = _test_model_on_dataset(
-        model, test_dataset, trained_calls, "test_data", msgr
+        model,
+        test_dataset,
+        trained_calls,
+        "test_data",
+        model_parameter["n_batch_test"],
+        msgr,
     )
+    _save_test_results(results_test_dataset, output_dir, msgr)
+    msgr.info(f"Saved test results to {output_dir}")
 
-    msgr.part("Testing model on new sample of extracted test snippets")
-    all_snippets = pd.read_csv(model_data_dir.joinpath("all_snippets.csv.gz"))
-    all_test_snippets = all_snippets[all_snippets["data_type"] == "test"]
-    sampled_test_snippets = all_test_snippets.sample(
-        test_data_sample_size, replace=False
-    ).reset_index()
-    sampled_test_snippets_loader = DataLoader(
-        sampled_test_snippets,
-        n_filters=len(model_parameter["filters"]),
-    )
-    test_sampled_dataset = tf.data.Dataset.from_generator(
-        sampled_test_snippets_loader.__iter__,
-        output_signature=(
-            tf.TensorSpec(
-                shape=(model.input_shape[1], model.input_shape[2], 1),
-                dtype=tf.float32,
-            ),  # Single spectrogram shape
-            tf.TensorSpec(
-                shape=(model.output_shape[1], model.output_shape[2]), dtype=tf.float32
-            ),  # Single label shape
-        ),
-    )
-    test_sampled_dataset = test_sampled_dataset.batch(
-        model_parameter["batch_size"], drop_remainder=True
-    ).prefetch(buffer_size=tf.data.AUTOTUNE)
-    total_batches = len(sampled_test_snippets_loader)
-    test_sampled_dataset = test_sampled_dataset.apply(
-        tf.data.experimental.assert_cardinality(total_batches)
-    )
-    results_test_dataset = _test_model_on_dataset(
-        model, test_sampled_dataset, trained_calls, "test_sampled_data", msgr
-    )
+    if recording_data_dir is not None:
+        msgr.part("Testing model on new, unfiltered sample of test snippets")
+        all_snippets = pd.read_csv(recording_data_dir.joinpath("all_snippets.csv.gz"))
+        all_test_snippets = all_snippets[all_snippets["data_type"] == "test"]
+        test_data_sample_size = n_batches_additional * model_parameter["batch_size"]
+        rng = np.random.default_rng(
+            seed=[3, orcai_parameter["seed"]]
+        )  # magic 3 to make this seed unique to this function
+        if len(all_test_snippets) < test_data_sample_size:
+            msgr.warning(
+                f"Test data sample size ({test_data_sample_size}) is larger than the number of test snippets ({len(all_test_snippets)})."
+            )
+            msgr.warning("Using all test snippets for testing.")
+            test_data_sample_size = len(all_test_snippets)
 
-    if save_results_dir is not None:
-        save_results_dir = Path(save_results_dir)
-        _save_test_results(results_test_dataset, save_results_dir, msgr)
+        sampled_test_snippets = all_test_snippets.sample(
+            test_data_sample_size, replace=False, random_state=rng
+        ).reset_index()
+        sampled_test_snippets_loader = DataLoader(
+            sampled_test_snippets,
+            n_filters=len(model_parameter["filters"]),
+        )
+        test_sampled_dataset = tf.data.Dataset.from_generator(
+            sampled_test_snippets_loader.__iter__,
+            output_signature=(
+                tf.TensorSpec(
+                    shape=(model.input_shape[1], model.input_shape[2], 1),
+                    dtype=tf.float32,
+                ),  # Single spectrogram shape
+                tf.TensorSpec(
+                    shape=(model.output_shape[1], model.output_shape[2]),
+                    dtype=tf.float32,
+                ),  # Single label shape
+            ),
+        )
+        test_sampled_dataset = test_sampled_dataset.batch(
+            model_parameter["batch_size"], drop_remainder=True
+        ).prefetch(buffer_size=tf.data.AUTOTUNE)
+        total_batches = (
+            len(sampled_test_snippets_loader) // model_parameter["batch_size"]
+        )
+        test_sampled_dataset = test_sampled_dataset.apply(
+            tf.data.experimental.assert_cardinality(total_batches)
+        )
+        results_test_dataset = _test_model_on_dataset(
+            model,
+            test_sampled_dataset,
+            trained_calls,
+            "test_sampled_data",
+            total_batches,
+            msgr,
+        )
+        _save_test_results(results_test_dataset, output_dir, msgr)
+        msgr.info(f"Saved test results to {output_dir}")
+
+    msgr.success("Model testing completed.")
 
     return
