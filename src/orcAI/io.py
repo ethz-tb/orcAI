@@ -128,7 +128,7 @@ class DataLoader:
 # reload tf dataset
 def load_dataset(file_path, batch_size, seed):
     dataset = (
-        tf.data.Dataset.load(file_path)
+        tf.data.Dataset.load(str(file_path))
         .shuffle(buffer_size=1000, seed=seed)
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
