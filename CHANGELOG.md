@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1] - 2025-03-24
+
+### Changes
+
+- extract one additional batch to avoid the warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.`
+- set validation steps in model.fit
+
 ## [0.6.0] - 2025-03-24
 
 ### Changes
