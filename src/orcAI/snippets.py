@@ -324,15 +324,6 @@ def _filter_snippet_table(
     """
     msgr.part("Filtering snippet table")
 
-    snippet_stats = _compute_snippet_stats(
-        snippet_table, for_calls=orcai_parameter["calls"]
-    )
-    snippet_stats_duration = snippet_stats.filter(regex=".*(?<!_ef)$", axis=1).map(
-        seconds_to_hms
-    )
-    msgr.info("Snippet stats [HMS]:", indent=1)
-    msgr.info(snippet_stats_duration, indent=-1)
-
     snippets_no_label = snippet_table[
         snippet_table[orcai_parameter["calls"]].sum(axis=1) <= 0.0000001
     ]
@@ -426,6 +417,18 @@ def create_tvt_snippet_tables(
     if isinstance(snippet_table, (Path | str)):
         snippet_table = pd.read_csv(snippet_table)
 
+    selected_snippet_stats = _compute_snippet_stats(
+        snippet_table, for_calls=orcai_parameter["calls"]
+    )
+    all_snippet_stats_duration = selected_snippet_stats.filter(
+        regex=".*(?<!_ef)$", axis=1
+    ).map(seconds_to_hms)
+    msgr.info("Snippet stats [HMS]:", indent=1)
+    msgr.info(all_snippet_stats_duration, indent=-1)
+    all_snippet_stats_duration.to_csv(
+        Path(output_dir, "all_snippet_stats_duration.csv"), index=True
+    )
+
     rng = np.random.default_rng(
         seed=[2, orcai_parameter["seed"]]
     )  # magic 2 to make this seed unique to this function
@@ -436,7 +439,8 @@ def create_tvt_snippet_tables(
         msgr=msgr,
     )
 
-    for itype in ["train", "val", "test"]:
+    snippets = []
+    for i, itype in enumerate(["train", "val", "test"]):
         n_snippets = (
             orcai_parameter["model"][f"n_batch_{itype}"] + 1
         ) * orcai_parameter["model"]["batch_size"]
@@ -453,13 +457,25 @@ def create_tvt_snippet_tables(
             msgr.error("Skipping.")
             continue
 
-        snippets_itype = snippet_table_i.sample(
-            n=n_snippets, replace=False, random_state=rng
+        snippets.append(
+            snippet_table_i.sample(n=n_snippets, replace=False, random_state=rng)
         )
 
-        snippets_itype[["recording_data_dir", "row_start", "row_stop"]].to_csv(
+        snippets[i][["recording_data_dir", "row_start", "row_stop"]].to_csv(
             Path(output_dir, f"{itype}.csv.gz"), compression="gzip", index=False
         )
+
+    selected_snippet_stats = _compute_snippet_stats(
+        pd.concat(snippets, ignore_index=True), for_calls=orcai_parameter["calls"]
+    )
+    selected_snippet_stats_duration = selected_snippet_stats.filter(
+        regex=".*(?<!_ef)$", axis=1
+    ).map(seconds_to_hms)
+    msgr.info("Snippet stats for train, val and test datasets [HMS]:", indent=1)
+    msgr.info(selected_snippet_stats_duration, indent=-1)
+    selected_snippet_stats_duration.to_csv(
+        Path(output_dir, "selected_snippet_stats_duration.csv"), index=True
+    )
 
     msgr.success("Train, val and test snippet tables created and saved to disk")
 
