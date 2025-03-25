@@ -9,6 +9,7 @@
 ### Added
 
 - added hyperparameter search cli
+- report and save duration of selected snippets
 
 ## [0.6.1] - 2025-03-24
 
