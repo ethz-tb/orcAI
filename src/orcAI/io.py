@@ -164,13 +164,15 @@ def _load_dataset(file_path, dataset_shape):
 
 
 # reload tf dataset
-def load_dataset(file_path, dataset_shape, batch_size, seed):
+def load_dataset(file_path, dataset_shape, batch_size, n_batches=None, seed=None):
     dataset = (
         _load_dataset(file_path, dataset_shape)
         .shuffle(buffer_size=1000, seed=seed)
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
+    if n_batches is not None:
+        dataset = dataset.apply(tf.data.experimental.assert_cardinality(n_batches))
     return dataset
 
 

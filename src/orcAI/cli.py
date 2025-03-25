@@ -47,6 +47,10 @@ ClickFilePathW = click.Path(
     exists=False, dir_okay=False, writable=True, resolve_path=True, path_type=Path
 )
 
+INCLUDED_MODELS = [
+    file.stem for file in files("orcAI.models").iterdir() if file.stem != ".DS_Store"
+]
+
 
 @click.group(
     # fmt: off
@@ -87,11 +91,18 @@ def cli():
 @click.option(
     "--model",
     "-m",
-    "model_path",
+    type=click.Choice(INCLUDED_MODELS, case_sensitive=False),
+    default=INCLUDED_MODELS[0],
+    help="Builtin model to use for prediction. Overriden if model_dir is given.",
+)
+@click.option(
+    "--model_dir",
+    "-md",
+    "model_dir",
     type=ClickDirPathR,
-    default=files("orcAI.models").joinpath("orcai-V1"),
-    show_default="orcai-V1",
-    help="Path to the model directory.",
+    default=None,
+    show_default="use builtin model",
+    help="Path to a model directory.",
 )
 @click.option(
     "--output_path",
@@ -138,7 +149,12 @@ def cli():
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_predict(**kwargs):
+    kwargs["msgr"] = Messenger(verbosity=kwargs["verbosity"], title="Predicting calls")
     from orcAI.predict import predict
+
+    if kwargs["model_dir"] is None:
+        kwargs["model_dir"] = files("orcAI.models").joinpath(kwargs["model"])
+    del kwargs["model"]
 
     predict(**kwargs)
 
@@ -182,6 +198,9 @@ def cli_predict(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_filter_predictions(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"], title="Filtering predictions"
+    )
     from orcAI.predict import filter_predictions
 
     filter_predictions(**kwargs)

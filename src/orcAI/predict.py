@@ -6,6 +6,7 @@ from importlib.resources import files
 import time
 import keras
 from tqdm import tqdm
+from keras.saving import load_model
 
 from orcAI.auxiliary import Messenger, find_consecutive_ones
 from orcAI.architectures import (
@@ -71,8 +72,8 @@ def filter_predictions(
         "default_call_duration_limits.json"
     ),
     label_suffix="orcai-V1",
-    msgr=None,
     verbosity=2,
+    msgr=None,
 ):
     """
     Filter predictions based on duration.
@@ -87,10 +88,10 @@ def filter_predictions(
         Path to a JSON file containing a dictionary with call duration limits.
     label_suffix : str
         Suffix that was added to label names during prediction.
-    msgr : Messenger
-        Messenger object for logging. If None a new Messenger object is created.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+    msgr : Messenger
+        Messenger object for logging. If None a new Messenger object is created.
 
     Returns
     -------
@@ -100,7 +101,7 @@ def filter_predictions(
     """
 
     if msgr is None:
-        msgr = Messenger(verbosity=verbosity)
+        msgr = Messenger(verbosity=verbosity, title="Filtering predictions")
     msgr.part("Filtering predictions")
 
     if output_file is not None:
@@ -336,131 +337,68 @@ def _predict_wav(
     return predicted_labels
 
 
-def predict_wav(
-    recording_path,
-    channel=1,
-    model_path=files("orcAI.models").joinpath("orcai-V1"),
-    output_path="default",
-    save_prediction_probabilities=False,
-    call_duration_limits=None,
-    label_suffix="*",
-    msgr=None,
-    verbosity=2,
-):
-    """
-    Predicts annotations for a given wav file and saves them in an output file.
-
-    Parameters
-    ----------
-    recording_path : (Path | Str)
-        Path to the wav file.
-    channel : int
-        Channel in wav file where calls are. Defaults to 1.
-    model_path : (Path | Str)
-        Path to the model directory.
-    output_path : (Path | Str) | "default" | None
-        Path to the output file or "default" to save in the same directory as the wav file. None to not save predictions to disk.
-    save_prediction_probabilities : bool
-        Save prediction probabilities to a separate file. Defaults to False.
-    call_duration_limits : (Path | Str) | dict
-        Path to a JSON file containing a dictionary with call duration limits. Or a dictionary with call duration limits.
-    label_suffix : str
-        Suffix to add to the label names. defaults to "*".
-    msgr : Messenger
-        Messenger object for logging. If None a new Messenger object is created.
-    verbosity : int
-        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
-    Returns
-    -------
-    df_predicted_labels : pd.DataFrame
-        DataFrame with predicted labels
-
-    """
-    if msgr is None:
-        msgr = Messenger(verbosity=verbosity)
-    model_path = Path(model_path)
-    recording_path = Path(recording_path)
-
-    msgr.part(f"Predicting annotations for wav file: {recording_path}")
-    msgr.info(f"Model: {model_path.stem}")
-    msgr.info(f"Wav file: {recording_path}")
-
-    orcai_parameter = read_json(model_path.joinpath("orcai_parameter.json"))
-    msgr.debug("Calls for labeling:")
-    msgr.debug(orcai_parameter["calls"])
-
-    shape = read_json(model_path.joinpath("model_shape.json"))
-    msgr.debug(f"Input shape:")
-    msgr.debug(shape)
-
-    msgr.debug(f"Model parameter:")
-    msgr.debug(orcai_parameter["model"])
-
-    msgr.debug(f"Spectrogram parameters:")
-    msgr.debug(orcai_parameter["spectrogram"])
-
-    msgr.part(f"Loading model: {model_path.stem}")
-
-    msgr.info("Building model architecture")
-    model = res_net_LSTM_arch(**shape, **orcai_parameter["model"])
-
-    msgr.info("Loading model weights")
-    model.load_weights(model_path.joinpath("model_weights.h5"))
-
-    msgr.info("Compiling model")
-    masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
-        fn=masked_binary_accuracy,
-        name="masked_binary_accuracy",
-    )
-    model.compile(
-        optimizer="adam",
-        loss=masked_binary_crossentropy,
-        metrics=[masked_binary_accuracy_metric],
-    )
-
-    predictions = _predict_wav(
-        recording_path=recording_path,
-        channel=channel,
-        model=model,
-        orcai_parameter=orcai_parameter,
-        shape=shape,
-        output_path=output_path,
-        save_prediction_probabilities=save_prediction_probabilities,
-        call_duration_limits=call_duration_limits,
-        label_suffix=label_suffix,
-        msgr=msgr,
-        progressbar=None,
-    )
-
-    return predictions
-
-
 def predict(
     recording_path,
     channel=1,
-    model_path=files("orcAI.models").joinpath("orcai-V1"),
+    model_dir=files("orcAI.models").joinpath("orcai-v1"),
     output_path="default",
     save_prediction_probabilities=False,
     base_dir_recording=None,
     call_duration_limits=None,
     label_suffix="*",
     verbosity=2,
+    msgr=None,
 ):
-    msgr = Messenger(verbosity=verbosity)
-    model_path = Path(model_path)
+    if msgr is None:
+        msgr = Messenger(
+            verbosity=verbosity,
+            title="Predicting calls",
+        )
+
+    model_dir = Path(model_dir)
     recording_path = Path(recording_path)
+    msgr.part(f"Loading model: {model_dir.stem}")
+
+    orcai_parameter = read_json(model_dir.joinpath("orcai_parameter.json"))
+    shape = read_json(model_dir.joinpath("model_shape.json"))
+
+    if model_dir.joinpath(orcai_parameter["name"] + ".keras").exists():
+        model = load_model(
+            model_dir.joinpath(orcai_parameter["name"] + ".keras"),
+            custom_objects=None,
+            compile=True,
+            safe_mode=True,
+        )
+    elif model_dir.joinpath("model_weights.h5").exists():
+        # legacy model
+        model = res_net_LSTM_arch(**shape, **orcai_parameter["model"])
+        model.load_weights(model_dir.joinpath("model_weights.h5"))
+        masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
+            fn=masked_binary_accuracy,
+            name="masked_binary_accuracy",
+        )
+        model.compile(
+            optimizer="adam",
+            loss=masked_binary_crossentropy,
+            metrics=[masked_binary_accuracy_metric],
+        )
+    else:
+        msgr.error("Couldn't find model weights or keras model file in {model_dir}")
+        sys.exit()
 
     if recording_path.suffix == ".wav":
-        return predict_wav(
-            recording_path,
+        return _predict_wav(
+            recording_path=recording_path,
             channel=channel,
-            model_path=model_path,
+            model=model,
+            orcai_parameter=orcai_parameter,
+            shape=shape,
             output_path=output_path,
             save_prediction_probabilities=save_prediction_probabilities,
             call_duration_limits=call_duration_limits,
             label_suffix=label_suffix,
             msgr=msgr,
-            verbosity=verbosity,
+            progressbar=None,
         )
     elif recording_path.suffix == ".csv":
         recording_table = pd.read_csv(recording_path)
@@ -474,47 +412,12 @@ def predict(
     if (output_path is not None) & (output_path != "default"):
         recording_table["output_path"] = [
             Path(output_path).joinpath(
-                recording + "_" + model_path.stem + "_predicted.txt"
+                recording + "_" + model_dir.stem + "_predicted.txt"
             )
             for recording in recording_table["recording"]
         ]
     else:
         recording_table["output_path"] = output_path
-
-    label_calls = read_json(model_path.joinpath("trained_calls.json"))
-    msgr.debug("Calls for labeling:")
-    msgr.debug(label_calls)
-
-    shape = read_json(model_path.joinpath("model_shape.json"))
-    msgr.debug(f"Input shape:")
-    msgr.debug(shape)
-
-    model_parameter = read_json(model_path.joinpath("model_parameter.json"))
-    msgr.debug(f"Model parameter:")
-    msgr.debug(model_parameter)
-    spectrogram_parameter = read_json(model_path.joinpath("spectrogram_parameter.json"))
-
-    msgr.debug(f"Spectrogram parameters:")
-    msgr.debug(spectrogram_parameter)
-
-    msgr.part(f"Loading model: {model_path.stem}")
-
-    msgr.info("Building model architecture")
-    model = res_net_LSTM_arch(**shape, **model_parameter)
-
-    msgr.info("Loading model weights")
-    model.load_weights(model_path.joinpath("model_weights.h5"))
-
-    msgr.info("Compiling model")
-    masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
-        fn=masked_binary_accuracy,
-        name="masked_binary_accuracy",
-    )
-    model.compile(
-        optimizer="adam",
-        loss=masked_binary_crossentropy,
-        metrics=[masked_binary_accuracy_metric],
-    )
 
     msgr.part(f"Predicting annotations for {len(recording_table)} wav files")
     progressbar = tqdm(recording_table.index, desc="Starting ...", unit="file")
@@ -525,10 +428,8 @@ def predict(
             ),
             channel=recording_table.loc[i, "channel"],
             model=model,
-            model_parameter=model_parameter,
-            spectrogram_parameter=spectrogram_parameter,
+            orcai_parameter=orcai_parameter,
             shape=shape,
-            label_calls=label_calls,
             output_path=recording_table.loc[i, "output_path"],
             save_prediction_probabilities=save_prediction_probabilities,
             call_duration_limits=call_duration_limits,

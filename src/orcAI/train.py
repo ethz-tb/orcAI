@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 from importlib.resources import files
 from functools import partial
@@ -92,14 +91,17 @@ def train(
         data_dir.joinpath("train_dataset.tfrecord.gz"),
         dataset_shape,
         model_parameter["batch_size"],
+        model_parameter["n_batch_train"],
         orcai_parameter["seed"] + 1,
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset.tfrecord.gz"),
         dataset_shape,
         model_parameter["batch_size"],
+        model_parameter["n_batch_train"],
         orcai_parameter["seed"] + 2,
     )
+
     msgr.info(f"Batch size {model_parameter['batch_size']}")
 
     msgr.part("Building model")
@@ -205,6 +207,11 @@ def train(
         output_dir.joinpath(model_name, model_name + ".keras"),
         include_optimizer=True,
     )
+    model_shape = {
+        "input_shape": dataset_shape["spectrogram"],
+        "num_labels": len(label_calls),
+    }
+    write_json(model_shape, output_dir.joinpath(model_name, "model_shape.json"))
 
     msgr.success(
         f"OrcAI - training model finished. Model saved to {model_name + '.keras'}"
