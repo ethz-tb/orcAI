@@ -98,7 +98,7 @@ def train(
         data_dir.joinpath("val_dataset.tfrecord.gz"),
         dataset_shape,
         model_parameter["batch_size"],
-        model_parameter["n_batch_train"],
+        model_parameter["n_batch_val"],
         orcai_parameter["seed"] + 2,
     )
 
@@ -345,12 +345,14 @@ def hyperparameter_search(
         data_dir.joinpath("train_dataset.tfrecord.gz"),
         dataset_shape,
         orcai_parameter["model"]["batch_size"],
+        orcai_parameter["model"]["n_batch_train"],
         orcai_parameter["seed"] + 1,
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset.tfrecord.gz"),
         dataset_shape,
         orcai_parameter["model"]["batch_size"],
+        orcai_parameter["model"]["n_batch_val"],
         orcai_parameter["seed"] + 2,
     )
     msgr.info(f"Batch size {orcai_parameter['model']['batch_size']}")
