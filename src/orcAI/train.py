@@ -85,7 +85,7 @@ def train(
     msgr.debug(label_calls, indent=-1)
 
     # load data sets from local disk
-    msgr.part(f"Loading train, val and test datasets from {data_dir}")
+    msgr.part(f"Loading training and validation datasets from {data_dir}")
     tf.config.set_soft_device_placement(True)
     dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     train_dataset = load_dataset(
@@ -215,8 +215,7 @@ def train(
 def _hp_model_builder(
     hp: kt.HyperParameters,
     input_shape: tuple[int, int, int],
-    num_labels: int,
-    model_parameter: dict,
+    orcai_parameter: dict,
     hps_parameter: dict,
     msgr: Messenger = Messenger(verbosity=0),
 ) -> tf.keras.Model:
@@ -229,7 +228,7 @@ def _hp_model_builder(
         Dimensions of the input data
     num_labels : int
         Number of labels to predict
-    model_parameter : dict
+    orcai_parameter : dict
         Model parameters
     hps_parameter : dict
         Hyperparameter search parameters
@@ -242,16 +241,16 @@ def _hp_model_builder(
         Model for hyperparameter search
     """
     hp_filters = hp.Choice("filters", values=list(hps_parameter["filters"].keys()))
-    model_parameter["filters"] = hps_parameter["filters"][hp_filters]
-    model_parameter["kernel_size"] = hp.Choice(
+    orcai_parameter["filters"] = hps_parameter["filters"][hp_filters]
+    orcai_parameter["kernel_size"] = hp.Choice(
         "kernel_size", hps_parameter["kernel_size"]
     )
-    model_parameter["dropout_rate"] = hp.Choice(
+    orcai_parameter["dropout_rate"] = hp.Choice(
         "dropout_rate", hps_parameter["dropout_rate"]
     )
-    if "lstm_units" in model_parameter.keys():
+    if "lstm_units" in orcai_parameter.keys():
         if "lstm_units" in hps_parameter.keys():
-            model_parameter["lstm_units"] = hp.Choice(
+            orcai_parameter["lstm_units"] = hp.Choice(
                 "lstm_units", hps_parameter["lstm_units"]
             )
         else:
@@ -265,7 +264,7 @@ def _hp_model_builder(
                 "LSTM units not in model parameters. Is the right model specified?"
             )
 
-    model = build_model(input_shape, num_labels, model_parameter, msgr=msgr)
+    model = build_model(input_shape, orcai_parameter, msgr=msgr)
 
     masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
         fn=masked_binary_accuracy,
@@ -317,64 +316,56 @@ def hyperparameter_search(
     """
 
     if msgr is None:
-        msgr = Messenger(verbosity=verbosity, title="Hyperparameter Search")
+        msgr = Messenger(verbosity=verbosity, title="Hyperparameter search")
 
     msgr.part("Loading Hyperparameter search parameter")
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
-    model_parameter = orcai_parameter["model"]
+
     msgr.debug("Model parameter")
-    msgr.debug(model_parameter)
-    model_name = model_parameter["name"]
+    msgr.debug(orcai_parameter["model"])
+    model_name = orcai_parameter["name"]
 
     if isinstance(hps_parameter, (Path | str)):
         hps_parameter = read_json(hps_parameter)
     msgr.debug("Hyperparameter search parameter")
     msgr.debug(hps_parameter)
 
-    file_paths = {
-        "test_data": Path(data_dir).joinpath("test_dataset"),
-        "model_dir": Path(output_dir).joinpath(model_name),
-        "hps_dir": Path(output_dir).joinpath(model_name, "hps"),
-        "hps_logs_dir": Path(output_dir).joinpath(model_name, "hps_logs"),
-    }
-
-    # load data sets from local disk
-    msgr.part(f"Loading train and val datasets from {data_dir}")
-    start_time = time.time()
+    msgr.part(f"Loading training and validation datasets from {data_dir}")
+    dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     train_dataset = load_dataset(
-        Path(data_dir).joinpath("train_dataset"), model_parameter["batch_size"]
+        data_dir.joinpath("train_dataset.tfrecord.gz"),
+        dataset_shape,
+        orcai_parameter["model"]["batch_size"],
+        orcai_parameter["seed"] + 1,
     )
     val_dataset = load_dataset(
-        Path(data_dir).joinpath("val_dataset"), model_parameter["batch_size"]
+        data_dir.joinpath("val_dataset.tfrecord.gz"),
+        dataset_shape,
+        orcai_parameter["model"]["batch_size"],
+        orcai_parameter["seed"] + 2,
     )
-
-    # Verify the val dataset and obtain shape
-    spectrogram, labels = val_dataset.take(1).element_spec
-    msgr.info(f"Spectrogram batch shape: {spectrogram.shape}")
-    msgr.info(f"Labels batch shape: {labels.shape}")
-
-    input_shape = tuple(spectrogram.shape[1:])  #  shape
-    num_labels = labels.shape[2]  # Number of sound types
+    msgr.info(f"Batch size {orcai_parameter['model']['batch_size']}")
 
     msgr.part("Searching hyperparameters")
+    hps_logs_dir = Path(output_dir).joinpath(model_name, "hps_logs")
+
     if parallel:
         gpus = tf.config.list_physical_devices("GPU")
-        msgr.info(f"Prallel - running on {len(gpus)} GPU")
+        msgr.info(f"Parallel - running on {len(gpus)} GPU")
         strategy = tf.distribute.MirroredStrategy()
         with strategy.scope():
             tuner = kt.Hyperband(
                 partial(
                     _hp_model_builder,
-                    input_shape=input_shape,
-                    num_labels=num_labels,
-                    model_parameter=model_parameter,
+                    input_shape=tuple(dataset_shape["spectrogram"]),
+                    orcai_parameter=orcai_parameter,
                     hps_parameter=hps_parameter,
                 ),
                 objective=kt.Objective("val_masked_binary_accuracy", direction="max"),
                 max_epochs=10,
-                directory=file_paths["hps_logs_dir"],
+                directory=hps_logs_dir,
                 project_name=model_name,
                 executions_per_trial=1,
             )
@@ -383,14 +374,13 @@ def hyperparameter_search(
         tuner = kt.Hyperband(
             partial(
                 _hp_model_builder,
-                input_shape=input_shape,
-                num_labels=num_labels,
-                model_parameter=model_parameter,
+                input_shape=tuple(dataset_shape["spectrogram"]),
+                orcai_parameter=orcai_parameter,
                 hps_parameter=hps_parameter,
             ),
             objective=kt.Objective("val_masked_binary_accuracy", direction="max"),
             max_epochs=10,
-            directory=file_paths["hps_logs_dir"],
+            directory=hps_logs_dir,
             project_name=model_name,
         )
     early_stopping = EarlyStopping(

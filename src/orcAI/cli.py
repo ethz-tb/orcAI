@@ -18,7 +18,9 @@ click.rich_click.COMMAND_GROUPS = {
                 "create-snippet-table",
                 "create-tvt-snippet-tables",
                 "create-tvt-data",
+                "hpsearch",
                 "train",
+                "test",
             ],
         },
         {
@@ -619,3 +621,52 @@ def cli_test(**kwargs):
     from orcAI.test import test_model
 
     test_model(**kwargs)
+
+
+@cli.command(
+    name="hpsearch",
+    help="Performs hyperparameter search on the training dataset in DATA_DIR and saves the results to OUTPUT_DIR.",
+    short_help="Performs hyperparameter search.",
+    no_args_is_help=True,
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+)
+@click.argument("data_dir", type=ClickDirPathR)
+@click.argument("output_dir", type=ClickDirPathW)
+@click.option(
+    "--orcai_parameter",
+    "-p",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    show_default="default_orcai_parameter.json",
+    help="Path to the OrcAI parameter file.",
+)
+@click.option(
+    "--hps_parameter",
+    "-hp",
+    type=ClickFilePathR,
+    default=files("orcAI.defaults").joinpath("default_hps_parameter.json"),
+    show_default="default_hps_parameter.json",
+    help="Path to the hyperparameter search parameter file.",
+)
+@click.option(
+    "--parallel",
+    "-pl",
+    is_flag=True,
+    help="Run hyperparameter search on multiple GPUs in parallel.",
+)
+@click.option(
+    "--verbosity",
+    "-v",
+    type=click.IntRange(0, 3),
+    default=2,
+    show_default=True,
+    help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
+)
+def hpsearch_cli(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"],
+        title="Hyperparameter search",
+    )
+    from orcAI.train import hyperparameter_search
+
+    hyperparameter_search(**kwargs)
