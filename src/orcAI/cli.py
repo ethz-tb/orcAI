@@ -87,7 +87,7 @@ def cli():
 @click.option(
     "--model",
     "-m",
-    "model_path",
+    "model_dir",
     type=ClickDirPathR,
     default=files("orcAI.models").joinpath("orcai-V1"),
     show_default="orcai-V1",
