@@ -1,6 +1,6 @@
 # orcai-v1 pipeline
 
-## init environment
+## install orcAi
 
 ```bash
 pipx install git+https://gitlab.ethz.ch/tb/orcai.git --version python3.11
@@ -22,7 +22,7 @@ orcai, version 0.4.0
 ```
 
 
-## Initialize project project
+## Initialize project
 
 ```bash
 orcai init /path/to/orcai-v1 orcai-v1
