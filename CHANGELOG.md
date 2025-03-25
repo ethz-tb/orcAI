@@ -1,10 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## [0.8.0] - 2025-03-25
 
 ### Changes
 
 - set cardinality when loading datasets
+- restructure predict fn
+  - load model only once
+  - remove redundant predict_wav function
+  - load model from .keras for newer models
+- update predict cli
+  - option to choose from included models (now includes orcai-v1 and orcai-v1-6400 trained on 6400 batches)
 
 ## [0.7.0] - 2025-03-25
 
