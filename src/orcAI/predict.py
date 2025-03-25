@@ -72,8 +72,8 @@ def filter_predictions(
         "default_call_duration_limits.json"
     ),
     label_suffix="orcai-V1",
-    msgr=None,
     verbosity=2,
+    msgr=None,
 ):
     """
     Filter predictions based on duration.
@@ -88,10 +88,10 @@ def filter_predictions(
         Path to a JSON file containing a dictionary with call duration limits.
     label_suffix : str
         Suffix that was added to label names during prediction.
-    msgr : Messenger
-        Messenger object for logging. If None a new Messenger object is created.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+    msgr : Messenger
+        Messenger object for logging. If None a new Messenger object is created.
 
     Returns
     -------
@@ -101,7 +101,7 @@ def filter_predictions(
     """
 
     if msgr is None:
-        msgr = Messenger(verbosity=verbosity)
+        msgr = Messenger(verbosity=verbosity, title="Filtering predictions")
     msgr.part("Filtering predictions")
 
     if output_file is not None:

@@ -198,6 +198,9 @@ def cli_predict(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_filter_predictions(**kwargs):
+    kwargs["msgr"] = Messenger(
+        verbosity=kwargs["verbosity"], title="Filtering predictions"
+    )
     from orcAI.predict import filter_predictions
 
     filter_predictions(**kwargs)
