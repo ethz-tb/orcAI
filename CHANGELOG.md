@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changes
+
+- set cardinality when loading datasets
+
 ## [0.7.0] - 2025-03-25
 
 ### Changes
