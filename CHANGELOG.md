@@ -1,10 +1,11 @@
 # Changelog
 
-## [0.7.0] - unreleased
+## [0.7.0] - 2025-03-25
 
 ### Changes
 
-- set validation steps in model.fit
+- explicitly set validation steps in model.fit
+- report and save duration by call of selected snippets when creating tvt snippet tables
 
 ### Added
 
@@ -137,5 +138,5 @@ _First prerelease._
 [0.5.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.5.0
 [0.6.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.6.0
 [0.6.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.6.1
-
+[0.7.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.7.0
 

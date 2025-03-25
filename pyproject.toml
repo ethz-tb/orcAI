@@ -16,7 +16,7 @@ keywords = [
     "Bioaccoustics",
     "Orca",
     "classification",
-] # TODO: update keywords
+]
 readme = "README.md"
 requires-python = "~=3.11"
 license = { text = "CC-BY-SA-4.0" }
