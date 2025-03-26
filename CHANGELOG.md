@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changes
+
+- fix saving project name in `init` command
+- add type hints to save functions
+
 ## [0.8.1] - 2025-03-25
 
 ### Changes
