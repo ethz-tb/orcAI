@@ -138,7 +138,10 @@ def serialize_example(spectrogram, labels):
     return example_proto.SerializeToString()
 
 
-def parse_example(proto, dataset_shape):
+def parse_example(
+    proto,
+    dataset_shape: dict["spectrogram" : tuple[int, int, int], "labels":[int, int]],
+):
     feature_description = {
         "spectrogram": tf.io.FixedLenFeature(
             np.prod(dataset_shape["spectrogram"]), tf.float32
@@ -153,7 +156,10 @@ def parse_example(proto, dataset_shape):
     return spectrogram, labels
 
 
-def _load_dataset(file_path, dataset_shape):
+def _load_dataset(
+    file_path: str,
+    dataset_shape: dict["spectrogram" : tuple[int, int, int], "labels":[int, int]],
+):
     """
     Load a dataset from a TFRecord file. (seperate function mainly for testing)
     """
@@ -164,7 +170,13 @@ def _load_dataset(file_path, dataset_shape):
 
 
 # reload tf dataset
-def load_dataset(file_path, dataset_shape, batch_size, n_batches=None, seed=None):
+def load_dataset(
+    file_path: str,
+    dataset_shape: dict["spectrogram" : tuple[int, int, int], "labels":[int, int]],
+    batch_size: int,
+    n_batches: int = None,
+    seed: int = None,
+):
     dataset = (
         _load_dataset(file_path, dataset_shape)
         .shuffle(buffer_size=1000, seed=seed)
