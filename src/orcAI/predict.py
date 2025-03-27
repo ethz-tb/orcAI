@@ -18,7 +18,11 @@ from orcAI.spectrogram import make_spectrogram
 from orcAI.io import read_json
 
 
-def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):
+def _check_duration(
+    calls: pd.DataFrame,
+    call_duration_limits: dict[str : tuple[float | None, float | None]],
+    label_suffix: str = "*",
+):
     """
     Filter calls based on duration.
 
@@ -29,7 +33,7 @@ def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):
     call_duration_limits : dict
         Dictionary with call duration limits for each label.
     label_suffix : str
-        Suffix to add to the label names.
+         Suffix that was added to label names during prediction.
 
 
     Returns
@@ -38,7 +42,7 @@ def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):
         str "keep", "too long", or "too short"
 
     """
-    label = x["label"].replace(f"_{label_suffix}", "")
+    label = calls["label"].replace(f"_{label_suffix}", "")
 
     if label in call_duration_limits:
         min_duration, max_duration = call_duration_limits[label]
@@ -56,9 +60,9 @@ def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):
         min_duration = 0
         max_duration = np.inf
 
-    if x["duration"] < min_duration:
+    if calls["duration"] < min_duration:
         out = "too short"
-    elif x["duration"] > max_duration:
+    elif calls["duration"] > max_duration:
         out = "too long"
     else:
         out = "keep"
@@ -66,25 +70,25 @@ def _check_duration(x, call_duration_limits, label_suffix="orcai-V1"):
 
 
 def filter_predictions(
-    predicted_labels,
-    output_file=None,
-    call_duration_limits=files("orcAI.defaults").joinpath(
+    predicted_labels: pd.DataFrame | Path | str,
+    output_file: pd.DataFrame | Path | str | None = None,
+    call_duration_limits: (Path | str) | dict = files("orcAI.defaults").joinpath(
         "default_call_duration_limits.json"
     ),
-    label_suffix="orcai-V1",
-    verbosity=2,
-    msgr=None,
+    label_suffix: str = "*",
+    verbosity: int = 2,
+    msgr: Messenger | None = None,
 ):
     """
     Filter predictions based on duration.
 
     Parameters
     ----------
-    predicted_labels : (pd.DataFrame | Path | Str)
+    predicted_labels : (pd.DataFrame | Path | str)
         DataFrame with predicted labels or path to a file with predicted labels.
-    output_file : (Path | Str) | "default" | None
+    output_file : (Path | str) | "default" | None
         Path to the output file or "default" to save in the same directory as the predicted labels file. None to not save predictions to disk.
-    call_duration_limits : (Path | Str) | dict
+    call_duration_limits : (Path | str) | dict
         Path to a JSON file containing a dictionary with call duration limits.
     label_suffix : str
         Suffix that was added to label names during prediction.
