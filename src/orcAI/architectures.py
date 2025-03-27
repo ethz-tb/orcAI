@@ -48,7 +48,6 @@ def res_net_1Dconv_arch(
     x = layers.Conv2D(16, kernel_size, padding="same")(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    # x = layers.Dropout(0.3)(x)  # Dropout after the first layer
 
     previous_block_activation = x  # Set aside residual
 
