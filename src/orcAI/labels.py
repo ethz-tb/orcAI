@@ -174,6 +174,7 @@ def create_label_arrays(
             f"Skipping {sum(existing_labels)} recordings because they already have Labels."
         )
         recording_table = recording_table[~existing_labels]
+
     msgr.part("Making label arrays")
     for i in tqdm(
         recording_table.index,
