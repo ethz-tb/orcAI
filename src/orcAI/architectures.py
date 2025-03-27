@@ -224,8 +224,6 @@ def masked_binary_accuracy(y_true: any, y_pred: any):
     -------
     tf.reduce_mean(accuracy) :
         The reduced tensor
-
-
     """
     mask_value = -1.0
     # Ensure mask_value has the same type as y_true
@@ -238,51 +236,6 @@ def masked_binary_accuracy(y_true: any, y_pred: any):
     # Compute binary accuracy on masked values
     accuracy = tf.keras.metrics.binary_accuracy(y_true_masked, y_pred_masked)
     return tf.reduce_mean(accuracy)
-
-
-@register_keras_serializable(name="masked_f1_score")
-def masked_f1_score(y_true: any, y_pred: any, threshold: float = 0.5):
-    """Custom F1 metric that excludes masked labels.
-
-    Parameters
-    ----------
-    y_true : any
-        True labels (with -1 indicating missing labels).
-    y_pred : any
-        Predicted probabilities or logits.
-    threshold : float
-        Threshold above which predictions are considered 1, else 0. (Default value = 0.5)
-
-    Returns
-    -------
-    f1 : float
-        Scalar F1 score (float) for the unmasked elements in this batch.
-
-    """
-    mask_value = -1.0
-    # Ensure y_true is float
-    y_true = tf.cast(y_true, tf.float32)
-    mask_value = tf.cast(mask_value, tf.float32)
-
-    # Create a mask for valid (non-masked) elements
-    mask = tf.not_equal(y_true, mask_value)
-    y_true_masked = tf.boolean_mask(y_true, mask)
-    y_pred_masked = tf.boolean_mask(y_pred, mask)
-
-    # Binarize the predictions
-    y_pred_bin = tf.cast(y_pred_masked >= threshold, tf.float32)
-
-    # Calculate confusion matrix components
-    tp = tf.reduce_sum(y_true_masked * y_pred_bin)  # 1 & 1
-    fp = tf.reduce_sum((1 - y_true_masked) * y_pred_bin)  # 0 & 1
-    fn = tf.reduce_sum(y_true_masked * (1 - y_pred_bin))  # 1 & 0
-
-    # Avoid division by zero
-    precision = tp / (tp + fp + 1e-7)
-    recall = tp / (tp + fn + 1e-7)
-
-    f1 = 2 * precision * recall / (precision + recall + 1e-7)
-    return f1
 
 
 ORCAI_ARCHITECTURES_FN = {
