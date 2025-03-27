@@ -4,6 +4,7 @@
 
 ### Changes
 
+- move hp_search to seperate module
 - fix saving project name in `init` command
 - add type hints to save functions
 

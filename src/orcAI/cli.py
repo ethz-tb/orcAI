@@ -686,6 +686,6 @@ def hpsearch_cli(**kwargs):
         verbosity=kwargs["verbosity"],
         title="Hyperparameter search",
     )
-    from orcAI.train import hyperparameter_search
+    from orcAI.hp_search import hyperparameter_search
 
     hyperparameter_search(**kwargs)
