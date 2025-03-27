@@ -193,10 +193,10 @@ def hyperparameter_search(
             project_name=model_name,
         )
     early_stopping = EarlyStopping(
-        monitor="val_masked_binary_accuracy",  # Use the validation metric
-        patience=5,  # Number of epochs to wait for improvement TODO: different than for train, intentional?
-        mode="max",  # Stop when accuracy stops increasing
-        restore_best_weights=True,  # Restore weights from the best epoch
+        monitor="val_masked_binary_accuracy",
+        patience=5,
+        mode="max",
+        restore_best_weights=True,
         verbose=0 if verbosity < 3 else 1,
     )
     model_checkpoint = ModelCheckpoint(
