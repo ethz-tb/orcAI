@@ -228,6 +228,13 @@ def _predict_wav(
     -------
     predicted_labels : pd.DataFrame
         DataFrame with predicted labels.
+
+    Raises
+    ------
+    ValueError
+        If the frequency dimensions of the spectrogram do not match the input shape.
+    ValueError
+        If the output_path already exists.
     """
     if output_path is not None:
         if output_path == "default":
@@ -238,7 +245,7 @@ def _predict_wav(
         msgr.info(f"Output file: {output_path}")
         if output_path.exists():
             msgr.error(f"Annotation file already exists: {output_path}")
-            sys.exit()  # TODO: replace with return
+            raise ValueError("Annotation file already exists: {output_path}")
 
     # Generating spectrogram
     if progressbar:
@@ -252,7 +259,9 @@ def _predict_wav(
             f"Frequency dimensions of spectrogram shape ({spectrogram.shape[1]}) "
             + f"not equal to frequency dimension of input shape ({shape['input_shape'][1]})"
         )
-        sys.exit()  # TODO: replace with return
+        raise ValueError(
+            f"Spectrogram shape for {recording_path.stem} not equal to input shape"
+        )
 
     # Prediction
     msgr.part(f"Prediction of annotations for wav_file: {recording_path.stem}")
