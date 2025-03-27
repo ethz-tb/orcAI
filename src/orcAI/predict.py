@@ -244,8 +244,7 @@ def _predict_wav(
             output_path = Path(output_path)
         msgr.info(f"Output file: {output_path}")
         if output_path.exists():
-            msgr.error(f"Annotation file already exists: {output_path}")
-            raise ValueError("Annotation file already exists: {output_path}")
+            raise ValueError(f"Annotation file already exists: {output_path}")
 
     # Generating spectrogram
     if progressbar:
@@ -255,12 +254,8 @@ def _predict_wav(
         recording_path, channel, orcai_parameter, msgr=msgr
     )
     if spectrogram.shape[1] != shape["input_shape"][1]:
-        msgr.error(
-            f"Frequency dimensions of spectrogram shape ({spectrogram.shape[1]}) "
-            + f"not equal to frequency dimension of input shape ({shape['input_shape'][1]})"
-        )
         raise ValueError(
-            f"Spectrogram shape for {recording_path.stem} not equal to input shape"
+            f"Spectrogram shape ({spectrogram.shape[1]}) for {recording_path.stem} not equal to input shape ({shape['input_shape'][1]})"
         )
 
     # Prediction
@@ -485,7 +480,8 @@ def predict(
                 progressbar=progressbar,
             )
         except Exception as e:
-            msgr.error(f"Error predicting {recording_table.loc[i, 'recording']}")
-            msgr.error(f"{e.__class__.__name__}: {e}")
+            msgr.error(
+                f"Error predicting {recording_table.loc[i, 'recording']}: {e.args[0]}"
+            )
     msgr.success("Predictions finished.")
     return
