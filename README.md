@@ -46,8 +46,10 @@ The command line interface is available through the `orcai` and subcommands. The
   - `create-snippet-table` - Creates snippet tables.
   - `create-tvt-snippet-tables` - Creates TVT snippet tables.
   - `create-tvt-data` - Creates TVT datasets.
-  - `train` -Trains a model.
-Helpers
+  - `hpsearch` - Hyperparameter search.
+  - `train` - Trains a model.
+  - `test` - Tests a model.
+- Helpers
   - `init` - Initializes a new orcAI project.
   - `orcai create-recording-table` - Create a recording table from a directory of recordings
 
