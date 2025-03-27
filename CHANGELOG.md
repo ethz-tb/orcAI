@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+- **Breaking** unify seed generation (will break reproducibility). The seeds
+  used take care of the random number generation for sampling and shuffling.
+  However, there are certain non-deterministic behaviours in python and the CUDA runtime
+  anyway so reproducibility is not guaranteed in any case.
+
 ## [0.9.1] - 2025-03-27
 
 ### Changes
@@ -180,4 +187,5 @@ _First prerelease._
 [0.8.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.8.0
 [0.8.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.8.1
 [0.9.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.9.0
-
+[0.9.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.9.0
+[Unreleased]:https://gitlab.ethz.ch/tb/orcai/-/tree/dev
