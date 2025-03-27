@@ -2,10 +2,16 @@
 
 ## [Unreleased]
 
+### Changes
+
 - **Breaking** unify seed generation (will break reproducibility). The seeds
   used take care of the random number generation for sampling and shuffling.
   However, there are certain non-deterministic behaviours in python and the CUDA runtime
   anyway so reproducibility is not guaranteed in any case.
+
+### Added
+
+- add LICENCE file (in addition to specifying it in pyproject.toml)
 
 ## [0.9.1] - 2025-03-27
 
