@@ -93,6 +93,7 @@ def train(
         model_parameter["batch_size"],
         model_parameter["n_batch_train"],
         orcai_parameter["seed"] + 1,
+        # magic 1 to make this seed unique to this function
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset.tfrecord.gz"),
@@ -100,6 +101,7 @@ def train(
         model_parameter["batch_size"],
         model_parameter["n_batch_val"],
         orcai_parameter["seed"] + 2,
+        # magic 2 to make this seed unique to this function
     )
 
     msgr.info(f"Batch size {model_parameter['batch_size']}")

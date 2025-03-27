@@ -383,7 +383,8 @@ def test_model(
         data_dir.joinpath("test_dataset.tfrecord.gz"),
         dataset_shape,
         model_parameter["batch_size"],
-        orcai_parameter["seed"] + 3,
+        orcai_parameter["seed"]
+        + 3,  # magic 3 to make this seed unique to this function
     )
     results_test_dataset = _test_model_on_dataset(
         model,
