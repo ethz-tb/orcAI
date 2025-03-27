@@ -196,6 +196,39 @@ def _predict_wav(
     msgr: Messenger = Messenger(verbosity=0),
     progressbar: tqdm = None,
 ):
+    """
+    Predicts calls in a single wav file.
+
+    Parameters
+    ----------
+    recording_path : Path | str
+        Path to the wav file.
+    channel : int
+        Channel of the wav file.
+    model : keras.Model
+        Model for prediction.
+    orcai_parameter : dict
+        orcAI parameter dictionary.
+    shape : dict
+        Model shape dictionary.
+    output_path : (Path | str) | "default"
+        Path to the output file or "default" to save in the same directory as the wav file.
+    save_prediction_probabilities : bool
+        Save prediction probabilities to output_path
+    call_duration_limits : (Path | str) | dict | None
+        Path to a JSON file containing a dictionary with call duration limits for filtering. None for no filtering.
+    label_suffix : str
+        Suffix to add to the predicted calls.
+    msgr : Messenger
+        Messenger object for logging.
+    progressbar : tqdm
+        Progressbar object.
+
+    Returns
+    -------
+    predicted_labels : pd.DataFrame
+        DataFrame with predicted labels.
+    """
     if output_path is not None:
         if output_path == "default":
             filename = f"{recording_path.stem}_c{channel}_{orcai_parameter['name']}_predicted.txt"
