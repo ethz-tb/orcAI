@@ -92,7 +92,8 @@ def cli():
     "--model",
     "-m",
     type=click.Choice(INCLUDED_MODELS, case_sensitive=False),
-    default=INCLUDED_MODELS[0],
+    default="orcai-v1",
+    show_default=True,
     help="Builtin model to use for prediction. Overriden if model_dir is given.",
 )
 @click.option(
