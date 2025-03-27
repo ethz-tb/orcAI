@@ -1,11 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## [0.9.0] - 2025-03-27
 
 ### Changes
 
-- move hp_search to seperate module
+- **Breaking** move hp_search to seperate module
+- fix predict function stopping if a single prediction fails
 - fix saving project name in `init` command
+
+### Added
+
+- docstrings for predict functions
 - add type hints to save functions
 
 ## [0.8.1] - 2025-03-25
@@ -167,4 +172,5 @@ _First prerelease._
 [0.7.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.7.0
 [0.8.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.8.0
 [0.8.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.8.1
+[0.9.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.9.0
 
