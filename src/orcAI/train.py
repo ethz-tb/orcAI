@@ -213,7 +213,5 @@ def train(
     }
     write_json(model_shape, output_dir.joinpath(model_name, "model_shape.json"))
 
-    msgr.success(
-        f"OrcAI - training model finished. Model saved to {model_name + '.keras'}"
-    )
+    msgr.success(f"Training model finished. Model saved to {model_name + '.keras'}")
     return
