@@ -210,8 +210,7 @@ def hyperparameter_search(
         validation_data=val_dataset,
         epochs=5,
         callbacks=[early_stopping, model_checkpoint],
-        verbose=verbosity,
+        verbose=0 if verbosity < 3 else 1,
     )
-
     msgr.success("Hyperparameter search completed")
     return
