@@ -13,6 +13,8 @@ from orcAI.auxiliary import (
     Messenger,
     seconds_to_hms,
     resolve_recording_data_dir,
+    SEED_ID_MAKE_SNIPPET_TABLE,
+    SEED_ID_FILTER_SNIPPET_TABLE,
 )
 from orcAI.io import DataLoader, serialize_example, read_json, write_json
 
@@ -244,8 +246,8 @@ def create_snippet_table(
     failed_result = []
     msgr.part("Making snippet tables")
     rng = np.random.default_rng(
-        seed=[1, orcai_parameter["seed"]]
-    )  # magic 1 to make this seed unique to this function
+        seed=[SEED_ID_MAKE_SNIPPET_TABLE, orcai_parameter["seed"]]
+    )
     for i in tqdm(
         recording_table.index,
         desc="Making snippet tables",
@@ -430,8 +432,8 @@ def create_tvt_snippet_tables(
     )
 
     rng = np.random.default_rng(
-        seed=[2, orcai_parameter["seed"]]
-    )  # magic 2 to make this seed unique to this function
+        seed=[SEED_ID_FILTER_SNIPPET_TABLE, orcai_parameter["seed"]]
+    )
     snippet_table_filtered = _filter_snippet_table(
         snippet_table,
         orcai_parameter=orcai_parameter,

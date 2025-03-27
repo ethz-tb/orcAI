@@ -9,7 +9,11 @@ from keras.saving import load_model
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
-from orcAI.auxiliary import Messenger
+from orcAI.auxiliary import (
+    Messenger,
+    SEED_ID_LOAD_TEST_DATA,
+    SEED_ID_UNFILTERED_TEST_DATA,
+)
 
 from orcAI.architectures import (
     build_model,
@@ -383,8 +387,10 @@ def test_model(
         data_dir.joinpath("test_dataset.tfrecord.gz"),
         dataset_shape,
         model_parameter["batch_size"],
-        orcai_parameter["seed"]
-        + 3,  # magic 3 to make this seed unique to this function
+        [
+            SEED_ID_LOAD_TEST_DATA,
+            orcai_parameter["seed"],
+        ],
     )
     results_test_dataset = _test_model_on_dataset(
         model,
@@ -403,8 +409,8 @@ def test_model(
         all_test_snippets = all_snippets[all_snippets["data_type"] == "test"]
         test_data_sample_size = n_batches_additional * model_parameter["batch_size"]
         rng = np.random.default_rng(
-            seed=[3, orcai_parameter["seed"]]
-        )  # magic 3 to make this seed unique to this function
+            seed=[SEED_ID_UNFILTERED_TEST_DATA, orcai_parameter["seed"]]
+        )
         if len(all_test_snippets) < test_data_sample_size:
             msgr.warning(
                 f"Test data sample size ({test_data_sample_size}) is larger than the number of test snippets ({len(all_test_snippets)})."

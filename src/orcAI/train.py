@@ -10,7 +10,7 @@ from tqdm.keras import TqdmCallback
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 # import local
-from orcAI.auxiliary import Messenger
+from orcAI.auxiliary import Messenger, SEED_ID_LOAD_TRAIN_DATA, SEED_ID_LOAD_VAL_DATA
 from orcAI.architectures import (
     build_model,
     masked_binary_accuracy,
@@ -92,16 +92,14 @@ def train(
         dataset_shape,
         model_parameter["batch_size"],
         model_parameter["n_batch_train"],
-        orcai_parameter["seed"] + 1,
-        # magic 1 to make this seed unique to this function
+        [SEED_ID_LOAD_TRAIN_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset.tfrecord.gz"),
         dataset_shape,
         model_parameter["batch_size"],
         model_parameter["n_batch_val"],
-        orcai_parameter["seed"] + 2,
-        # magic 2 to make this seed unique to this function
+        [SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
 
     msgr.info(f"Batch size {model_parameter['batch_size']}")

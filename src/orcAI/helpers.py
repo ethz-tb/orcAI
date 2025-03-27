@@ -55,7 +55,7 @@ def init_project(
         )
     )
     msgr.info(f"Setting seed")
-    orcai_parameter_new["seed"] = SeedSequence().entropy
+    orcai_parameter_new["seed"] = SeedSequence().generate_state(1)[0]
     orcai_parameter_new["name"] = project_name
     write_json(
         orcai_parameter_new,

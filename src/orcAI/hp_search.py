@@ -10,7 +10,7 @@ import keras_tuner as kt
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 # import local
-from orcAI.auxiliary import Messenger
+from orcAI.auxiliary import Messenger, SEED_ID_LOAD_TEST_DATA, SEED_ID_LOAD_VAL_DATA
 from orcAI.architectures import (
     build_model,
     masked_binary_accuracy,
@@ -146,14 +146,14 @@ def hyperparameter_search(
         dataset_shape,
         orcai_parameter["model"]["batch_size"],
         orcai_parameter["model"]["n_batch_train"],
-        orcai_parameter["seed"] + 1,
+        [SEED_ID_LOAD_TEST_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset.tfrecord.gz"),
         dataset_shape,
         orcai_parameter["model"]["batch_size"],
         orcai_parameter["model"]["n_batch_val"],
-        orcai_parameter["seed"] + 2,
+        [SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
     msgr.info(f"Batch size {orcai_parameter['model']['batch_size']}")
 

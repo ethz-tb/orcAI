@@ -2,6 +2,7 @@ from pathlib import Path
 import zarr
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 import json
 import time
 
@@ -175,11 +176,11 @@ def load_dataset(
     dataset_shape: dict["spectrogram" : tuple[int, int, int], "labels":[int, int]],
     batch_size: int,
     n_batches: int = None,
-    seed: int = None,
+    seed: int | list[int] = None,
 ):
     dataset = (
         _load_dataset(file_path, dataset_shape)
-        .shuffle(buffer_size=1000, seed=seed)
+        .shuffle(buffer_size=1000, seed=np.random.SeedSequence(seed).generate_state(1))
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )

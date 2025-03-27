@@ -8,6 +8,13 @@ import click
 from humanize import naturalsize
 from datetime import timedelta
 
+SEED_ID_MAKE_SNIPPET_TABLE = 1
+SEED_ID_FILTER_SNIPPET_TABLE = 2
+SEED_ID_LOAD_TRAIN_DATA = 3
+SEED_ID_LOAD_VAL_DATA = 4
+SEED_ID_LOAD_TEST_DATA = 5
+SEED_ID_UNFILTERED_TEST_DATA = 6
+
 
 class JsonEncoderExt(json.JSONEncoder):
     def default(self, obj):
