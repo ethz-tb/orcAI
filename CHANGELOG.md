@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1] - 2025-03-27
+
+### Changes
+
+- fix default for predict
+- update readme
+
 ## [0.9.0] - 2025-03-27
 
 ### Changes
