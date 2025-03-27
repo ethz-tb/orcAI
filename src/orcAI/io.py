@@ -233,3 +233,16 @@ def save_as_zarr(obj, filename, msgr=Messenger(verbosity=2)):
     save_time = time.time()
     msgr.info(f"Time for for saving to disk: {save_time - start_time:.2f} seconds")
     return
+
+
+def read_annotation_file(annotation_file_path):
+    """read annotation file and return with recording as additional column"""
+    annotation_file = pd.read_csv(
+        annotation_file_path,
+        sep="\t",
+        encoding="utf-8",
+        header=None,
+        names=["start", "stop", "origlabel"],
+    )
+    annotation_file["recording"] = Path(annotation_file_path).stem
+    return annotation_file[["recording", "start", "stop", "origlabel"]]

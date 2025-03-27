@@ -11,20 +11,8 @@ from orcAI.io import (
     write_json,
     save_as_zarr,
     generate_times_from_spectrogram,
+    read_annotation_file,
 )
-
-
-def read_annotation_file(annotation_file_path):
-    """read annotation file and return with recording as additional column"""
-    annotation_file = pd.read_csv(
-        annotation_file_path,
-        sep="\t",
-        encoding="utf-8",
-        header=None,
-        names=["start", "stop", "origlabel"],
-    )
-    annotation_file["recording"] = Path(annotation_file_path).stem
-    return annotation_file[["recording", "start", "stop", "origlabel"]]
 
 
 def _convert_annotation(
