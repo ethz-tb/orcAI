@@ -468,20 +468,24 @@ def predict(
     msgr.part(f"Predicting annotations for {len(recording_table)} wav files")
     progressbar = tqdm(recording_table.index, desc="Starting ...", unit="file")
     for i in progressbar:
-        _predict_wav(
-            recording_path=Path(recording_table.loc[i, "base_dir_recording"]).joinpath(
-                recording_table.loc[i, "rel_recording_path"]
-            ),
-            channel=recording_table.loc[i, "channel"],
-            model=model,
-            orcai_parameter=orcai_parameter,
-            shape=shape,
-            output_path=recording_table.loc[i, "output_path"],
-            save_prediction_probabilities=save_prediction_probabilities,
-            call_duration_limits=call_duration_limits,
-            label_suffix=label_suffix,
-            msgr=Messenger(verbosity=0),
-            progressbar=progressbar,
-        )
+        try:
+            _predict_wav(
+                recording_path=Path(
+                    recording_table.loc[i, "base_dir_recording"]
+                ).joinpath(recording_table.loc[i, "rel_recording_path"]),
+                channel=recording_table.loc[i, "channel"],
+                model=model,
+                orcai_parameter=orcai_parameter,
+                shape=shape,
+                output_path=recording_table.loc[i, "output_path"],
+                save_prediction_probabilities=save_prediction_probabilities,
+                call_duration_limits=call_duration_limits,
+                label_suffix=label_suffix,
+                msgr=Messenger(verbosity=0),
+                progressbar=progressbar,
+            )
+        except Exception as e:
+            msgr.error(f"Error predicting {recording_table.loc[i, 'recording']}")
+            msgr.error(f"{e.__class__.__name__}: {e}")
     msgr.success("Predictions finished.")
     return
