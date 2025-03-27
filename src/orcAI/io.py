@@ -180,7 +180,10 @@ def load_dataset(
 ):
     dataset = (
         _load_dataset(file_path, dataset_shape)
-        .shuffle(buffer_size=1000, seed=np.random.SeedSequence(seed).generate_state(1))
+        .shuffle(
+            buffer_size=1000,
+            seed=int(np.random.SeedSequence(seed).generate_state(1)[0]),
+        )
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
