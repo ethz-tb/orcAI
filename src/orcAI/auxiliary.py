@@ -18,6 +18,8 @@ SEED_ID_UNFILTERED_TEST_DATA = 10
 
 
 class JsonEncoderExt(json.JSONEncoder):
+    """Custom JSON encoder to handle additional data types."""
+
     def default(self, obj):
         if isinstance(obj, Path):
             return str(obj)
@@ -29,21 +31,30 @@ class Messenger:
 
     def __init__(
         self,
-        title=None,
-        n_indent=0,
-        verbosity=2,
-        indent_str="    ",
-        show_part_times=True,
-        file=None,
+        title: str = None,
+        n_indent: int = 0,
+        verbosity: int = 2,
+        indent_str: str = "    ",
+        show_part_times: bool = True,
+        file: Path = None,
     ):
         """
         Initialize the Messenger object with the specified verbosity level and indentation.
 
-        Parameter:
-        n_indent (int): The initial indentation level.
-        verbosity (int): The verbosity level.
-        file (file): The file to write the messages to.
-        indent_str (str): The string to use for indentation.
+        Parameter
+        ---------
+        title: str
+            The title to print at the start.
+        n_indent: int
+            The initial indentation level.
+        verbosity: int
+            The verbosity level (0: error, 1: warning, 2: info, 3:Debug).
+        indent_str: str
+            The string to use for indentation.
+        show_part_times: bool
+            Whether to show the time taken for each part.
+        file: Path
+            The file to write the messages to (default: None, which means stdout).
         """
         self.n_indent = n_indent
         self.verbosity = verbosity
@@ -56,17 +67,29 @@ class Messenger:
             self.start(title, severity=2)
 
     def print(
-        self, message, indent=0, set_indent=None, prepend="", severity=2, **kwargs
+        self,
+        message: str,
+        indent: int = 0,
+        set_indent: int | None = None,
+        prepend: str = "",
+        severity: int = 2,
+        **kwargs,
     ):
         """
         Print a message with the specified indentation level and verbosity.
 
-        Parameters:
-        message (str | dict | list): The message (or dict or list) to print.
-        indent (int): The number of additional indent levels after this message.
-        set_indent (int): The absolute indent level for this message.
-        prepend (str): A string to prepend to the message.
-        severity (int): The severity level of the message (0: error, 1: warning, 2: info, ...).
+        Parameter
+        ---------
+        message: str | dict | list
+            The message (or dict or list) to print.
+        indent: int
+            The number of additional indent levels after this message.
+        set_indent: int
+            The absolute indent level for this message.
+        prepend: str
+            A string to prepend to the message.
+        severity: int
+            The severity level of the message (0: error, 1: warning, 2: info, ...).
         **kwargs: Additional keyword arguments for click.style.
         """
         if self.verbosity < severity:
@@ -90,11 +113,11 @@ class Messenger:
         self.n_indent = self.n_indent + indent
 
     def debug(self, message, indent=0, set_indent=None, severity=3, **kwargs):
-        """Print a message."""
+        """Print a debug message."""
         self.print(message, indent, set_indent, severity=severity, **kwargs)
 
     def info(self, message, indent=0, set_indent=None, severity=2, **kwargs):
-        """Print a message."""
+        """Print a info message."""
         self.print(message, indent, set_indent, severity=severity, **kwargs)
 
     def start(self, message, indent=0, set_indent=0, severity=2, **kwargs):
@@ -204,7 +227,9 @@ class Messenger:
             **kwargs,
         )
 
-    def print_file_size(self, file, indent=0, set_indent=None, severity=2, **kwargs):
+    def print_file_size(
+        self, file: Path, indent=0, set_indent=None, severity=2, **kwargs
+    ):
         """print size of dataset"""
         if self.verbosity < severity:
             return
@@ -220,7 +245,7 @@ class Messenger:
         )
 
     def print_directory_size(
-        self, directory, indent=0, set_indent=None, severity=2, **kwargs
+        self, directory: Path, indent=0, set_indent=None, severity=2, **kwargs
     ):
         """print size of directory"""
 
@@ -238,12 +263,12 @@ class Messenger:
             **kwargs,
         )
 
-    def list_to_str(self, list):
+    def list_to_str(self, list: list) -> str:
         """Convert a list to a formatted string with indentation."""
         list_string = "\n".join(self.indent_str * self.n_indent + line for line in list)
         return list_string
 
-    def dict_to_str(self, dictionary):
+    def dict_to_str(self, dictionary: dict) -> str:
         """Convert a dictionary or list to a formatted string with indentation."""
         json_string = json.dumps(dictionary, indent=4, cls=JsonEncoderExt)
         indented_json = "\n".join(
@@ -251,7 +276,7 @@ class Messenger:
         )
         return indented_json
 
-    def pd_to_str(self, obj):
+    def pd_to_str(self, obj: pd.DataFrame) -> str:
         """Convert a DataFrame to a formatted string with indentation."""
         obj_string = obj.to_string()
         indented_obj = "\n".join(
@@ -260,7 +285,9 @@ class Messenger:
         return indented_obj
 
 
-def resolve_recording_data_dir(recording, recording_data_dir):
+def resolve_recording_data_dir(
+    recording: str, recording_data_dir: Path | str
+) -> Path | None:
     if Path(recording_data_dir, recording).exists():
         return Path(recording_data_dir, recording)
     else:
@@ -268,19 +295,28 @@ def resolve_recording_data_dir(recording, recording_data_dir):
 
 
 def filter_filepaths(
-    filepaths: list[Path], exclude_pattern: list[str], msgr=Messenger(verbosity=2)
-):
+    filepaths: list[Path],
+    exclude_pattern: list[str],
+    msgr: Messenger = Messenger(verbosity=2),
+) -> list[Path]:
     """Remove file paths that contain any of the specified patterns.
 
-    Args:
-        filepaths (list[Path]): A list of Path objects representing the file paths to be filtered.
-        exclude_pattern (list[str]): A list of strings, where each string is a pattern to be excluded from the file paths.
-        msgr (Messenger, optional): An instance of the Messenger class used for logging messages with different verbosity levels. Defaults to Messenger(verbosity=2).
+    Parameter
+    ---------
+    filepaths: list[Path]
+        A list of Path objects representing the file paths to be filtered.
+    exclude_pattern: list[str]
+        A list of strings, where each string is a pattern to be excluded from the file paths.
+    msgr: Messenger
+        An instance of the Messenger class used for logging messages with different verbosity levels. Defaults to Messenger(verbosity=2).
 
-    Returns:
+    Returns
+    -------
         list[Path]: A list of Path objects representing the filtered file paths.
 
-    Example:
+    Example
+    -------
+        from pathlib import Path
         filepaths = [Path("/path/to/file1.txt"), Path("/path/to/file2.log"), Path("/path/to/file3.txt")]
         exclude_pattern = [".log"]
         filtered_filepaths = filter_filepaths(filepaths, exclude_pattern)
@@ -294,21 +330,25 @@ def filter_filepaths(
     return filepaths
 
 
-def seconds_to_hms(seconds):
+def seconds_to_hms(seconds: int) -> str:
+    """convert seconds to h:m:s format"""
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
-def find_consecutive_ones(binary_vector):
+def find_consecutive_ones(binary_vector: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Finds the start and end indices of consecutive sequences of ones in a binary vector.
 
-    Args:
-        binary_vector (np.ndarray): A binary vector (1D array of 0s and 1s).
+    Parameter
+    ---------
+    binary_vector: np.ndarray
+        A binary vector (1D array of 0s and 1s).
+    Returns
+    -------
+        tuple[np.ndarray, np.ndarray]: (start, end) indices for each sequence of ones.
 
-    Returns:
-        List[Tuple[int, int]]: A list of (start, end) indices for each sequence of ones.
     """
     # Find where the binary vector changes
     diff = np.diff(binary_vector, prepend=0, append=0)
@@ -317,5 +357,4 @@ def find_consecutive_ones(binary_vector):
     starts = np.where(diff == 1)[0]
     stops = np.where(diff == -1)[0] - 1  # Adjust to include the last 1
 
-    # Combine starts and ends into a list of tuples
     return starts, stops
