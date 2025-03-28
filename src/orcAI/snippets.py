@@ -15,6 +15,7 @@ from orcAI.auxiliary import (
     resolve_recording_data_dir,
     SEED_ID_MAKE_SNIPPET_TABLE,
     SEED_ID_FILTER_SNIPPET_TABLE,
+    SEED_ID_CREATE_DATALOADER,
 )
 from orcAI.io import DataLoader, serialize_example, read_json, write_json
 
@@ -535,7 +536,14 @@ def create_tvt_data(
     csv_paths = {itype: Path(tvt_dir, f"{itype}.csv.gz") for itype in data_types}
 
     loader = {
-        key: DataLoader.from_csv(path, len(orcai_parameter["model"]["filters"]))
+        key: DataLoader.from_csv(
+            path,
+            len(orcai_parameter["model"]["filters"]),
+            shuffle=True,
+            rng=np.random.default_rng(
+                seed=[SEED_ID_CREATE_DATALOADER.get(key, 0), orcai_parameter["seed"]]
+            ),
+        )
         for key, path in csv_paths.items()
     }
 

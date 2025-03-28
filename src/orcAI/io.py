@@ -16,7 +16,9 @@ class DataLoader:
     Data loader for extracting snippets from multiple Zarr files with reshaped labels and normalized spectrograms.
     """
 
-    def __init__(self, snippet_table, n_filters):
+    def __init__(
+        self, snippet_table, n_filters, shuffle=True, rng=np.random.default_rng()
+    ):
         """
         Args:
             snippet_table (pd.DataFrame): DataFrame with columns ['recording_data_dir', 'row_start', 'row_stop'].
@@ -25,6 +27,8 @@ class DataLoader:
         """
         self.snippet_table = snippet_table
         self.n_filters = n_filters
+        self.shuffle = shuffle
+        self.rng = rng
 
         # Preload Zarr files and JSON label names
         self.zarr_files = [
@@ -34,15 +38,18 @@ class DataLoader:
         # Prepare indices
         self.indices = snippet_table.index
 
+        if shuffle:
+            self.rng.shuffle(self.indices)
+
     @classmethod
-    def from_csv(cls, path, n_filters):
+    def from_csv(cls, path, n_filters, shuffle=True, rng=np.random.default_rng()):
         """
         Create a DataLoader from a snippet table saved at CSV file.
         """
         import pandas as pd
 
         snippet_table = pd.read_csv(path)
-        return cls(snippet_table, n_filters)
+        return cls(snippet_table, n_filters, shuffle, rng)
 
     def __len__(self):
         """
