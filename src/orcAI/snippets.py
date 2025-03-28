@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 from importlib.resources import files
 import pandas as pd
@@ -221,7 +220,7 @@ def create_snippet_table(
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
-
+    recording_data_dir = Path(recording_data_dir)
     recording_table = pd.read_csv(recording_table_path)
     # remove recordings without annotation
     not_annotated = recording_table["base_dir_annotation"].isna()
@@ -287,17 +286,17 @@ def create_snippet_table(
     msgr.part("Saving snippet table...")
 
     failed_table.to_csv(
-        Path(recording_data_dir).joinpath("failed_snippets.csv"),
+        recording_data_dir.joinpath("failed_snippets.csv"),
         index=False,
     )
 
     snippet_table.to_csv(
-        Path(recording_data_dir).joinpath("all_snippets.csv.gz"),
+        recording_data_dir.joinpath("all_snippets.csv.gz"),
         compression="gzip",
         index=False,
     )
     msgr.success(
-        f"Snippet table saved to {Path(recording_data_dir).joinpath('all_snippets.csv.gz')}"
+        f"Snippet table saved to {recording_data_dir.joinpath('all_snippets.csv.gz')}"
     )
 
     return
