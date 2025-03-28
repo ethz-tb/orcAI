@@ -13,13 +13,10 @@ from orcAI.auxiliary import (
     Messenger,
     SEED_ID_LOAD_TEST_DATA,
     SEED_ID_UNFILTERED_TEST_DATA,
+    SEED_ID_CREATE_DATALOADER,
 )
 
-from orcAI.architectures import (
-    build_model,
-    masked_binary_accuracy,
-    masked_binary_crossentropy,
-)
+
 from orcAI.io import DataLoader, load_dataset, read_json
 
 
@@ -425,6 +422,13 @@ def test_model(
         sampled_test_snippets_loader = DataLoader(
             sampled_test_snippets,
             n_filters=len(model_parameter["filters"]),
+            shuffle=True,
+            rng=np.random.default_rng(
+                seed=[
+                    SEED_ID_CREATE_DATALOADER["unfiltered_test"],
+                    orcai_parameter["seed"],
+                ],
+            ),
         )
         test_sampled_dataset = tf.data.Dataset.from_generator(
             sampled_test_snippets_loader.__iter__,
