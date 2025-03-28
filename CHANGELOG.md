@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.10.0] - 2025-03-28
 
 ### Changes
 
@@ -197,4 +197,4 @@ _First prerelease._
 [0.8.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.8.1
 [0.9.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.9.0
 [0.9.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.9.0
-[Unreleased]:https://gitlab.ethz.ch/tb/orcai/-/tree/dev
+[0.10.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.10.0
