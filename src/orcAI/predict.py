@@ -78,7 +78,7 @@ def filter_predictions(
     label_suffix: str = "*",
     verbosity: int = 2,
     msgr: Messenger | None = None,
-):
+) -> pd.DataFrame:
     """
     Filter predictions based on duration.
 
@@ -102,6 +102,12 @@ def filter_predictions(
     predicted_labels_duration_ok : pd.DataFrame
         DataFrame with predicted labels after filtering based
         on duration.
+
+    Raises
+    ------
+    ValueError
+        If the output file already exists.
+
     """
 
     if msgr is None:
@@ -111,18 +117,16 @@ def filter_predictions(
     if output_file is not None:
         if output_file == "default":
             if not isinstance(predicted_labels, (Path | str)):
-                msgr.error(
+                raise ValueError(
                     "Output file 'default' only allowed if predicted_labels is a file path"
                 )
-                sys.exit()
             filename = Path(predicted_labels).stem + "_filtered.txt"
             output_file = Path(predicted_labels).with_name(filename)
         else:
             output_file = Path(output_file)
         msgr.info(f"Output file: {output_file}")
         if output_file.exists():
-            msgr.error(f"Annotation file already exists: {output_file}")
-            sys.exit()
+            raise ValueError(f"Annotation file already exists: {output_file}")
 
     if isinstance(predicted_labels, (Path | str)):
         predicted_labels = pd.read_csv(predicted_labels, sep="\t", encoding="utf-8")
@@ -175,11 +179,10 @@ def filter_predictions(
         predicted_labels_duration_ok[["start", "stop", "label"]].to_csv(
             output_file, sep="\t", index=False
         )
-        msgr.success(
-            f"Filtering predictions finished.\nFiltered predictions saved to {output_file}"
-        )
-    else:
-        msgr.success(f"Filtering predictions finished.")
+        msgr.info(f"Filtered predictions saved to {output_file}")
+
+    msgr.success(f"Filtering predictions finished.")
+
     return predicted_labels_duration_ok
 
 
@@ -379,17 +382,47 @@ def _predict_wav(
 
 
 def predict(
-    recording_path,
-    channel=1,
-    model_dir=files("orcAI.models").joinpath("orcai-v1"),
-    output_path="default",
-    save_prediction_probabilities=False,
-    base_dir_recording=None,
-    call_duration_limits=None,
-    label_suffix="*",
-    verbosity=2,
-    msgr=None,
-):
+    recording_path: str | Path,
+    channel: int = 1,
+    model_dir: str | Path = files("orcAI.models").joinpath("orcai-v1"),
+    output_path: str | Path = "default",
+    save_prediction_probabilities: bool = False,
+    base_dir_recording: str | Path | None = None,
+    call_duration_limits: str | Path | None = None,
+    label_suffix: str = "*",
+    verbosity: int = 2,
+    msgr: Messenger | None = None,
+) -> None:
+    """
+    Predicts calls in a wav file or a list of wav files.
+    Parameters
+    ----------
+    recording_path : str | Path
+        Path to the wav file or a CSV file of the recording table.
+    channel : int
+        Channel of the wav file if single wav file. If a csv is given,
+        this is the default channel used.
+    model_dir : str | Path
+        Path to the directory containing the model.
+    output_path : str | Path
+        Path to the output file or "default" to save in the same directory as the wav file.
+    save_prediction_probabilities : bool
+        Save prediction probabilities to output_path
+    base_dir_recording : str | Path | None
+        Base directory for the recordings. If not given, the base directory is taken from the recording table.
+    call_duration_limits : str | Path | None
+        Path to a JSON file containing a dictionary with call duration limits for filtering. None for no filtering.
+    label_suffix : str
+        Suffix to add to the predicted calls.
+    verbosity : int
+        Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+    msgr : Messenger
+        Messenger object for logging. If None a new Messenger object is created.
+    Returns
+    -------
+    None
+        Saves the predicted labels to a file.
+    """
     if msgr is None:
         msgr = Messenger(
             verbosity=verbosity,

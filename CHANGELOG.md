@@ -10,6 +10,7 @@
   anyway so reproducibility is not guaranteed in any case.
 - Shuffle indices in DataLoader. Originally removed because dataset is shuffled anyway after loading.
 - fix data loading in test
+- more docstrings and type hints
 
 ### Added
 
