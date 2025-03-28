@@ -17,32 +17,51 @@ class DataLoader:
     """
 
     def __init__(
-        self, snippet_table, n_filters, shuffle=True, rng=np.random.default_rng()
+        self,
+        snippet_table: pd.DataFrame,
+        n_filters: int,
+        shuffle: bool = True,
+        rng: np.random.Generator = np.random.default_rng(),
     ):
         """
-        Args:
-            snippet_table (pd.DataFrame): DataFrame with columns ['recording_data_dir', 'row_start', 'row_stop'].
-            n_filters (int): Number of filters for reshaping labels.
-            shuffle (bool): Whether to shuffle the data at the end of each epoch.
+        Parameters:
+        -----------
+        snippet_table: pd.DataFrame
+            DataFrame with columns ['recording_data_dir', 'row_start', 'row_stop'].
+        n_filters: int
+            Number of filters for reshaping labels.
+        shuffle: bool
+            Whether to shuffle data after loading.
+        rng: np.random.Generator
+            Random number generator for shuffling.
         """
-        self.snippet_table = snippet_table
+
+        if shuffle:
+            self.snippet_table = snippet_table.sample(
+                frac=1, axis="index", random_state=rng
+            ).reset_index(drop=True)
+        else:
+            self.snippet_table = snippet_table
+
+        self.indices = snippet_table.index
         self.n_filters = n_filters
         self.shuffle = shuffle
         self.rng = rng
 
         # Preload Zarr files and JSON label names
         self.zarr_files = [
-            self._load_zarr_files(path) for path in snippet_table.recording_data_dir
+            self._load_zarr_files(path)
+            for path in self.snippet_table.recording_data_dir
         ]
 
-        # Prepare indices
-        self.indices = snippet_table.index
-
-        if shuffle:
-            self.rng.shuffle(self.indices)
-
     @classmethod
-    def from_csv(cls, path, n_filters, shuffle=True, rng=np.random.default_rng()):
+    def from_csv(
+        cls,
+        path: Path | str,
+        n_filters: int,
+        shuffle: bool = True,
+        rng: np.random.Generator = np.random.default_rng(),
+    ):
         """
         Create a DataLoader from a snippet table saved at CSV file.
         """
@@ -64,12 +83,13 @@ class DataLoader:
         for i in self.indices:
             yield self[i]
 
-    def _load_zarr_files(self, path):
+    def _load_zarr_files(self, path: Path | str):
         """
         Load Zarr files from the provided path.
         """
-        spectrogram_zarr_path = Path(path).joinpath("spectrogram", "spectrogram.zarr")
-        labels_zarr_path = Path(path).joinpath("labels", "labels.zarr")
+        path = Path(path)
+        spectrogram_zarr_path = path.joinpath("spectrogram", "spectrogram.zarr")
+        labels_zarr_path = path.joinpath("labels", "labels.zarr")
 
         # zarr open doesn't work with try/except blocks
         if labels_zarr_path.exists():
@@ -111,7 +131,7 @@ class DataLoader:
                 "The number of rows in 'arr' must be divisible by 2**'n_filters'."
             )
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         """
         Retrieve a single batch, aggregating data from multiple Zarr files if needed.
         """
