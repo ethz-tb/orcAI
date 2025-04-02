@@ -17,7 +17,7 @@ from orcAI.auxiliary import (
 )
 
 
-from orcAI.io import DataLoader, load_dataset, read_json
+from orcAI.io import DataLoader, load_dataset, read_json, load_orcai_model
 
 
 def _stack_batch(batch):
@@ -246,7 +246,6 @@ def _test_model_on_dataset(
         dataset,
         disable=True if msgr.verbosity < 2 else None,
         desc="predicting data",
-        total=dataset_length,
     ):
         data_true.append(label_batch.numpy())
         data_predicted.append(model.predict(spectrogram_batch, verbose=0))
@@ -357,26 +356,16 @@ def test_model(
     else:
         output_dir = Path(output_dir)
 
-    msgr.part("Loading parameter and data")
+    msgr.part("Loading model")
     msgr.info(f"Model directory: {model_dir}")
     msgr.info(f"Model data directory: {data_dir}")
+    model, orcai_parameter, _ = load_orcai_model(model_dir, msgr=msgr)
 
-    orcai_parameter = read_json(Path(model_dir).joinpath("orcai_parameter.json"))
     model_parameter = orcai_parameter["model"]
     msgr.debug("Model parameter")
     msgr.debug(model_parameter)
 
     trained_calls = orcai_parameter["calls"]
-
-    # LOAD MODEL #TODO: load from .keras file?
-    msgr.part("Loading model")
-
-    model = load_model(
-        model_dir.joinpath(orcai_parameter["name"] + ".keras"),
-        custom_objects=None,
-        compile=True,
-        safe_mode=True,
-    )
 
     msgr.part("Testing model on test data")
     dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
@@ -392,11 +381,11 @@ def test_model(
     )
     results_test_dataset = _test_model_on_dataset(
         model,
-        test_dataset,
-        trained_calls,
-        "test_data",
-        model_parameter["n_batch_test"],
-        msgr,
+        dataset=test_dataset,
+        label_names=trained_calls,
+        dataset_name="test_data",
+        dataset_length=model_parameter["n_batch_test"],
+        msgr=msgr,
     )
     _save_test_results(results_test_dataset, output_dir, msgr)
     msgr.info(f"Saved test results to {output_dir}")

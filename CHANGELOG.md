@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changes
+
+- move loading model to fn in orcAI.io
+
 ## [0.10.0] - 2025-03-28
 
 ### Changes

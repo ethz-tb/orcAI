@@ -197,7 +197,6 @@ def _load_dataset(
     return dataset
 
 
-# reload tf dataset
 def load_dataset(
     file_path: str,
     dataset_shape: dict["spectrogram" : tuple[int, int, int], "labels":[int, int]],
@@ -278,3 +277,46 @@ def read_annotation_file(annotation_file_path):
     )
     annotation_file["recording"] = Path(annotation_file_path).stem
     return annotation_file[["recording", "start", "stop", "origlabel"]]
+
+
+def load_orcai_model(
+    model_dir: Path, msgr: Messenger = Messenger(verbosity=2)
+) -> tuple[tf.keras.Model, dict, dict]:
+    from orcAI.architectures import (
+        res_net_LSTM_arch,
+        masked_binary_accuracy,
+        masked_binary_crossentropy,
+    )
+    from keras.saving import load_model
+    from keras.metrics import MeanMetricWrapper
+
+    orcai_parameter = read_json(model_dir.joinpath("orcai_parameter.json"))
+    shape = read_json(model_dir.joinpath("model_shape.json"))
+
+    if model_dir.joinpath(orcai_parameter["name"] + ".keras").exists():
+
+        model = load_model(
+            model_dir.joinpath(orcai_parameter["name"] + ".keras"),
+            custom_objects=None,
+            compile=True,
+            safe_mode=True,
+        )
+    elif model_dir.joinpath("model_weights.h5").exists():
+        # legacy model
+        model = res_net_LSTM_arch(**shape, **orcai_parameter["model"])
+        model.load_weights(model_dir.joinpath("model_weights.h5"))
+        masked_binary_accuracy_metric = MeanMetricWrapper(
+            fn=masked_binary_accuracy,
+            name="masked_binary_accuracy",
+        )
+        model.compile(
+            optimizer="adam",
+            loss=masked_binary_crossentropy,
+            metrics=[masked_binary_accuracy_metric],
+        )
+    else:
+        ValueError(
+            f"Couldn't find model weights (model_weights.h5) or keras model file in {model_dir}"
+        )
+
+    return model, orcai_parameter, shape

@@ -6,16 +6,10 @@ from importlib.resources import files
 import time
 import keras
 from tqdm import tqdm
-from keras.saving import load_model
 
 from orcAI.auxiliary import Messenger, find_consecutive_ones
-from orcAI.architectures import (
-    res_net_LSTM_arch,
-    masked_binary_accuracy,
-    masked_binary_crossentropy,
-)
 from orcAI.spectrogram import make_spectrogram
-from orcAI.io import read_json
+from orcAI.io import read_json, load_orcai_model
 
 
 def _check_duration(
@@ -433,32 +427,7 @@ def predict(
     recording_path = Path(recording_path)
     msgr.part(f"Loading model: {model_dir.stem}")
 
-    orcai_parameter = read_json(model_dir.joinpath("orcai_parameter.json"))
-    shape = read_json(model_dir.joinpath("model_shape.json"))
-
-    if model_dir.joinpath(orcai_parameter["name"] + ".keras").exists():
-        model = load_model(
-            model_dir.joinpath(orcai_parameter["name"] + ".keras"),
-            custom_objects=None,
-            compile=True,
-            safe_mode=True,
-        )
-    elif model_dir.joinpath("model_weights.h5").exists():
-        # legacy model
-        model = res_net_LSTM_arch(**shape, **orcai_parameter["model"])
-        model.load_weights(model_dir.joinpath("model_weights.h5"))
-        masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
-            fn=masked_binary_accuracy,
-            name="masked_binary_accuracy",
-        )
-        model.compile(
-            optimizer="adam",
-            loss=masked_binary_crossentropy,
-            metrics=[masked_binary_accuracy_metric],
-        )
-    else:
-        msgr.error("Couldn't find model weights or keras model file in {model_dir}")
-        sys.exit()
+    model, orcai_parameter, shape = load_orcai_model(model_dir, msgr=msgr)
 
     if recording_path.suffix == ".wav":
         return _predict_wav(
