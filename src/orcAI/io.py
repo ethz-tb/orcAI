@@ -215,6 +215,7 @@ def load_dataset(
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
     if n_batches is not None:
+        dataset = dataset.take(n_batches)
         dataset = dataset.apply(tf.data.experimental.assert_cardinality(n_batches))
     return dataset
 
