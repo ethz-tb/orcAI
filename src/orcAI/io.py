@@ -294,7 +294,6 @@ def load_orcai_model(
     shape = read_json(model_dir.joinpath("model_shape.json"))
 
     if model_dir.joinpath(orcai_parameter["name"] + ".keras").exists():
-
         model = load_model(
             model_dir.joinpath(orcai_parameter["name"] + ".keras"),
             custom_objects=None,
