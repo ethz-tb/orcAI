@@ -443,11 +443,11 @@ def create_tvt_snippet_tables(
 
     snippets = []
     for i, itype in enumerate(["train", "val", "test"]):
-        n_snippets = (
-            orcai_parameter["model"][f"n_batch_{itype}"] + 1
-        ) * orcai_parameter["model"]["batch_size"]
+        n_snippets = (orcai_parameter["model"][f"n_batch_{itype}"]) * orcai_parameter[
+            "model"
+        ]["batch_size"]
         msgr.info(
-            f"Extracting {orcai_parameter['model'][f'n_batch_{itype}']}+1 batches of {orcai_parameter['model']['batch_size']} random {itype} snippets ({n_snippets} snippets)"
+            f"Extracting {orcai_parameter['model'][f'n_batch_{itype}']} batches of {orcai_parameter['model']['batch_size']} random {itype} snippets ({n_snippets} snippets)"
         )
         snippet_table_i = snippet_table_filtered[
             snippet_table_filtered["data_type"] == itype
