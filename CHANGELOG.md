@@ -1,10 +1,13 @@
 # Changelog
 
-## [Unreleased]
+## [0.11.0] - 2025-04-03
 
 ### Changes
 
+- **Breaking** save dataset using tf.data.Dataset.save instead of TFRecordWriter
 - move loading model to fn in orcAI.io
+- move saving model to fn in orcAI.io
+
 
 ## [0.10.0] - 2025-03-28
 
@@ -204,3 +207,4 @@ _First prerelease._
 [0.9.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.9.0
 [0.9.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.9.0
 [0.10.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.10.0
+[0.11.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.0
