@@ -90,12 +90,14 @@ def train(
     train_dataset = load_dataset(
         data_dir.joinpath("train_dataset"),
         model_parameter["batch_size"],
-        [SEED_ID_LOAD_TRAIN_DATA, orcai_parameter["seed"]],
+        compression="GZIP",
+        seed=[SEED_ID_LOAD_TRAIN_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset"),
         model_parameter["batch_size"],
-        [SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
+        compression="GZIP",
+        seed=[SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
 
     msgr.info(f"Batch size {model_parameter['batch_size']}")

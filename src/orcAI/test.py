@@ -371,7 +371,8 @@ def test_model(
     test_dataset = load_dataset(
         data_dir.joinpath("test_dataset"),
         model_parameter["batch_size"],
-        [
+        compression="GZIP",
+        seed=[
             SEED_ID_LOAD_TEST_DATA,
             orcai_parameter["seed"],
         ],

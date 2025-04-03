@@ -144,12 +144,14 @@ def hyperparameter_search(
     train_dataset = load_dataset(
         data_dir.joinpath("train_dataset"),
         orcai_parameter["model"]["batch_size"],
-        [SEED_ID_LOAD_TEST_DATA, orcai_parameter["seed"]],
+        compression="GZIP",
+        seed=[SEED_ID_LOAD_TEST_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset"),
         orcai_parameter["model"]["batch_size"],
-        [SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
+        compression="GZIP",
+        seed=[SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
     msgr.info(f"Batch size {orcai_parameter['model']['batch_size']}")
 
