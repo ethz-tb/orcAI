@@ -1,10 +1,8 @@
 from pathlib import Path
 from importlib.resources import files
-from functools import partial
 import numpy as np
 import tensorflow as tf
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-import keras_tuner as kt
 from tqdm.keras import TqdmCallback
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
