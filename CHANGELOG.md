@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.11.1] - 2025-04-03
+
+### Added
+
+- report system information in train
+
 ## [0.11.0] - 2025-04-03
 
 ### Changes
@@ -208,3 +214,4 @@ _First prerelease._
 [0.9.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.9.0
 [0.10.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.10.0
 [0.11.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.0
+[0.11.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.1
