@@ -525,9 +525,7 @@ def create_tvt_data(
 
     data_types = ["train", "val", "test"]
 
-    dataset_paths = {
-        itype: Path(tvt_dir, f"{itype}_dataset.tfrecord.gz") for itype in data_types
-    }
+    dataset_paths = {itype: Path(tvt_dir, f"{itype}_dataset") for itype in data_types}
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
@@ -574,7 +572,7 @@ def create_tvt_data(
 
     for itype in data_types:
         try:
-            save_dataset(dataset[itype])
+            save_dataset(dataset[itype], path=dataset_paths[itype], overwrite=overwrite)
         except FileExistsError as e:
             msgr.warning(
                 f"File {dataset_paths[itype]} already exists. Skipping. Set overwrite=True to overwrite."
