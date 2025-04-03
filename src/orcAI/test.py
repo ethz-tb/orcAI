@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -5,7 +6,6 @@ from tqdm import tqdm
 import json
 from sklearn.metrics import confusion_matrix
 import tensorflow as tf
-from keras.saving import load_model
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -15,7 +15,6 @@ from orcAI.auxiliary import (
     SEED_ID_UNFILTERED_TEST_DATA,
     SEED_ID_CREATE_DATALOADER,
 )
-
 
 from orcAI.io import DataLoader, load_dataset, read_json, load_orcai_model
 
@@ -223,7 +222,6 @@ def _test_model_on_dataset(
     dataset: tf.data.Dataset,
     label_names: list[str],
     dataset_name: str,
-    dataset_length: int,
     msgr: Messenger,
 ):
     """Test a model on a dataset."""
@@ -290,7 +288,7 @@ def _save_test_results(
     """Save test results to disk."""
     msgr.part(f"Saving test results")
     dataset_name = results["dataset"]
-
+    os.makedirs(save_results_dir, exist_ok=True)
     metrics = {
         key: value
         for key, value in results.items()
@@ -318,6 +316,7 @@ def test_model(
     recording_data_dir: Path | str | None = None,
     n_batches_additional: int = 3200,
     output_dir: None | Path | str = None,
+    legacy_data: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -368,23 +367,21 @@ def test_model(
     trained_calls = orcai_parameter["calls"]
 
     msgr.part("Testing model on test data")
-    dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
+
     test_dataset = load_dataset(
-        data_dir.joinpath("test_dataset.tfrecord.gz"),
-        dataset_shape,
+        data_dir.joinpath("test_dataset"),
         model_parameter["batch_size"],
-        model_parameter["n_batch_test"],
         [
             SEED_ID_LOAD_TEST_DATA,
             orcai_parameter["seed"],
         ],
     )
+
     results_test_dataset = _test_model_on_dataset(
         model,
         dataset=test_dataset,
         label_names=trained_calls,
         dataset_name="test_data",
-        dataset_length=model_parameter["n_batch_test"],
         msgr=msgr,
     )
     _save_test_results(results_test_dataset, output_dir, msgr)
@@ -446,7 +443,6 @@ def test_model(
             test_sampled_dataset,
             trained_calls,
             "test_sampled_data",
-            total_batches,
             msgr,
         )
         _save_test_results(results_test_dataset, output_dir, msgr)

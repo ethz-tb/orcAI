@@ -88,17 +88,13 @@ def train(
     tf.config.set_soft_device_placement(True)
     dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     train_dataset = load_dataset(
-        data_dir.joinpath("train_dataset.tfrecord.gz"),
-        dataset_shape,
+        data_dir.joinpath("train_dataset"),
         model_parameter["batch_size"],
-        model_parameter["n_batch_train"],
         [SEED_ID_LOAD_TRAIN_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
-        data_dir.joinpath("val_dataset.tfrecord.gz"),
-        dataset_shape,
+        data_dir.joinpath("val_dataset"),
         model_parameter["batch_size"],
-        model_parameter["n_batch_val"],
         [SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
 

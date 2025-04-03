@@ -153,59 +153,13 @@ class DataLoader:
         return (spectrogram_chunk, label_chunk)
 
 
-def serialize_example(spectrogram, labels):
-    feature_dict = {
-        "spectrogram": tf.train.Feature(
-            float_list=tf.train.FloatList(value=spectrogram.numpy().flatten())
-        ),
-        "labels": tf.train.Feature(
-            float_list=tf.train.FloatList(value=labels.numpy().flatten())
-        ),
-    }
-    example_proto = tf.train.Example(features=tf.train.Features(feature=feature_dict))
-    return example_proto.SerializeToString()
-
-
-def parse_example(
-    proto,
-    dataset_shape: dict["spectrogram" : tuple[int, int, int], "labels":[int, int]],
-):
-    feature_description = {
-        "spectrogram": tf.io.FixedLenFeature(
-            np.prod(dataset_shape["spectrogram"]), tf.float32
-        ),
-        "labels": tf.io.FixedLenFeature(np.prod(dataset_shape["labels"]), tf.float32),
-    }
-    example = tf.io.parse_single_example(proto, feature_description)
-
-    spectrogram = tf.reshape(example["spectrogram"], dataset_shape["spectrogram"])
-    labels = tf.reshape(example["labels"], dataset_shape["labels"])
-
-    return spectrogram, labels
-
-
-def _load_dataset(
-    file_path: str,
-    dataset_shape: dict["spectrogram" : tuple[int, int, int], "labels":[int, int]],
-):
-    """
-    Load a dataset from a TFRecord file. (seperate function mainly for testing)
-    """
-    dataset = tf.data.TFRecordDataset(
-        str(file_path), num_parallel_reads=8, compression_type="GZIP"
-    ).map(lambda proto: parse_example(proto, dataset_shape))
-    return dataset
-
-
 def load_dataset(
-    file_path: str,
-    dataset_shape: dict["spectrogram" : tuple[int, int, int], "labels":[int, int]],
+    path: Path | str,
     batch_size: int,
-    n_batches: int = None,
     seed: int | list[int] = None,
 ):
     dataset = (
-        _load_dataset(file_path, dataset_shape)
+        tf.data.Dataset.load(str(path))
         .shuffle(
             buffer_size=1000,
             seed=int(np.random.SeedSequence(seed).generate_state(1)[0]),
@@ -213,10 +167,23 @@ def load_dataset(
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
-    if n_batches is not None:
-        dataset = dataset.take(n_batches)
-        dataset = dataset.apply(tf.data.experimental.assert_cardinality(n_batches))
+
     return dataset
+
+
+def save_dataset(
+    dataset: tf.data.Dataset,
+    path: Path | str,
+    overwrite: bool = False,
+    compression="GZIP",
+) -> None:
+    """
+    Save a dataset
+    """
+    if path.exists() and not overwrite:
+        raise FileExistsError(f"File {path} already exists.")
+    dataset.save(str(path), compression=compression)
+    return
 
 
 def write_vector_to_json(vector, filename):

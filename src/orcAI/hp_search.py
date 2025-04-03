@@ -142,17 +142,13 @@ def hyperparameter_search(
     msgr.part(f"Loading training and validation datasets from {data_dir}")
     dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     train_dataset = load_dataset(
-        data_dir.joinpath("train_dataset.tfrecord.gz"),
-        dataset_shape,
+        data_dir.joinpath("train_dataset"),
         orcai_parameter["model"]["batch_size"],
-        orcai_parameter["model"]["n_batch_train"],
         [SEED_ID_LOAD_TEST_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
-        data_dir.joinpath("val_dataset.tfrecord.gz"),
-        dataset_shape,
+        data_dir.joinpath("val_dataset"),
         orcai_parameter["model"]["batch_size"],
-        orcai_parameter["model"]["n_batch_val"],
         [SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
     msgr.info(f"Batch size {orcai_parameter['model']['batch_size']}")

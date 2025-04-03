@@ -16,7 +16,7 @@ from orcAI.auxiliary import (
     SEED_ID_FILTER_SNIPPET_TABLE,
     SEED_ID_CREATE_DATALOADER,
 )
-from orcAI.io import DataLoader, serialize_example, read_json, write_json
+from orcAI.io import DataLoader, read_json, write_json, save_dataset
 
 
 def _make_snippet_table(
@@ -572,21 +572,13 @@ def create_tvt_data(
 
     msgr.part("Saving datasets to disk")
 
-    tfr_options = tf.io.TFRecordOptions(compression_type="GZIP")
     for itype in data_types:
-        if dataset_paths[itype].exists() and overwrite is False:
-            msgr.warning(f"Dataset {itype} already exists. Skipping.")
-        else:
-            with tf.io.TFRecordWriter(
-                str(dataset_paths[itype]), options=tfr_options
-            ) as writer:
-                for x, y in tqdm(
-                    dataset[itype],
-                    desc=f"Saving {itype} dataset",
-                    total=len(loader[itype]),
-                    unit="sample",
-                ):
-                    writer.write(serialize_example(x, y))
+        try:
+            save_dataset(dataset[itype])
+        except FileExistsError as e:
+            msgr.warning(
+                f"File {dataset_paths[itype]} already exists. Skipping. Set overwrite=True to overwrite."
+            )
         msgr.print_file_size(dataset_paths[itype])
 
     write_json(
