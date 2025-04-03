@@ -156,10 +156,11 @@ class DataLoader:
 def load_dataset(
     path: Path | str,
     batch_size: int,
+    compression: str = "GZIP",
     seed: int | list[int] = None,
 ):
     dataset = (
-        tf.data.Dataset.load(str(path))
+        tf.data.Dataset.load(str(path), compression=compression)
         .shuffle(
             buffer_size=1000,
             seed=int(np.random.SeedSequence(seed).generate_state(1)[0]),
@@ -175,7 +176,7 @@ def save_dataset(
     dataset: tf.data.Dataset,
     path: Path | str,
     overwrite: bool = False,
-    compression="GZIP",
+    compression: str = "GZIP",
 ) -> None:
     """
     Save a dataset
