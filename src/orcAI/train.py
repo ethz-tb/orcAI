@@ -62,6 +62,8 @@ def train(
             verbosity=verbosity,
             title="Training model",
         )
+    msgr.print_platform_info(set_indent=1)
+    msgr.print_tf_device_info(set_indent=1)
 
     msgr.part("Loading parameter")
 
@@ -164,7 +166,6 @@ def train(
 
     # Train model
     msgr.part(f"Fitting model: {model_name}")
-    msgr.print_tf_devices()
 
     with tf.device("/GPU:0"):
         history = model.fit(

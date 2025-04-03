@@ -190,7 +190,32 @@ class Messenger:
             **kwargs,
         )
 
-    def print_tf_devices(self, indent=0, set_indent=None, severity=2, **kwargs):
+    def print_platform_info(self, severity=2, **kwargs):
+        if self.verbosity < severity:
+            return
+        import tensorflow as tf
+        import platform
+        import sys
+        import keras
+
+        self.info(f"Platform: {platform.platform()}", severity=severity, **kwargs)
+        self.info(f"Python version: {sys.version}", severity=severity, **kwargs)
+        self.info(f"Tensorflow version: {tf.__version__}", severity=severity, **kwargs)
+        self.info(f"Keras version: {keras.__version__}", severity=severity, **kwargs)
+        sys_details = tf.sysconfig.get_build_info()
+        if sys_details["is_cuda_build"]:
+            self.info(
+                f"CUDA version: {sys_details['cuda_version']}",
+                severity=severity,
+                **kwargs,
+            )
+            self.info(
+                f"cuDNN version: {sys_details['cudnn_version']}",
+                severity=severity,
+                **kwargs,
+            )
+
+    def print_tf_device_info(self, indent=0, set_indent=None, severity=2, **kwargs):
         """print tensorflow devices"""
         if self.verbosity < severity:
             return
@@ -200,10 +225,18 @@ class Messenger:
             40
         )  # suppress tensorflow logging (ERROR and worse only)
 
-        physical_devices = tf.config.list_physical_devices()
+        physical_devices = tf.config.list_physical_devices("GPU")
+        devices_info = [
+            tf.config.experimental.get_device_details(i) for i in physical_devices
+        ]
+
         devices_string = ", ".join(
-            [i.name.replace("physical_device:", "") for i in physical_devices]
+            [
+                f"{dev.name.replace('physical_device:', '')}: {info['device_name']}"
+                for dev, info in zip(physical_devices, devices_info)
+            ]
         )
+
         self.info(
             f"Available TensorFlow devices: {devices_string}",
             indent=indent,
