@@ -10,6 +10,8 @@ tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse onl
 
 from orcAI.auxiliary import Messenger
 
+SHUFFLE_BUFFER_SIZE = 1000
+
 
 class DataLoader:
     """
@@ -162,7 +164,7 @@ def load_dataset(
     dataset = (
         tf.data.Dataset.load(str(path), compression=compression)
         .shuffle(
-            buffer_size=1000,
+            buffer_size=SHUFFLE_BUFFER_SIZE,
             seed=int(np.random.SeedSequence(seed).generate_state(1)[0]),
         )
         .batch(batch_size, drop_remainder=True)
