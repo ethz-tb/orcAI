@@ -577,7 +577,7 @@ def create_tvt_data(
             msgr.warning(
                 f"File {dataset_paths[itype]} already exists. Skipping. Set overwrite=True to overwrite."
             )
-        msgr.print_file_size(dataset_paths[itype])
+        msgr.print_directory_size(dataset_paths[itype])
 
     write_json(
         {
