@@ -316,7 +316,6 @@ def test_model(
     recording_data_dir: Path | str | None = None,
     n_batches_additional: int = 3200,
     output_dir: None | Path | str = None,
-    legacy_data: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
