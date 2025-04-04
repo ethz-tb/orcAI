@@ -189,7 +189,6 @@ def train(
             verbose=0,
         )
 
-    msgr.info(f"training history: {history.history}")
     msgr.part("Saving Model")
 
     with open(output_dir.joinpath(model_name, "training_history.json"), "w") as f:
@@ -199,7 +198,6 @@ def train(
         orcai_parameter,
         output_dir.joinpath(model_name).joinpath(f"orcai_parameter.json"),
     )
-    model.save_weights(weights_path)
     model.save(
         output_dir.joinpath(model_name, model_name + ".keras"),
         include_optimizer=True,
