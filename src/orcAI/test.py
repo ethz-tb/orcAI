@@ -332,7 +332,7 @@ def test_model(
     test_data_sample_size : int
         Number of test snippets to sample from the complete test data for testing. Default is 100000.
     output_dir : None | Path | str
-        Directory to save the test results. Default is saving to model_dir.
+        Directory to save the test results. Default is saving to `model_dir`/test.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     msgr : Messenger
@@ -350,7 +350,7 @@ def test_model(
     data_dir = Path(data_dir)
     model_dir = Path(model_dir)
     if output_dir is None:
-        output_dir = model_dir
+        output_dir = model_dir.joinpath("test")
     else:
         output_dir = Path(output_dir)
 
