@@ -1,5 +1,11 @@
 # Changelog
 
+## [dev] - unrealeased
+
+### Changes
+
+- save test results to subdir by default
+
 ## [0.11.1] - 2025-04-03
 
 ### Added
@@ -215,3 +221,4 @@ _First prerelease._
 [0.10.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.10.0
 [0.11.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.0
 [0.11.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.1
+[dev]:https://gitlab.ethz.ch/tb/orcai/-/tree/dev?ref_type=heads
