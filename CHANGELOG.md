@@ -1,10 +1,12 @@
 # Changelog
 
-## [dev] - unrealeased
+## [0.12.0] - 2025-04-07
 
 ### Changes
 
+- add option for dataset compression to create_tvt_data, train, test and hp_search
 - save test results to subdir by default
+- improve saved tables in test
 
 ## [0.11.1] - 2025-04-03
 
@@ -221,4 +223,3 @@ _First prerelease._
 [0.10.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.10.0
 [0.11.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.0
 [0.11.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.1
-[dev]:https://gitlab.ethz.ch/tb/orcai/-/tree/dev?ref_type=heads
