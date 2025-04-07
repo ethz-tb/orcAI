@@ -35,7 +35,6 @@ def res_net_1Dconv_arch(
     **unused :
         Additional keyword arguments, unused
 
-
     Returns
     -------
     tf.keras.Model
