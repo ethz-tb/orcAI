@@ -534,6 +534,14 @@ def cli_create_tvt_snippet_tables(**kwargs):
     help="Recreate existing data.",
 )
 @click.option(
+    "--data_compression",
+    "-dc",
+    type=click.Choice(["GZIP", "NONE"], case_sensitive=False),
+    default="GZIP",
+    show_default=True,
+    help="Data compression for datasets",
+)
+@click.option(
     "--verbosity",
     "-v",
     type=click.IntRange(0, 3),
@@ -556,7 +564,7 @@ def cli_create_tvt_data(**kwargs):
     help="Trains a model on the training dataset in DATA_DIR and saves it to OUTPUT_DIR.",
     short_help="Trains a model.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitl. ab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
 )
 @click.argument("data_dir", type=ClickDirPathR)
 @click.argument("output_dir", type=ClickDirPathW)
@@ -567,6 +575,14 @@ def cli_create_tvt_data(**kwargs):
     default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
     help="Path to the OrcAI parameter file.",
+)
+@click.option(
+    "--data_compression",
+    "-dc",
+    type=click.Choice(["GZIP", "NONE"], case_sensitive=False),
+    default="GZIP",
+    show_default=True,
+    help="Data compression of saved datasets",
 )
 @click.option(
     "--load_weights",
@@ -626,6 +642,14 @@ def cli_train(**kwargs):
     help="Number of additional batches of unfiltered samples to use for testing. Only valid if recording_data_dir is given.",
 )
 @click.option(
+    "--data_compression",
+    "-dc",
+    type=click.Choice(["GZIP", "NONE"], case_sensitive=False),
+    default="GZIP",
+    show_default=True,
+    help="Data compression of saved datasets",
+)
+@click.option(
     "--verbosity",
     "-v",
     type=click.IntRange(0, 3),
@@ -673,6 +697,14 @@ def cli_test(**kwargs):
     "-pl",
     is_flag=True,
     help="Run hyperparameter search on multiple GPUs in parallel.",
+)
+@click.option(
+    "--data_compression",
+    "-dc",
+    type=click.Choice(["GZIP", "NONE"], case_sensitive=False),
+    default="GZIP",
+    show_default=True,
+    help="Data compression of saved datasets",
 )
 @click.option(
     "--verbosity",

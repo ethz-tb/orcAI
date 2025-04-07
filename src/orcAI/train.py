@@ -38,6 +38,7 @@ def train(
     orcai_parameter: (Path | str) | dict = files("orcAI.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
+    data_compression: str = "GZIP",
     load_weights: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -52,6 +53,8 @@ def train(
         Path to the output directory.
     orcai_parameter : (Path | str) | dict
         Path to a JSON file containing orcai parameter or a dictionary with orcai parameter.
+    data_compression: str
+        Compression of data files. Accepts "GZIP" or "NONE".
     load_weights : bool
         Load weights from previous training.
     verbosity : int
@@ -90,13 +93,13 @@ def train(
     train_dataset = load_dataset(
         data_dir.joinpath("train_dataset"),
         model_parameter["batch_size"],
-        compression="GZIP",
+        compression=data_compression,
         seed=[SEED_ID_LOAD_TRAIN_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset"),
         model_parameter["batch_size"],
-        compression="GZIP",
+        compression=data_compression,
         seed=[SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
 

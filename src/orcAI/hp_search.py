@@ -96,6 +96,7 @@ def hyperparameter_search(
         "default_hps_parameter.json"
     ),
     parallel: bool = False,
+    data_compression: str = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -112,6 +113,8 @@ def hyperparameter_search(
         Path to the hyperparameter search parameter file
     parallel : bool
         Run hyperparameter search on multiple GPUs
+    data_compression: str
+        Compression of data files. Accepts "GZIP" or "NONE".
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     msgr : Messenger
@@ -144,13 +147,13 @@ def hyperparameter_search(
     train_dataset = load_dataset(
         data_dir.joinpath("train_dataset"),
         orcai_parameter["model"]["batch_size"],
-        compression="GZIP",
+        compression=data_compression,
         seed=[SEED_ID_LOAD_TEST_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset"),
         orcai_parameter["model"]["batch_size"],
-        compression="GZIP",
+        compression=data_compression,
         seed=[SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
     msgr.info(f"Batch size {orcai_parameter['model']['batch_size']}")
