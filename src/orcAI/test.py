@@ -6,6 +6,7 @@ from tqdm import tqdm
 import json
 from sklearn.metrics import confusion_matrix
 import tensorflow as tf
+import keras
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -16,7 +17,7 @@ from orcAI.auxiliary import (
     SEED_ID_CREATE_DATALOADER,
 )
 
-from orcAI.io import DataLoader, load_dataset, read_json, load_orcai_model
+from orcAI.io import DataLoader, load_dataset, load_orcai_model
 
 
 def _stack_batch(batch):
@@ -218,7 +219,7 @@ def compute_confusion_table(
 
 
 def _test_model_on_dataset(
-    model: tf.keras.Model,
+    model: keras.Model,
     dataset: tf.data.Dataset,
     label_names: list[str],
     dataset_name: str,
@@ -362,7 +363,7 @@ def test_model(
     msgr.part("Loading model")
     msgr.info(f"Model directory: {model_dir}")
     msgr.info(f"Model data directory: {data_dir}")
-    model, orcai_parameter, _ = load_orcai_model(model_dir, msgr=msgr)
+    model, orcai_parameter, _ = load_orcai_model(model_dir)
 
     model_parameter = orcai_parameter["model"]
     msgr.debug("Model parameter")

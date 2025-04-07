@@ -3,6 +3,7 @@ from importlib.resources import files
 from functools import partial
 
 import tensorflow as tf
+import keras
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import keras_tuner as kt
 
@@ -25,7 +26,7 @@ def _hp_model_builder(
     orcai_parameter: dict,
     hps_parameter: dict,
     msgr: Messenger = Messenger(verbosity=0),
-) -> tf.keras.Model:
+) -> keras.Model:
     """Build a model for hyperparameter search
     Parameters
     ----------
@@ -44,7 +45,7 @@ def _hp_model_builder(
 
     Returns
     -------
-    tf.keras.Model
+    keras.Model
         Model for hyperparameter search
     """
     hp_filters = hp.Choice("filters", values=list(hps_parameter["filters"].keys()))
@@ -73,13 +74,13 @@ def _hp_model_builder(
 
     model = build_model(input_shape, orcai_parameter, msgr=msgr)
 
-    masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
+    masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
         fn=masked_binary_accuracy,
         name="masked_binary_accuracy",
     )
 
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+        optimizer=keras.optimizers.Adam(learning_rate=0.001),
         loss=masked_binary_crossentropy,
         metrics=[masked_binary_accuracy_metric],
     )

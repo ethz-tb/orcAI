@@ -427,7 +427,7 @@ def predict(
     recording_path = Path(recording_path)
     msgr.part(f"Loading model: {model_dir.stem}")
 
-    model, orcai_parameter, shape = load_orcai_model(model_dir, msgr=msgr)
+    model, orcai_parameter, shape = load_orcai_model(model_dir)
 
     if recording_path.suffix == ".wav":
         return _predict_wav(

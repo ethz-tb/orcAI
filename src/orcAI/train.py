@@ -124,7 +124,7 @@ def train(
         msgr.info("Learning weights from scratch")
 
     # Metrics
-    masked_binary_accuracy_metric = tf.keras.metrics.MeanMetricWrapper(
+    masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
         fn=masked_binary_accuracy,
         name="masked_binary_accuracy",
     )

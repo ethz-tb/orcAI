@@ -1,4 +1,5 @@
 import tensorflow as tf
+import keras
 from keras import layers
 from keras.saving import register_keras_serializable
 
@@ -15,7 +16,7 @@ def res_net_1Dconv_arch(
     kernel_size: int,
     dropout_rate: float,
     **unused,
-):
+) -> keras.Model:
     """TensorFlow/Keras model architecture for a Convolutional Neural Network
     (CNN) with residual connections (ResNet) followed by a global temporal
     aggregation step using a 1D convolution
@@ -37,11 +38,11 @@ def res_net_1Dconv_arch(
 
     Returns
     -------
-    tf.keras.Model
+    keras.Model
         Model architecture
 
     """
-    inputs = tf.keras.Input(shape=input_shape)
+    inputs = keras.Input(shape=input_shape)
 
     # Entry block
     x = layers.Conv2D(16, kernel_size, padding="same")(inputs)
@@ -77,7 +78,7 @@ def res_net_1Dconv_arch(
         num_labels, kernel_size=k_size, padding="same", activation="sigmoid"
     )(x)
 
-    return tf.keras.Model(inputs, outputs)
+    return keras.Model(inputs, outputs)
 
 
 def res_net_LSTM_arch(
@@ -88,7 +89,7 @@ def res_net_LSTM_arch(
     dropout_rate: float,
     lstm_units: int,
     **unused,
-):
+) -> keras.Model:
     """TensorFlow/Keras model architecture for a Convolutional Neural Network
     (CNN) with residual connections (ResNet) extended with bidirectional
     Long Short-Term Memory (LSTM) layers
@@ -112,11 +113,11 @@ def res_net_LSTM_arch(
 
     Returns
     -------
-    tf.keras.Model
+    keras.Model
         Model architecture
 
     """
-    inputs = tf.keras.Input(shape=input_shape)
+    inputs = keras.Input(shape=input_shape)
 
     # Entry block
     x = layers.Conv2D(16, kernel_size, padding="same")(inputs)
@@ -153,7 +154,7 @@ def res_net_LSTM_arch(
         layers.LSTM(
             lstm_units,
             return_sequences=True,
-            kernel_regularizer=tf.keras.regularizers.l2(0.001),
+            kernel_regularizer=keras.regularizers.l2(0.001),
         )
     )(x)
     x = layers.Dropout(dropout_rate)(x)
@@ -161,20 +162,20 @@ def res_net_LSTM_arch(
         layers.LSTM(
             lstm_units,
             return_sequences=True,
-            kernel_regularizer=tf.keras.regularizers.l2(0.001),
+            kernel_regularizer=keras.regularizers.l2(0.001),
         )
     )(x)
     x = layers.Dropout(dropout_rate)(x)
 
     # Fully connected layers with regularization
     x = layers.Dense(
-        128, activation="relu", kernel_regularizer=tf.keras.regularizers.l2(0.001)
+        128, activation="relu", kernel_regularizer=keras.regularizers.l2(0.001)
     )(x)
     x = layers.BatchNormalization()(x)
     x = layers.Dropout(dropout_rate)(x)
     outputs = layers.Dense(num_labels, activation="sigmoid")(x)
 
-    return tf.keras.Model(inputs, outputs)
+    return keras.Model(inputs, outputs)
 
 
 @register_keras_serializable(name="masked_binary_crossentropy")
@@ -204,7 +205,7 @@ def masked_binary_crossentropy(y_true: any, y_pred: any):
     y_pred_masked = tf.boolean_mask(y_pred, mask)
 
     # Standard binary cross-entropy on the masked values
-    loss = tf.keras.losses.binary_crossentropy(y_true_masked, y_pred_masked)
+    loss = keras.losses.binary_crossentropy(y_true_masked, y_pred_masked)
     return tf.reduce_mean(loss)
 
 
@@ -233,7 +234,7 @@ def masked_binary_accuracy(y_true: any, y_pred: any):
     y_pred_masked = tf.boolean_mask(y_pred, mask)
 
     # Compute binary accuracy on masked values
-    accuracy = tf.keras.metrics.binary_accuracy(y_true_masked, y_pred_masked)
+    accuracy = keras.metrics.binary_accuracy(y_true_masked, y_pred_masked)
     return tf.reduce_mean(accuracy)
 
 
@@ -250,7 +251,7 @@ def build_model(
     input_shape: tuple[int, int, int],
     orcai_parameter: dict,
     msgr: Messenger = Messenger(),
-):
+) -> keras.Model:
     """
 
     Parameters
@@ -265,7 +266,7 @@ def build_model(
 
     Returns
     -------
-        model : tf.keras.Model
+        model : keras.Model
             Model
     """
     num_labels = len(orcai_parameter["calls"])
