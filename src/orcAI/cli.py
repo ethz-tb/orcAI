@@ -536,7 +536,7 @@ def cli_create_tvt_snippet_tables(**kwargs):
 @click.option(
     "--data_compression",
     "-dc",
-    type=click.Choice(["GZIP", "NONE"], case_sensitive=False),
+    type=click.Choice(["GZIP", "None"], case_sensitive=False),
     default="GZIP",
     show_default=True,
     help="Data compression for datasets",
@@ -554,6 +554,9 @@ def cli_create_tvt_data(**kwargs):
         verbosity=kwargs["verbosity"],
         title="Creating train, validation and test datasets",
     )
+    if kwargs["data_compression"] == "None":
+        kwargs["data_compression"] = None
+
     from orcAI.snippets import create_tvt_data
 
     create_tvt_data(**kwargs)
@@ -579,7 +582,7 @@ def cli_create_tvt_data(**kwargs):
 @click.option(
     "--data_compression",
     "-dc",
-    type=click.Choice(["GZIP", "NONE"], case_sensitive=False),
+    type=click.Choice(["GZIP", "None"], case_sensitive=False),
     default="GZIP",
     show_default=True,
     help="Data compression of saved datasets",
@@ -603,6 +606,9 @@ def cli_train(**kwargs):
         verbosity=kwargs["verbosity"],
         title="Training model",
     )
+    if kwargs["data_compression"] == "None":
+        kwargs["data_compression"] = None
+
     from orcAI.train import train
 
     train(**kwargs)
@@ -644,7 +650,7 @@ def cli_train(**kwargs):
 @click.option(
     "--data_compression",
     "-dc",
-    type=click.Choice(["GZIP", "NONE"], case_sensitive=False),
+    type=click.Choice(["GZIP", "None"], case_sensitive=False),
     default="GZIP",
     show_default=True,
     help="Data compression of saved datasets",
@@ -662,6 +668,9 @@ def cli_test(**kwargs):
         verbosity=kwargs["verbosity"],
         title=f"Testing model {kwargs['model_dir'].name}",
     )
+    if kwargs["data_compression"] == "None":
+        kwargs["data_compression"] = None
+
     from orcAI.test import test_model
 
     test_model(**kwargs)
