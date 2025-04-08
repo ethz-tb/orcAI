@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0] - 2025-04-08
+
+### Changes
+
+- update zarr to zarr>=3,<4. Is backwards compatible in terms of loading files
+
+
 ## [0.12.2] - 2025-04-08
 
 ### Changes
@@ -240,3 +247,4 @@ _First prerelease._
 [0.12.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.0
 [0.12.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.1
 [0.12.2]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.2
+[0.13.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.13.0
