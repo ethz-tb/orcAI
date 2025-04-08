@@ -82,14 +82,18 @@ def _make_snippet_table(
             "shorter than segment_duration",
         )
 
-    # zarr open doesn't work with try/except blocks
-    if label_zarr_path.exists() & label_list_path.exists():
+    try:
         label_filepointer = zarr.open(label_zarr_path, mode="r")
-        label_list = read_json(label_list_path)
-        label_names = list(label_list.keys())
-    else:
-        msgr.warning(f"File not found: {label_zarr_path}")
+    except FileNotFoundError as e:
+        msgr.warning(f"Label file not found: {label_zarr_path}")
         return (None, recording_duration, n_segments, recording, "missing label files")
+    try:
+        label_list = read_json(label_list_path)
+    except FileNotFoundError as e:
+        msgr.warning(f"Label file not found: {label_list_path}")
+        return (None, recording_duration, n_segments, recording, "missing label files")
+
+    label_names = list(label_list.keys())
 
     times = np.linspace(
         spectrogram_times["min"],

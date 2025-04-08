@@ -20,10 +20,8 @@ keywords = [
 readme = "README.md"
 requires-python = "~=3.11"
 license = { text = "CC-BY-SA-4.0" }
-# TODO: remove numcodecs from deps once zarr<3 is fixed. or switch to zarr3
 dependencies = [
-    "zarr<3",
-    "numcodecs<0.16", 
+    "zarr>=3,<4",
     "numpy<3",
     "pandas<3",
     "tensorrt; platform_system!='Darwin'",

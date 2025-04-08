@@ -94,17 +94,9 @@ class DataLoader:
         spectrogram_zarr_path = path.joinpath("spectrogram", "spectrogram.zarr")
         labels_zarr_path = path.joinpath("labels", "labels.zarr")
 
-        # zarr open doesn't work with try/except blocks
-        if labels_zarr_path.exists():
-            labels = zarr.open(labels_zarr_path, mode="r")
-        else:
-            raise FileNotFoundError(f"File not found: {labels_zarr_path}")
+        labels = zarr.open(labels_zarr_path, mode="r")
+        spectrogram = zarr.open(spectrogram_zarr_path, mode="r")
 
-        # zarr open doesn't work with try/except blocks
-        if spectrogram_zarr_path.exists():
-            spectrogram = zarr.open(spectrogram_zarr_path, mode="r")
-        else:
-            raise FileNotFoundError(f"File not found: {spectrogram_zarr_path}")
         return spectrogram, labels
 
     def reshape_labels(self, labels):
@@ -220,20 +212,28 @@ def write_json(dictionary, filename):
     return
 
 
-def save_as_zarr(obj, filename, msgr=Messenger(verbosity=2)):
+def save_as_zarr(
+    obj,
+    filename: Path,
+    compressors: dict[str, list] = {
+        "bytes": [{"configuration": {}, "name": "gzip"}],
+        "numeric": [{"configuration": {}, "name": "gzip"}],
+        "string": [{"configuration": {}, "name": "gzip"}],
+    },
+):
     """write object to zarr file"""
-    start_time = time.time()
+
+    zarr.config.set({"array.v3_default_compressors": compressors})
+
     zarr_file = zarr.open(
         filename,
         mode="w",
         shape=obj.shape,
         chunks=(2000, obj.shape[1]),
         dtype="float32",
-        compressor=zarr.Blosc(cname="zlib"),
     )
+
     zarr_file[:] = obj
-    save_time = time.time()
-    msgr.info(f"Time for for saving to disk: {save_time - start_time:.2f} seconds")
     return
 
 
