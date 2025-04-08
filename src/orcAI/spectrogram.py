@@ -257,19 +257,22 @@ def create_spectrograms(
 
     if not include_not_annotated:
         not_annotated = recording_table["base_dir_annotation"].isna()
-        msgr.info(
-            f"Excluded {not_annotated.sum()} recordings because they are not annotated."
-        )
-        recording_table = recording_table[~not_annotated]
+        if len(not_annotated) > 0:
+            msgr.info(
+                f"Excluded {not_annotated.sum()} recordings because they are not annotated."
+            )
+            recording_table = recording_table[~not_annotated]
 
     if not include_no_possible_annotations:
         label_calls = orcai_parameter["calls"]
         is_included = recording_table[label_calls].apply(lambda x: x.any(), axis=1)
-        msgr.info(
-            f"Excluded recordings because they lack any possible annotations:", indent=1
-        )
-        msgr.info(str(recording_table[~is_included]["recording"].values), indent=-1)
-        recording_table = recording_table[is_included]
+        if sum(~is_included) > 0:
+            msgr.info(
+                f"Excluded recordings because they lack any possible annotations:",
+                indent=1,
+            )
+            msgr.info(str(recording_table[~is_included]["recording"].values), indent=-1)
+            recording_table = recording_table[is_included]
 
     if not overwrite:
         existing_spectrograms = recording_table["recording"].apply(
