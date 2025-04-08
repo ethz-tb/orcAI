@@ -97,7 +97,7 @@ def hyperparameter_search(
         "default_hps_parameter.json"
     ),
     parallel: bool = False,
-    data_compression: str = "GZIP",
+    data_compression: str | None = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -114,7 +114,7 @@ def hyperparameter_search(
         Path to the hyperparameter search parameter file
     parallel : bool
         Run hyperparameter search on multiple GPUs
-    data_compression: str
+    data_compression: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug

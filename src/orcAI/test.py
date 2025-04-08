@@ -319,7 +319,7 @@ def test_model(
     recording_data_dir: Path | str | None = None,
     n_batches_additional: int = 3200,
     output_dir: None | Path | str = None,
-    data_compression: str = "GZIP",
+    data_compression: str | None = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -337,7 +337,7 @@ def test_model(
         Number of test snippets to sample from the complete test data for testing. Default is 100000.
     output_dir : None | Path | str
         Directory to save the test results. Default is saving to `model_dir`/test.
-    data_compression: str
+    data_compression: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug

@@ -490,7 +490,7 @@ def create_tvt_data(
         "default_orcai_parameter.json"
     ),
     overwrite: bool = False,
-    data_compression: str = "GZIP",
+    data_compression: str | None = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> dict[str, tf.data.Dataset]:
@@ -504,7 +504,7 @@ def create_tvt_data(
         Dict containing model specifications or path to json containing the same, by default files("orcAI.defaults").joinpath("default_orcai_parameter.json")
     overwrite : bool
         Overwrite existing datasets
-    data_compression: str
+    data_compression: str | None
         Compression for data files. Accepts "GZIP" or "NONE".
     verbosity : int
         Verbosity level [0, 1, 2]

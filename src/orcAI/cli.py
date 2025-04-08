@@ -701,7 +701,7 @@ def cli_test(**kwargs):
 @click.option(
     "--data_compression",
     "-dc",
-    type=click.Choice(["GZIP", "NONE"], case_sensitive=False),
+    type=click.Choice(["GZIP", "None"], case_sensitive=False),
     default="GZIP",
     show_default=True,
     help="Data compression of saved datasets",
@@ -719,6 +719,8 @@ def hpsearch_cli(**kwargs):
         verbosity=kwargs["verbosity"],
         title="Hyperparameter search",
     )
+    if kwargs["data_compression"] == "None":
+        kwargs["data_compression"] = None
     from orcAI.hp_search import hyperparameter_search
 
     hyperparameter_search(**kwargs)

@@ -39,7 +39,7 @@ def train(
     orcai_parameter: (Path | str) | dict = files("orcAI.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
-    data_compression: str = "GZIP",
+    data_compression: str | None = "GZIP",
     load_weights: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -54,7 +54,7 @@ def train(
         Path to the output directory.
     orcai_parameter : (Path | str) | dict
         Path to a JSON file containing orcai parameter or a dictionary with orcai parameter.
-    data_compression: str
+    data_compression: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
     load_weights : bool
         Load weights from previous training.
@@ -92,7 +92,7 @@ def train(
     tf.config.set_soft_device_placement(True)
     if data_dir.joinpath("dataset_shapes.json").exists():
         msgr.info("Loading dataset shapes from JSON file")
-    dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
+        dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
     else:
         msgr.info("Using default OrcAI dataset shapes")
         dataset_shape = {"spectrogram": [736, 171, 1], "labels": [46, 7]}
