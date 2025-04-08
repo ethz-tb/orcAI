@@ -3,6 +3,7 @@ from importlib.resources import files
 import numpy as np
 import tensorflow as tf
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from keras.metrics import MeanMetricWrapper
 from tqdm.keras import TqdmCallback
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
@@ -89,7 +90,13 @@ def train(
     # load data sets from local disk
     msgr.part(f"Loading training and validation datasets from {data_dir}")
     tf.config.set_soft_device_placement(True)
+    if data_dir.joinpath("dataset_shapes.json").exists():
+        msgr.info("Loading dataset shapes from JSON file")
     dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
+    else:
+        msgr.info("Using default OrcAI dataset shapes")
+        dataset_shape = {"spectrogram": [736, 171, 1], "labels": [46, 7]}
+
     train_dataset = load_dataset(
         data_dir.joinpath("train_dataset"),
         model_parameter["batch_size"],
@@ -124,7 +131,7 @@ def train(
         msgr.info("Learning weights from scratch")
 
     # Metrics
-    masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
+    masked_binary_accuracy_metric = MeanMetricWrapper(
         fn=masked_binary_accuracy,
         name="masked_binary_accuracy",
     )
