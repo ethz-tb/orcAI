@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.12.1] - 2025-04-08
+
+### Changes
+
+- fix dataset compression option in cli
+- fallback dataset_shape
+- fix keras imports
+
+
 ## [0.12.0] - 2025-04-07
 
 ### Changes
