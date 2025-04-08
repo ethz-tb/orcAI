@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.2] - 2025-04-08
+
+### Changes
+
+- fix for zarr 2.8.15: fix numcodecs to < 0.16 (until zarr is updated or we switch to zarr 3.0)
+
 ## [0.12.1] - 2025-04-08
 
 ### Changes
@@ -7,7 +13,6 @@
 - fix dataset compression option in cli
 - fallback dataset_shape
 - fix keras imports
-
 
 ## [0.12.0] - 2025-04-07
 
@@ -234,3 +239,4 @@ _First prerelease._
 [0.11.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.1
 [0.12.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.0
 [0.12.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.1
+[0.12.2]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.2
