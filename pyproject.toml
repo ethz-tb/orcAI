@@ -21,19 +21,19 @@ readme = "README.md"
 requires-python = "~=3.11"
 license = { text = "CC-BY-SA-4.0" }
 dependencies = [
-    "zarr>=3,<4",
-    "numpy<3",
-    "pandas<3",
-    "tensorrt; platform_system!='Darwin'",
-    "tensorflow[and-cuda]<3; platform_system!='Darwin'",
-    "tensorflow<3; platform_system=='Darwin'",
-    "tensorflow-metal; platform_system=='Darwin'",
-    "keras_tuner<2",
-    "keras<4",
-    "librosa",
-    "psutil<8",
-    "rich-click<2",
-    "humanize<5",
+    "zarr>=3, <4",
+    "numpy>=2, <3",
+    "pandas>=2, <3",
+    "tensorrt>=10, <11; platform_system!='Darwin'",
+    "tensorflow[and-cuda]>=2, <3; platform_system!='Darwin'",
+    "tensorflow>=2, <3; platform_system=='Darwin'",
+    "tensorflow-metal>=1, <2; platform_system=='Darwin'",
+    "keras_tuner>=1, <2",
+    "keras>=3, <4",
+    "librosa<1",
+    "psutil>=7, <8",
+    "rich-click>=1, <2",
+    "humanize>=4, <5",
     "tqdm>=4.42.0, <5",
 ]
 [project.optional-dependencies]
