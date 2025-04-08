@@ -232,3 +232,5 @@ _First prerelease._
 [0.10.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.10.0
 [0.11.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.0
 [0.11.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.11.1
+[0.12.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.0
+[0.12.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.1
