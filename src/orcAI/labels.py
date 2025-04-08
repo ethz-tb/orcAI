@@ -206,7 +206,6 @@ def create_label_arrays(
             save_as_zarr(
                 annotations_array.to_numpy(),
                 recording_output_dir.joinpath("labels.zarr"),
-                msgr=Messenger(verbosity=0),
             )
             write_json(label_list, recording_output_dir.joinpath("label_list.json"))
 

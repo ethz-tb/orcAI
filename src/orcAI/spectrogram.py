@@ -160,7 +160,7 @@ def save_spectrogram(
 
     msgr.part("Saving spectrogram")
     # Save spectrogram with Zarr
-    save_as_zarr(spectrogram, filename=Path(output_dir, "spectrogram.zarr"), msgr=msgr)
+    save_as_zarr(spectrogram, filename=Path(output_dir, "spectrogram.zarr"))
 
     # save frequency and time vector into json files
     write_vector_to_json(
