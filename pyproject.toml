@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orcAI"
-version = "0.13.0"
+dynamic = ["version"]
 authors = [
     { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
     { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
@@ -36,6 +36,9 @@ dependencies = [
     "humanize>=4, <5",
     "tqdm>=4.42.0, <5",
 ]
+[tool.setuptools.dynamic]
+version = {attr = "orcAI.__version__"}
+
 [project.optional-dependencies]
 dev = ["ipython", "black"]
 
