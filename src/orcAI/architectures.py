@@ -205,7 +205,8 @@ def masked_binary_crossentropy(y_true: any, y_pred: any):
     y_pred_masked = tf.boolean_mask(y_pred, mask)
 
     # Standard binary cross-entropy on the masked values
-    loss = keras.losses.binary_crossentropy(y_true_masked, y_pred_masked)
+    loss_fn = keras.losses.BinaryCrossentropy(from_logits=False)
+    loss = loss_fn(y_true_masked, y_pred_masked)
     return tf.reduce_mean(loss)
 
 
