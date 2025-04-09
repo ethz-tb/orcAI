@@ -1,12 +1,13 @@
 import os
 import time
+from importlib.metadata import version
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import json
 import click
 from humanize import naturalsize
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 SEED_ID_MAKE_SNIPPET_TABLE = 1
 SEED_ID_FILTER_SNIPPET_TABLE = 2
@@ -131,6 +132,15 @@ class Messenger:
             bold=True,
             **kwargs,
         )
+        if self.verbosity >= severity:
+            self.print(
+                f"orcAI {version('orcAI')} [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]",
+                indent,
+                set_indent,
+                severity=severity,
+                italic=True,
+                **kwargs,
+            )
 
     def part(self, message, indent=1, set_indent=0, severity=2, **kwargs):
         """Print a message in bold at indent 0 to indicate a new part"""
@@ -198,10 +208,24 @@ class Messenger:
         import sys
         import keras
 
-        self.info(f"Platform: {platform.platform()}", severity=severity, **kwargs)
-        self.info(f"Python version: {sys.version}", severity=severity, **kwargs)
-        self.info(f"Tensorflow version: {tf.__version__}", severity=severity, **kwargs)
-        self.info(f"Keras version: {keras.__version__}", severity=severity, **kwargs)
+        self.info(
+            f"Platform: {platform.platform()}", severity=severity, italic=True, **kwargs
+        )
+        self.info(
+            f"Python version: {sys.version}", severity=severity, italic=True, **kwargs
+        )
+        self.info(
+            f"Tensorflow version: {tf.__version__}",
+            severity=severity,
+            italic=True,
+            **kwargs,
+        )
+        self.info(
+            f"Keras version: {keras.__version__}",
+            severity=severity,
+            italic=True,
+            **kwargs,
+        )
         sys_details = tf.sysconfig.get_build_info()
         if sys_details["is_cuda_build"]:
             self.info(
@@ -242,6 +266,7 @@ class Messenger:
             indent=indent,
             set_indent=set_indent,
             severity=severity,
+            italic=True,
             **kwargs,
         )
 
@@ -257,6 +282,7 @@ class Messenger:
             indent=indent,
             set_indent=set_indent,
             severity=severity,
+            italic=True,
             **kwargs,
         )
 
