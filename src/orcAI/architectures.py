@@ -1,5 +1,8 @@
 import tensorflow as tf
 import keras
+
+keras.backend.set_backend("tensorflow")
+
 from keras import layers
 from keras.saving import register_keras_serializable
 

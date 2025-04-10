@@ -4,6 +4,9 @@ from functools import partial
 
 import tensorflow as tf
 import keras
+
+keras.backend.set_backend("tensorflow")
+
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import keras_tuner as kt
 

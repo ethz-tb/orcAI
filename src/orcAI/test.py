@@ -8,6 +8,8 @@ from sklearn.metrics import confusion_matrix
 import tensorflow as tf
 import keras
 
+keras.backend.set_backend("tensorflow")
+
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 from orcAI.auxiliary import (
@@ -226,7 +228,7 @@ def _test_model_on_dataset(
     msgr: Messenger,
 ):
     """Test a model on a dataset."""
-    msgr.part(f"Testing model on {dataset_name}", indent=1)
+    msgr.part(f"Testing model on {dataset_name}")
     msgr.info(f"Evaluating model on {dataset_name}")
     data_loss, data_metric = model.evaluate(
         dataset, verbose=0 if msgr.verbosity < 3 else 1
@@ -370,8 +372,6 @@ def test_model(
     msgr.debug(model_parameter)
 
     trained_calls = orcai_parameter["calls"]
-
-    msgr.part("Testing model on test data")
 
     test_dataset = load_dataset(
         data_dir.joinpath("test_dataset"),

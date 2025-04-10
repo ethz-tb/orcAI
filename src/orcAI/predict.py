@@ -5,6 +5,8 @@ from pathlib import Path
 from importlib.resources import files
 import time
 import keras
+
+keras.backend.set_backend("tensorflow")
 from tqdm import tqdm
 
 from orcAI.auxiliary import Messenger, find_consecutive_ones

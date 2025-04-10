@@ -2,6 +2,8 @@ from pathlib import Path
 import zarr
 import tensorflow as tf
 import keras
+
+keras.backend.set_backend("tensorflow")
 import numpy as np
 import pandas as pd
 import json

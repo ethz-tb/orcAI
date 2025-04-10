@@ -208,6 +208,8 @@ class Messenger:
         import sys
         import keras
 
+        keras.backend.set_backend("tensorflow")
+
         self.info(
             f"Platform: {platform.platform()}", severity=severity, italic=True, **kwargs
         )
