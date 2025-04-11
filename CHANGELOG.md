@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.14.0] - 2025-04-11
+
+### Changes
+
+- __Breaking__ save all_snippets.csv.gz in tvt_data not recording data
+- enable changing of initial learning rate with orcai_parameters.json
+- switch formatter and format imports
+
 ## [0.13.2] - 2025-04-11
 
 ### Changes
@@ -13,7 +21,7 @@
 
 - set backend explicitly
 - use class for loss function and set from_logits to False (should be equivalent)
-- use __version__ attribute for version number
+- use `__version__` attribute for version number
 
 
 ## [0.13.0] - 2025-04-08
@@ -264,3 +272,6 @@ _First prerelease._
 [0.12.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.1
 [0.12.2]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.12.2
 [0.13.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.13.0
+[0.13.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.13.1
+[0.13.2]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.13.2
+[0.14.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.14.0
