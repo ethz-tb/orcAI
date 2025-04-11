@@ -384,7 +384,6 @@ def _filter_snippet_table(
 
 
 def create_tvt_snippet_tables(
-    recording_data_dir: Path | str,
     output_dir: Path | str,
     snippet_table: (Path | str) | pd.DataFrame | None = None,
     orcai_parameter: Path | str = files("orcAI.defaults").joinpath(
@@ -397,8 +396,6 @@ def create_tvt_snippet_tables(
 
     Parameters
     ----------
-    recording_data_dir : (Path | str)
-        Path to the recording data directory
     output_dir : (Path | str)
         Path to the output directory
     snippet_table : (Path | str) | pd.DataFrame | None
@@ -431,7 +428,7 @@ def create_tvt_snippet_tables(
         orcai_parameter = read_json(orcai_parameter)
 
     if snippet_table is None:
-        snippet_table = Path(recording_data_dir).joinpath("all_snippets.csv.gz")
+        snippet_table = Path(output_dir).joinpath("all_snippets.csv.gz")
     if isinstance(snippet_table, (Path | str)):
         snippet_table = pd.read_csv(snippet_table)
 

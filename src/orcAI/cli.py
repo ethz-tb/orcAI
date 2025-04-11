@@ -483,7 +483,6 @@ def cli_create_snippet_table(**kwargs):
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
 )
-@click.argument("recording_data_dir", type=ClickDirPathR)
 @click.argument("output_dir", type=ClickDirPathWcreate)
 @click.option(
     "--snippet_table",
