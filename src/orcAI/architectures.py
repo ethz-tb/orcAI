@@ -7,6 +7,7 @@ from keras import layers
 from keras.saving import register_keras_serializable
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
+keras.backend.set_backend("tensorflow")
 
 from orcAI.auxiliary import Messenger
 
