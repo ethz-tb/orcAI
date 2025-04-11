@@ -478,7 +478,7 @@ def cli_create_snippet_table(**kwargs):
 
 @cli.command(
     name="create-tvt-snippet-tables",
-    help="Creates snippet tables for training, validation and test datasets from recordings in RECORDING_DATA_DIR and saves them to OUTPUT_DIR.",
+    help="Creates snippet tables for training, validation and test datasets and saves them to OUTPUT_DIR.",
     short_help="Creates TVT snippet tables.",
     no_args_is_help=True,
     epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
