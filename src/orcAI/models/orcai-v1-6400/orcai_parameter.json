@@ -17,7 +17,9 @@
         "n_batch_train": 6400,
         "n_batch_val": 640,
         "n_batch_test": 640,
-        "shuffle": true
+        "shuffle": true,
+        "learning_rate": 1e-3,
+        "min_learning_rate": 1e-6
     },
     "spectrogram": {
         "sampling_rate": 48000,
