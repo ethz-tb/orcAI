@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.13.1] - 2025-04-11
+
+### Changes
+
+- set backend explicitly
+- use class for loss function and set from_logits to False (should be equivalent)
+- use __version__ attribute for version number
+
+
 ## [0.13.0] - 2025-04-08
 
 ### Changes
@@ -39,7 +48,7 @@
 
 ### Changes
 
-- **Breaking** save dataset using tf.data.Dataset.save instead of TFRecordWriter
+- __Breaking__ save dataset using tf.data.Dataset.save instead of TFRecordWriter
 - move loading model to fn in orcAI.io
 - move saving model to fn in orcAI.io
 
@@ -48,7 +57,7 @@
 
 ### Changes
 
-- **Breaking** unify seed generation (will break reproducibility). The seeds
+- __Breaking__ unify seed generation (will break reproducibility). The seeds
   used take care of the random number generation for sampling and shuffling.
   However, there are certain non-deterministic behaviours in python and the CUDA runtime
   anyway so reproducibility is not guaranteed in any case.
@@ -71,7 +80,7 @@
 
 ### Changes
 
-- **Breaking** move hp_search to seperate module
+- __Breaking__ move hp_search to seperate module
 - fix predict function stopping if a single prediction fails
 - fix saving project name in `init` command
 
@@ -120,13 +129,13 @@
 
 ### Changes
 
-- **Breaking** revert to using TFRecordWriter for saving datasets. The warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` probably is not relevant?
+- __Breaking__ revert to using TFRecordWriter for saving datasets. The warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` probably is not relevant?
 
 ## [0.5.0] - 2025-03-24
 
 ### Changes
 
-- **Breaking** save datasets using tf.data.Datset.save instead of TFRecordWriter in an effort to get rid of `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` warning.
+- __Breaking__ save datasets using tf.data.Datset.save instead of TFRecordWriter in an effort to get rid of `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` warning.
 
 ### Added
 
@@ -156,12 +165,12 @@
 
 ### Changed
 
-- **Breaking**: Combined default_calls.json, default_model_parameter.json, default_spectrogram_parameter.json, default_snippet_parameter.json into a single default_orcai_parameter.json file.
-- **Breaking**: new DataLoader
-- **Breaking**: new save format for data: TFRecord
-- **Breaking**: renamed module `load` to `io`, rename 'reload_dataset' to 'load_dataset'
-- **Breaking**: renamed module `annotations` to `labels`
-- **Breaking**: moved io function from `auxiliary` to `io`
+- __Breaking__: Combined default_calls.json, default_model_parameter.json, default_spectrogram_parameter.json, default_snippet_parameter.json into a single default_orcai_parameter.json file.
+- __Breaking__: new DataLoader
+- __Breaking__: new save format for data: TFRecord
+- __Breaking__: renamed module `load` to `io`, rename 'reload_dataset' to 'load_dataset'
+- __Breaking__: renamed module `annotations` to `labels`
+- __Breaking__: moved io function from `auxiliary` to `io`
 - Channel added to the prediction output filename
 
 
@@ -185,8 +194,8 @@
 
 ### Changed
 
-- **Breaking**: rename model architectures to correspond to manuscript (`efd3472c`)
-- **Breaking**: remove multiprocessing from predict. It wasn't working and caused more problems than it solved. -np parameter is not available anymore.
+- __Breaking__: rename model architectures to correspond to manuscript (`efd3472c`)
+- __Breaking__: remove multiprocessing from predict. It wasn't working and caused more problems than it solved. -np parameter is not available anymore.
 - refactored predict_wav so that model is only loaded once in case of multiple predictions
 - changed confusion matrix to confusion table reporting TP, FN, FP, TN, precision, recall, F1 score and number of samples
 
