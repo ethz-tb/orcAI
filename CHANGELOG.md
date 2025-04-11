@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.2] - 2025-04-11
+
+### Changes
+
+- fix: set backend explicitly
+
+
 ## [0.13.1] - 2025-04-11
 
 ### Changes
