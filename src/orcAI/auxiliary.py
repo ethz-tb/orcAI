@@ -137,7 +137,7 @@ class Messenger:
         )
         if self.verbosity >= severity:
             self.print(
-                f"orcAI {version('orcAI')} [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]",
+                f"orcAI {version('orcAI')} [started @ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]",
                 indent,
                 set_indent,
                 severity=severity,
