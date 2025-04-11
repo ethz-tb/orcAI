@@ -163,7 +163,7 @@ def hyperparameter_search(
     msgr.info(f"Batch size {orcai_parameter['model']['batch_size']}")
 
     msgr.part("Searching hyperparameters")
-    hps_logs_dir = Path(output_dir).joinpath(model_name, "hps_logs")
+    hps_logs_dir = Path(output_dir).joinpath("hps_logs")
 
     if parallel:
         gpus = tf.config.list_physical_devices("GPU")
