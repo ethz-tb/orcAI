@@ -25,5 +25,10 @@
         3,
         5
     ],
+    "batch_size": [
+        32,
+        64,
+        128
+    ],
     "multi_gpu": true
 }
