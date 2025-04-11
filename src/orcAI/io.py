@@ -275,7 +275,9 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
             name="masked_binary_accuracy",
         )
         model.compile(
-            optimizer="adam",
+            optimizer=keras.optimizers.Adam(
+                learning_rate=orcai_parameter["model"]["learning_rate"]
+            ),
             loss=masked_binary_crossentropy,
             metrics=[masked_binary_accuracy_metric],
         )

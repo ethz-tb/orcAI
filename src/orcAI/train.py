@@ -138,9 +138,7 @@ def train(
     )
 
     model.compile(
-        optimizer=keras.optimizers.Adam(
-            learning_rate=model_parameter["initial_learning_rate"]
-        ),
+        optimizer=keras.optimizers.Adam(learning_rate=model_parameter["learning_rate"]),
         loss=masked_binary_crossentropy,
         metrics=[masked_binary_accuracy_metric],
     )
