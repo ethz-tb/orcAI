@@ -55,6 +55,9 @@ def _hp_model_builder(
     orcai_parameter["model"]["dropout_rate"] = hp.Choice(
         "dropout_rate", hps_parameter["dropout_rate"]
     )
+    orcai_parameter["model"]["batch_size"] = hp.Choice(
+        "batch_size", hps_parameter["batch_size"]
+    )
     if "lstm_units" in orcai_parameter["model"].keys():
         if "lstm_units" in hps_parameter.keys():
             orcai_parameter["model"]["lstm_units"] = hp.Choice(
