@@ -8,8 +8,6 @@ from sklearn.metrics import confusion_matrix
 import tensorflow as tf
 import keras
 
-keras.backend.set_backend("tensorflow")
-
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 from orcAI.auxiliary import (
