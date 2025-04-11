@@ -2,17 +2,12 @@ from pathlib import Path
 import zarr
 import tensorflow as tf
 import keras
-
-keras.backend.set_backend("tensorflow")
 import numpy as np
 import pandas as pd
 import json
-import time
+
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
-
-from orcAI.auxiliary import Messenger
-
 SHUFFLE_BUFFER_SIZE = 1000
 
 
