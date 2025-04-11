@@ -40,7 +40,7 @@ dependencies = [
 version = {attr = "orcAI.__version__"}
 
 [project.optional-dependencies]
-dev = ["ipython", "black"]
+dev = ["ipython", "ruff"]
 
 [project.urls]
 Repository = "https://gitlab.ethz.ch/tb/orcai"
