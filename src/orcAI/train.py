@@ -2,6 +2,7 @@ from pathlib import Path
 from importlib.resources import files
 import numpy as np
 import tensorflow as tf
+import keras
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.metrics import MeanMetricWrapper
 from tqdm.keras import TqdmCallback
@@ -137,7 +138,9 @@ def train(
     )
 
     model.compile(
-        optimizer="adam",
+        optimizer=keras.optimizers.Adam(
+            learning_rate=model_parameter["initial_learning_rate"]
+        ),
         loss=masked_binary_crossentropy,
         metrics=[masked_binary_accuracy_metric],
     )
@@ -161,7 +164,7 @@ def train(
         monitor="val_masked_binary_accuracy",
         factor=0.5,
         patience=3,
-        min_lr=1e-6,
+        min_lr=model_parameter["min_learning_rate"],
         verbose=0 if verbosity < 3 else 1,
     )
 

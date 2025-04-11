@@ -14,7 +14,9 @@
         "kernel_size": 5,
         "dropout_rate": 0.4,
         "lstm_units": 64,
-        "shuffle": true
+        "shuffle": true,
+        "initial_learning_rate": 1e-3,
+        "min_learning_rate": 1e-6
     },
     "spectrogram": {
         "sampling_rate": 48000,
