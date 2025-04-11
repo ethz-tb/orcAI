@@ -1,11 +1,11 @@
 from importlib.resources import files
 from pathlib import Path
 
-import keras
 import numpy as np
 import tensorflow as tf
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.metrics import MeanMetricWrapper
+from keras.optimizers import Adam
 from tqdm.keras import TqdmCallback
 
 from orcAI.architectures import (
@@ -140,7 +140,7 @@ def train(
     )
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=model_parameter["learning_rate"]),
+        optimizer=Adam(learning_rate=model_parameter["learning_rate"]),
         loss=masked_binary_crossentropy,
         metrics=[masked_binary_accuracy_metric],
     )
@@ -208,7 +208,7 @@ def train(
 
     write_json(
         orcai_parameter,
-        output_dir.joinpath(model_name).joinpath(f"orcai_parameter.json"),
+        output_dir.joinpath(model_name).joinpath("orcai_parameter.json"),
     )
     model.save(
         output_dir.joinpath(model_name, model_name + ".keras"),

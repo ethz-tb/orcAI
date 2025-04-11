@@ -2,11 +2,12 @@ from functools import partial
 from importlib.resources import files
 from pathlib import Path
 
-import keras
-import tensorflow as tf
-
+from keras import Model
 import keras_tuner as kt
+import tensorflow as tf
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.metrics import MeanMetricWrapper
+from keras.optimizers import Adam
 
 from orcAI.architectures import (
     build_model,
@@ -25,7 +26,7 @@ def _hp_model_builder(
     orcai_parameter: dict,
     hps_parameter: dict,
     msgr: Messenger = Messenger(verbosity=0),
-) -> keras.Model:
+) -> Model:
     """Build a model for hyperparameter search
     Parameters
     ----------
@@ -76,13 +77,13 @@ def _hp_model_builder(
 
     model = build_model(input_shape, orcai_parameter, msgr=msgr)
 
-    masked_binary_accuracy_metric = keras.metrics.MeanMetricWrapper(
+    masked_binary_accuracy_metric = MeanMetricWrapper(
         fn=masked_binary_accuracy,
         name="masked_binary_accuracy",
     )
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=0.001),
+        optimizer=Adam(learning_rate=0.001),
         loss=masked_binary_crossentropy,
         metrics=[masked_binary_accuracy_metric],
     )
@@ -183,7 +184,7 @@ def hyperparameter_search(
                 executions_per_trial=1,
             )
     else:
-        msgr.info(f"Sequential - running on 1 GPU")
+        msgr.info("Sequential - running on 1 GPU")
         tuner = kt.Hyperband(
             partial(
                 _hp_model_builder,
