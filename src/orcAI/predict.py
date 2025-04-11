@@ -1,15 +1,16 @@
 import sys
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from importlib.resources import files
 import time
+from importlib.resources import files
+from pathlib import Path
+
 import keras
+import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 from orcAI.auxiliary import Messenger, find_consecutive_ones
+from orcAI.io import load_orcai_model, read_json
 from orcAI.spectrogram import make_spectrogram
-from orcAI.io import read_json, load_orcai_model
 
 
 def _check_duration(
@@ -339,7 +340,7 @@ def _predict_wav(
     ).sort_values(by=["start", "stop", "label"])
     msgr.info(f"found {len(predicted_labels)} acoustic signals", indent=1)
     msgr.info(
-        f"time for prediction and preparing annotation file: {time.time()-start_time:.2f}"
+        f"time for prediction and preparing annotation file: {time.time() - start_time:.2f}"
     )
 
     if call_duration_limits is not None:

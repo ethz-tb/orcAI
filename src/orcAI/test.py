@@ -1,25 +1,24 @@
+import json
 import os
 from pathlib import Path
-import pandas as pd
-import numpy as np
-from tqdm import tqdm
-import json
-from sklearn.metrics import confusion_matrix
-import tensorflow as tf
-import keras
 
-tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
+import keras
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.metrics import confusion_matrix
+from tqdm import tqdm
 
 from orcAI.auxiliary import (
-    Messenger,
+    MASK_VALUE,
+    SEED_ID_CREATE_DATALOADER,
     SEED_ID_LOAD_TEST_DATA,
     SEED_ID_UNFILTERED_TEST_DATA,
-    SEED_ID_CREATE_DATALOADER,
-    MASK_VALUE,
+    Messenger,
 )
-
-
 from orcAI.io import DataLoader, load_dataset, load_orcai_model
+
+tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 
 def _stack_batch(batch):
@@ -179,9 +178,9 @@ def compute_confusion_table(
     y_pred_binary_batch = np.array(y_pred_binary_batch)
 
     # Validate input shapes
-    assert (
-        y_true_batch.shape == y_pred_binary_batch.shape
-    ), "Shapes of y_true_batch and y_pred_binary_batch must match"
+    assert y_true_batch.shape == y_pred_binary_batch.shape, (
+        "Shapes of y_true_batch and y_pred_binary_batch must match"
+    )
 
     # Initialize a dictionary to store confusion matrices for each label
     confusion_table = {}

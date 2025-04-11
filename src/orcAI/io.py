@@ -1,11 +1,11 @@
+import json
 from pathlib import Path
-import zarr
-import tensorflow as tf
+
 import keras
 import numpy as np
 import pandas as pd
-import json
-
+import tensorflow as tf
+import zarr
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 SHUFFLE_BUFFER_SIZE = 1000
@@ -248,13 +248,14 @@ def read_annotation_file(annotation_file_path):
 
 
 def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
+    from keras.metrics import MeanMetricWrapper
+    from keras.saving import load_model
+
     from orcAI.architectures import (
-        res_net_LSTM_arch,
         masked_binary_accuracy,
         masked_binary_crossentropy,
+        res_net_LSTM_arch,
     )
-    from keras.saving import load_model
-    from keras.metrics import MeanMetricWrapper
 
     orcai_parameter = read_json(model_dir.joinpath("orcai_parameter.json"))
     shape = read_json(model_dir.joinpath("model_shape.json"))

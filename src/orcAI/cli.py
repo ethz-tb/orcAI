@@ -1,7 +1,9 @@
-from pathlib import Path
-from importlib.resources import files
 from importlib.metadata import version
+from importlib.resources import files
+from pathlib import Path
+
 import rich_click as click
+
 from orcAI.auxiliary import Messenger
 
 click.rich_click.COMMAND_GROUPS = {
@@ -53,16 +55,26 @@ INCLUDED_MODELS = [
 
 
 @click.group(
-    # fmt: off
     help="\n\b\n"
-    + "            █████  " + click.style("Command line interface for ", bold=True) + click.style("orcAI", fg="blue", bold=True) + "\n"
-    + "███ ███   ████████ " + "  a tool for \n"
-    + "  ████  ████░██░░░ " + "  training, testing & applying AI models \n"
-    + "    ██████████░░░  " + "  to detect acoustic signals in spectrograms generated from audio recordings.\n"
-    + "     ░░██░░░░      " + "Version: " + version("orcAI") + "\n"
-    + "      ███ ██       " + "Reference: " + click.style("in preparation", italic=True) + "\n",
+    + "            █████  "
+    + click.style("Command line interface for ", bold=True)
+    + click.style("orcAI", fg="blue", bold=True)
+    + "\n"
+    + "███ ███   ████████ "
+    + "  a tool for \n"
+    + "  ████  ████░██░░░ "
+    + "  training, testing & applying AI models \n"
+    + "    ██████████░░░  "
+    + "  to detect acoustic signals in spectrograms generated from audio recordings.\n"
+    + "     ░░██░░░░      "
+    + "Version: "
+    + version("orcAI")
+    + "\n"
+    + "      ███ ██       "
+    + "Reference: "
+    + click.style("in preparation", italic=True)
+    + "\n",
     # TODO: Add reference
-    # fmt: on
     epilog="For further information see the help pages of the individual subcommands (e.g. "
     + click.style("orcai predict --help", italic=True)
     + ") and/or visit: https://gitlab.ethz.ch/tb/orcai",

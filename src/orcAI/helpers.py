@@ -1,7 +1,8 @@
-import sys
 import shutil
-from pathlib import Path
+import sys
 from importlib.resources import files
+from pathlib import Path
+
 import pandas as pd
 from numpy.random import SeedSequence
 

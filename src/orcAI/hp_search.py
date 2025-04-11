@@ -1,26 +1,22 @@
-from pathlib import Path
-from importlib.resources import files
 from functools import partial
+from importlib.resources import files
+from pathlib import Path
 
-import tensorflow as tf
 import keras
+import tensorflow as tf
 
-keras.backend.set_backend("tensorflow")
-
-from keras.callbacks import EarlyStopping, ModelCheckpoint
 import keras_tuner as kt
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
-
-tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
-
-# import local
-from orcAI.auxiliary import Messenger, SEED_ID_LOAD_TEST_DATA, SEED_ID_LOAD_VAL_DATA
 from orcAI.architectures import (
     build_model,
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
+from orcAI.auxiliary import SEED_ID_LOAD_TEST_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
 from orcAI.io import load_dataset, read_json
+
+tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 
 def _hp_model_builder(

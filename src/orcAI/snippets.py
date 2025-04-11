@@ -1,22 +1,23 @@
-from pathlib import Path
 from importlib.resources import files
-import pandas as pd
-from tqdm import tqdm
-import zarr
-import tensorflow as tf
-import numpy as np
+from pathlib import Path
 
-tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+import zarr
+from tqdm import tqdm
 
 from orcAI.auxiliary import (
-    Messenger,
-    seconds_to_hms,
-    resolve_recording_data_dir,
-    SEED_ID_MAKE_SNIPPET_TABLE,
-    SEED_ID_FILTER_SNIPPET_TABLE,
     SEED_ID_CREATE_DATALOADER,
+    SEED_ID_FILTER_SNIPPET_TABLE,
+    SEED_ID_MAKE_SNIPPET_TABLE,
+    Messenger,
+    resolve_recording_data_dir,
+    seconds_to_hms,
 )
-from orcAI.io import DataLoader, read_json, write_json, save_dataset
+from orcAI.io import DataLoader, read_json, save_dataset, write_json
+
+tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 
 def _make_snippet_table(
@@ -456,9 +457,10 @@ def create_tvt_snippet_tables(
 
     snippets = []
     for i, itype in enumerate(["train", "val", "test"]):
-        n_snippets = (orcai_parameter["model"][f"n_batch_{itype}"]) * orcai_parameter[
-            "model"
-        ]["batch_size"]
+        n_snippets = (
+            (orcai_parameter["model"][f"n_batch_{itype}"])
+            * orcai_parameter["model"]["batch_size"]
+        )
         msgr.info(
             f"Extracting {orcai_parameter['model'][f'n_batch_{itype}']} batches of {orcai_parameter['model']['batch_size']} random {itype} snippets ({n_snippets} snippets)"
         )

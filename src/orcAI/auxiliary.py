@@ -1,13 +1,14 @@
+import json
 import os
 import time
+from datetime import datetime, timedelta
 from importlib.metadata import version
 from pathlib import Path
-import pandas as pd
-import numpy as np
-import json
+
 import click
+import numpy as np
+import pandas as pd
 from humanize import naturalsize
-from datetime import timedelta, datetime
 
 SEED_ID_MAKE_SNIPPET_TABLE = 1
 SEED_ID_FILTER_SNIPPET_TABLE = 2
@@ -205,10 +206,11 @@ class Messenger:
     def print_platform_info(self, severity=2, **kwargs):
         if self.verbosity < severity:
             return
-        import tensorflow as tf
         import platform
         import sys
+
         import keras
+        import tensorflow as tf
 
         self.info(
             f"Platform: {platform.platform()}", severity=severity, italic=True, **kwargs

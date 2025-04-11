@@ -1,12 +1,11 @@
-from pathlib import Path
 from importlib.resources import files
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from librosa import load, stft, fft_frequencies, frames_to_time, amplitude_to_db
+from librosa import amplitude_to_db, fft_frequencies, frames_to_time, load, stft
 from tqdm import tqdm
 
-
-# import local
 from orcAI.auxiliary import (
     Messenger,
 )
@@ -54,7 +53,7 @@ def make_spectrogram(
     spectrogram_parameter = orcai_parameter["spectrogram"]
 
     msgr.part(
-        f"Loading & resampling (to {spectrogram_parameter['sampling_rate']/1000:.2f} kHz) wav file: {wav_file_path.stem}"
+        f"Loading & resampling (to {spectrogram_parameter['sampling_rate'] / 1000:.2f} kHz) wav file: {wav_file_path.stem}"
     )
 
     wav_file, _ = load(

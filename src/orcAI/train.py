@@ -1,22 +1,24 @@
-from pathlib import Path
 from importlib.resources import files
+from pathlib import Path
+
+import keras
 import numpy as np
 import tensorflow as tf
-import keras
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.metrics import MeanMetricWrapper
 from tqdm.keras import TqdmCallback
 
-tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
-
-# import local
-from orcAI.auxiliary import Messenger, SEED_ID_LOAD_TRAIN_DATA, SEED_ID_LOAD_VAL_DATA
 from orcAI.architectures import (
     build_model,
     masked_binary_accuracy,
     masked_binary_crossentropy,
 )
+
+# import local
+from orcAI.auxiliary import SEED_ID_LOAD_TRAIN_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
 from orcAI.io import load_dataset, read_json, write_json
+
+tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 
 # model parameters

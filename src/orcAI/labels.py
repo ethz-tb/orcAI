@@ -1,17 +1,17 @@
-from pathlib import Path
 from importlib.resources import files
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-# import local
-from orcAI.auxiliary import Messenger, MASK_VALUE
+from orcAI.auxiliary import MASK_VALUE, Messenger
 from orcAI.io import (
-    read_json,
-    write_json,
-    save_as_zarr,
     generate_times_from_spectrogram,
     read_annotation_file,
+    read_json,
+    save_as_zarr,
+    write_json,
 )
 
 
@@ -95,8 +95,8 @@ def _convert_annotation(
 
     # Create a column for each label masked
     for label in labels_masked:
-        annotations_array[label] = MASK_VALUE * np.ones(
-            len(t_vec), dtype=int
+        annotations_array[label] = (
+            MASK_VALUE * np.ones(len(t_vec), dtype=int)
         )  # set mask value to -1 for label to be masked, set to zero if labels should be assumed absent
 
     # sort columns alphabetically
