@@ -192,6 +192,7 @@ def _compute_snippet_stats(
 def create_snippet_table(
     recording_table_path: Path | str,
     recording_data_dir: Path | str,
+    output_dir: Path | str = None,
     orcai_parameter: dict | (Path | str) = files("orcAI.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
@@ -206,6 +207,8 @@ def create_snippet_table(
         Path to the recording table
     recording_data_dir : (Path | str)
         Path to the recording data directory
+    output_dir : (Path | str)
+        Path to the output directory. If None the output_dir is set to "tvt_data" next to the recording_table_path
     orcai_parameter : dict | (Path | str)
         Dict containing OrcAI parameter or path to json containing the same, by default files("orcAI.defaults").joinpath("default_orcai_parameter.json")
     verbosity : int
@@ -224,7 +227,17 @@ def create_snippet_table(
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
+
+    if output_dir is None:
+        output_dir = Path(recording_table_path).parent.joinpath("tvt_data")
+    else:
+        output_dir = Path(output_dir)
+
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True)
+
     recording_data_dir = Path(recording_data_dir)
+    recording_table_path = Path(recording_table_path)
     recording_table = pd.read_csv(recording_table_path)
     # remove recordings without annotation
     not_annotated = recording_table["base_dir_annotation"].isna()
@@ -290,18 +303,16 @@ def create_snippet_table(
     msgr.part("Saving snippet table...")
 
     failed_table.to_csv(
-        recording_data_dir.joinpath("failed_snippets.csv"),
+        output_dir.joinpath("failed_snippets.csv"),
         index=False,
     )
 
     snippet_table.to_csv(
-        recording_data_dir.joinpath("all_snippets.csv.gz"),
+        output_dir.joinpath("all_snippets.csv.gz"),
         compression="gzip",
         index=False,
     )
-    msgr.success(
-        f"Snippet table saved to {recording_data_dir.joinpath('all_snippets.csv.gz')}"
-    )
+    msgr.success(f"Snippet table saved to {output_dir.joinpath('all_snippets.csv.gz')}")
 
     return
 
@@ -391,7 +402,7 @@ def create_tvt_snippet_tables(
     output_dir : (Path | str)
         Path to the output directory
     snippet_table : (Path | str) | pd.DataFrame | None
-        Path to the snippet table csv or the snippet table itself. None if the snippet table should be read from recording_data_dir/all_snippets.csv.gz
+        Path to the snippet table csv or the snippet table itself. None if the snippet table should be read from output_dir/all_snippets.csv.gz
     orcai_parameter : dict | (Path | str)
         Dict containing OrcAi parameter or path to json containing the same, by default files("orcAI.defaults").joinpath("default_orcai_parameter.json")
     verbosity : int
@@ -410,8 +421,9 @@ def create_tvt_snippet_tables(
             title="Creating train, validation and test snippet tables",
         )
 
-    if not Path(output_dir).exists():
-        Path(output_dir).mkdir(parents=True)
+    output_dir = Path(output_dir)
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True)
 
     msgr.part("Reading snippet table")
 
@@ -432,7 +444,7 @@ def create_tvt_snippet_tables(
     msgr.info("Snippet stats [HMS]:", indent=1)
     msgr.info(all_snippet_stats_duration, indent=-1)
     all_snippet_stats_duration.to_csv(
-        Path(output_dir, "all_snippet_stats_duration.csv"), index=True
+        output_dir.joinpath("all_snippet_stats_duration.csv"), index=True
     )
 
     rng = np.random.default_rng(
@@ -468,7 +480,7 @@ def create_tvt_snippet_tables(
         )
 
         snippets[i][["recording_data_dir", "row_start", "row_stop"]].to_csv(
-            Path(output_dir, f"{itype}.csv.gz"), compression="gzip", index=False
+            output_dir.joinpath(f"{itype}.csv.gz"), compression="gzip", index=False
         )
 
     selected_snippet_stats = _compute_snippet_stats(
@@ -480,7 +492,7 @@ def create_tvt_snippet_tables(
     msgr.info("Snippet stats for train, val and test datasets [HMS]:", indent=1)
     msgr.info(selected_snippet_stats_duration, indent=-1)
     selected_snippet_stats_duration.to_csv(
-        Path(output_dir, "selected_snippet_stats_duration.csv"), index=True
+        output_dir.joinpath("selected_snippet_stats_duration.csv"), index=True
     )
 
     msgr.success("Train, val and test snippet tables created and saved to disk")

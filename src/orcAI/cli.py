@@ -444,6 +444,14 @@ def cli_create_label_arrays(**kwargs):
 @click.argument("recording_table_path", type=ClickFilePathR)
 @click.argument("recording_data_dir", type=ClickDirPathW)
 @click.option(
+    "--ouptut_dir",
+    "-o",
+    type=ClickDirPathWcreate,
+    default=None,
+    show_default="None",
+    help="Path to the output directory. None to save in the same directory as the recording data table.",
+)
+@click.option(
     "--orcai_parameter",
     "-p",
     type=ClickFilePathR,
