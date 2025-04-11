@@ -17,6 +17,8 @@ SEED_ID_LOAD_VAL_DATA = 8
 SEED_ID_LOAD_TEST_DATA = 9
 SEED_ID_UNFILTERED_TEST_DATA = 10
 
+MASK_VALUE = -1.0  # Value used to mask labels in the dataset
+
 
 class JsonEncoderExt(json.JSONEncoder):
     """Custom JSON encoder to handle additional data types."""

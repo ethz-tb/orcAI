@@ -17,7 +17,9 @@ from orcAI.auxiliary import (
     SEED_ID_LOAD_TEST_DATA,
     SEED_ID_UNFILTERED_TEST_DATA,
     SEED_ID_CREATE_DATALOADER,
+    MASK_VALUE,
 )
+
 
 from orcAI.io import DataLoader, load_dataset, load_orcai_model
 
@@ -173,7 +175,6 @@ def compute_confusion_table(
         A DataFrame with confusion values for each label.
 
     """
-    mask_value = -1
     # Ensure inputs are numpy arrays
     y_true_batch = np.array(y_true_batch)
     y_pred_binary_batch = (y_pred_batch >= 0.5).astype(int)
@@ -193,7 +194,7 @@ def compute_confusion_table(
         y_pred_flat = y_pred_binary_batch[:, :, label_idx].flatten()
 
         # Apply the mask to exclude masked values
-        mask = y_true_flat != mask_value
+        mask = y_true_flat != MASK_VALUE
         y_true_filtered = y_true_flat[mask]
         y_pred_filtered = y_pred_flat[mask]
 

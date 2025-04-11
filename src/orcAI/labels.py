@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 # import local
-from orcAI.auxiliary import Messenger
+from orcAI.auxiliary import Messenger, MASK_VALUE
 from orcAI.io import (
     read_json,
     write_json,
@@ -94,9 +94,8 @@ def _convert_annotation(
         annotations_array[label] = bool_mask.astype(int)
 
     # Create a column for each label masked
-    mask_value = -1
     for label in labels_masked:
-        annotations_array[label] = mask_value * np.ones(
+        annotations_array[label] = MASK_VALUE * np.ones(
             len(t_vec), dtype=int
         )  # set mask value to -1 for label to be masked, set to zero if labels should be assumed absent
 

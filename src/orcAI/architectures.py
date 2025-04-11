@@ -9,7 +9,7 @@ from keras.saving import register_keras_serializable
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 keras.backend.set_backend("tensorflow")
 
-from orcAI.auxiliary import Messenger
+from orcAI.auxiliary import Messenger, MASK_VALUE
 
 
 # CNN model with residual connection
@@ -199,9 +199,8 @@ def masked_binary_crossentropy(y_true: any, y_pred: any):
         The reduced tensor
 
     """
-    mask_value = -1.0
     # Ensure mask_value has the same type as y_true
-    mask_value = tf.cast(mask_value, y_true.dtype)
+    mask_value = tf.cast(MASK_VALUE, y_true.dtype)
 
     # Create a mask: where y_true != mask_value
     mask = tf.not_equal(y_true, mask_value)
@@ -221,7 +220,7 @@ def masked_binary_accuracy(y_true: any, y_pred: any):
     Parameters
     ----------
     y_true : any
-        True labels (with -1 indicating missing labels).
+        True labels (with orcai.auxiliary.MASK_VALUE indicating missing labels).
     y_pred : any
         Predicted probabilities.
 
@@ -230,9 +229,8 @@ def masked_binary_accuracy(y_true: any, y_pred: any):
     tf.reduce_mean(accuracy) :
         The reduced tensor
     """
-    mask_value = -1.0
     # Ensure mask_value has the same type as y_true
-    mask_value = tf.cast(mask_value, y_true.dtype)
+    mask_value = tf.cast(MASK_VALUE, y_true.dtype)
     # Create a mask: where y_true != mask_value
     mask = tf.not_equal(y_true, mask_value)
     y_true_masked = tf.boolean_mask(y_true, mask)
