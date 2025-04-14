@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0] - 2025-04-14
+
+### Changes
+
+- save best hyperparameters
+- flag to save model when running hp_search
+
 ## [0.14.0] - 2025-04-11
 
 ### Changes
