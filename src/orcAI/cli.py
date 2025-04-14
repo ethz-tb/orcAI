@@ -727,6 +727,12 @@ def cli_test(**kwargs):
     help="Run hyperparameter search on multiple GPUs in parallel.",
 )
 @click.option(
+    "--save_best_model",
+    "-s",
+    is_flag=True,
+    help="Save the best model to the output directory.",
+)
+@click.option(
     "--data_compression",
     "-dc",
     type=click.Choice(["GZIP", "None"], case_sensitive=False),
@@ -742,7 +748,7 @@ def cli_test(**kwargs):
     show_default=True,
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
-def hpsearch_cli(**kwargs):
+def cli_hpsearch(**kwargs):
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"],
         title="Hyperparameter search",

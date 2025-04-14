@@ -15,7 +15,7 @@ from orcAI.architectures import (
     masked_binary_crossentropy,
 )
 from orcAI.auxiliary import SEED_ID_LOAD_TEST_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
-from orcAI.io import load_dataset, read_json
+from orcAI.io import load_dataset, read_json, write_json
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -100,6 +100,7 @@ def hyperparameter_search(
         "default_hps_parameter.json"
     ),
     parallel: bool = False,
+    save_best_model: bool = False,
     data_compression: str | None = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -117,6 +118,8 @@ def hyperparameter_search(
         Path to the hyperparameter search parameter file
     parallel : bool
         Run hyperparameter search on multiple GPUs
+    save_best_model : bool
+        Save the best model to the output directory
     data_compression: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
     verbosity : int
@@ -204,12 +207,13 @@ def hyperparameter_search(
         restore_best_weights=True,
         verbose=0 if verbosity < 3 else 1,
     )
-    model_checkpoint = ModelCheckpoint(
-        Path(output_dir).joinpath(model_name, "hps", model_name + ".weights.h5"),
-        monitor="val_masked_binary_accuracy",
-        save_best_only=True,
-        save_weights_only=True,
-    )
+    if save_best_model:
+        msgr.info(f"Saving models to hps/{model_name}.keras")
+        model_checkpoint = ModelCheckpoint(
+            Path(output_dir).joinpath(model_name, "hps", model_name + ".keras"),
+            monitor="val_masked_binary_accuracy",
+            save_best_only=True,
+        )
     tuner.search(
         train_dataset,
         validation_data=val_dataset,
