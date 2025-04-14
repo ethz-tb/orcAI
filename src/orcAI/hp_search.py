@@ -217,5 +217,13 @@ def hyperparameter_search(
         callbacks=[early_stopping, model_checkpoint],
         verbose=0 if verbosity < 3 else 1,
     )
+    msgr.part("Best Hyperparameters")
+    msgr.info(tuner.get_best_hyperparameters()[0].values)
+    write_json(
+        tuner.get_best_hyperparameters()[0].values,
+        hps_logs_dir.joinpath("best_hyperparameters.json"),
+    )
+
     msgr.success("Hyperparameter search completed")
+
     return
