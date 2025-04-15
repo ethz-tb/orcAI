@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.1] - 2025-04-15
+
+### Changes
+
+- make ReduceLROnPlateau callback patience == model_parameters['patience'] // 2
+
 ## [0.15.0] - 2025-04-14
 
 ### Changes
@@ -283,3 +289,4 @@ _First prerelease._
 [0.13.2]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.13.2
 [0.14.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.14.0
 [0.15.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.15.0
+[0.15.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.15.1
