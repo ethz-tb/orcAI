@@ -194,7 +194,7 @@ def train(
     reduce_lr = ReduceLROnPlateau(
         monitor="val_masked_roc_auc",
         factor=0.5,
-        patience=model_parameter["patience"] // 2,
+        patience=model_parameter["patience"] // 3,
         min_lr=model_parameter["min_learning_rate"],
         verbose=0 if verbosity < 3 else 1,
     )
