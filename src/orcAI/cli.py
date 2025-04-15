@@ -607,10 +607,10 @@ def cli_create_tvt_data(**kwargs):
     help="Data compression of saved datasets",
 )
 @click.option(
-    "--load_weights",
-    "-lw",
+    "--load_model",
+    "-lm",
     is_flag=True,
-    help="Load weights from previous training.",
+    help="Load model from previous training.",
 )
 @click.option(
     "--verbosity",

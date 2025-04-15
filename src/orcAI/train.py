@@ -43,7 +43,7 @@ def train(
         "default_orcai_parameter.json"
     ),
     data_compression: str | None = "GZIP",
-    load_weights: bool = False,
+    load_model: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ):
@@ -59,7 +59,7 @@ def train(
         Path to a JSON file containing orcai parameter or a dictionary with orcai parameter.
     data_compression: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
-    load_weights : bool
+    load_model : bool
         Load weights from previous training.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
@@ -114,7 +114,12 @@ def train(
     )
 
     msgr.info(f"Batch size {model_parameter['batch_size']}")
+    model_dir = output_dir.joinpath(model_name)
 
+    if load_model:
+        msgr.part("Loading model")
+        model, _, _ = load_orcai_model(model_dir)
+    else:
     msgr.part("Building model")
     model = build_model(
         tuple(dataset_shape["spectrogram"]),
@@ -124,14 +129,6 @@ def train(
 
     # Compiling Model
     msgr.part("Compiling model: " + model_name)
-
-    # Loading model weights if required
-    weights_path = output_dir.joinpath(model_name, model_name + ".weights.h5")
-    if load_weights:
-        msgr.info("Loading weights from stored model: " + model_name)
-        model.load_weights(weights_path)
-    else:
-        msgr.info("Learning weights from scratch")
 
     # Metrics
     masked_binary_accuracy_metric = MeanMetricWrapper(
@@ -154,10 +151,9 @@ def train(
         verbose=0 if verbosity < 3 else 1,
     )
     model_checkpoint = ModelCheckpoint(
-        weights_path,
+        model_dir.joinpath(model_name + ".keras"),
         monitor="val_masked_binary_accuracy",
         save_best_only=True,
-        save_weights_only=True,
         verbose=0 if verbosity < 3 else 1,
     )
     reduce_lr = ReduceLROnPlateau(
@@ -210,10 +206,7 @@ def train(
         orcai_parameter,
         output_dir.joinpath(model_name).joinpath("orcai_parameter.json"),
     )
-    model.save(
-        output_dir.joinpath(model_name, model_name + ".keras"),
-        include_optimizer=True,
-    )
+
     model_shape = {
         "input_shape": dataset_shape["spectrogram"],
         "num_labels": len(label_calls),
