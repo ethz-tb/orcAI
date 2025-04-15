@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.16.0] - 2025-04-15
+
+### Changes
+
+- __Breaking__: experimental masked_roc_auc metric to monitor.
+- __Breaking__: in train, load model instead of weights when restarting
+  - the argument `load_weights` is now `load_model`
+  - the flag option in the cli `--load_weights` is now `--load_model`
+- __Breaking__: implement class weights.
+  - orcai_parameters.json now has a model.call_weights key.
+    - to unbreak add `"call_weights": null` to the model section of orcai_parameters.json
+  - Implemented "three" methods for calculating call weights:
+    - `"balanced"` is the same heuristic as is used in sklearn (= total / (n_calls \* count)),
+    - `"max"` is 1/count \* total,
+    - `"uniform"` is all ones and equal to None.
+    - Use `null` (in Json, `None` in python) to disable class weights.
+- __Breaking__: remove `--no-weights` option from train
+
+
 ## [0.15.1] - 2025-04-15
 
 ### Changes
@@ -261,7 +280,7 @@
 
 ## [0.1.0] - 2025-03-04
 
-_First prerelease._
+*First prerelease.*
 
 
 [0.1.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.1.0
@@ -290,3 +309,4 @@ _First prerelease._
 [0.14.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.14.0
 [0.15.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.15.0
 [0.15.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.15.1
+[0.16.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.15.2
