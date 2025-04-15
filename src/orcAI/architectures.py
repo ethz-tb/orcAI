@@ -237,6 +237,34 @@ def masked_binary_accuracy(y_true: any, y_pred: any):
     return tf.reduce_mean(accuracy)
 
 
+@register_keras_serializable(name="masked_roc_auc")
+def masked_roc_auc(y_true: any, y_pred: any):
+    """Custom ROC AUC metric that excludes masked labels.
+
+    Parameters
+    ----------
+    y_true : any
+        True labels (with orcai.auxiliary.MASK_VALUE indicating missing labels).
+    y_pred : any
+        Predicted probabilities.
+
+    Returns
+    -------
+    tf.reduce_mean(roc_auc) :
+        The reduced tensor
+    """
+    # Ensure mask_value has the same type as y_true
+    mask_value = tf.cast(MASK_VALUE, y_true.dtype)
+    # Create a mask: where y_true != mask_value
+    mask = tf.not_equal(y_true, mask_value)
+    y_true_masked = tf.boolean_mask(y_true, mask)
+    y_pred_masked = tf.boolean_mask(y_pred, mask)
+
+    # Compute ROC AUC on masked values
+    roc_auc = keras.metrics.AUC(curve="ROC")
+    return roc_auc(y_true_masked, y_pred_masked)
+
+
 ORCAI_ARCHITECTURES_FN = {
     "ResNet1DConv": res_net_1Dconv_arch,
     "ResNetLSTM": res_net_LSTM_arch,
