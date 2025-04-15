@@ -16,7 +16,7 @@ from orcAI.architectures import (
 
 # import local
 from orcAI.auxiliary import SEED_ID_LOAD_TRAIN_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
-from orcAI.io import load_dataset, read_json, write_json
+from orcAI.io import load_dataset, read_json, write_json, load_orcai_model
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
