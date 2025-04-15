@@ -59,7 +59,7 @@ def _make_snippet_table(
 
     try:
         spectrogram_times = read_json(spectrogram_times_path)
-    except FileNotFoundError as e:
+    except FileNotFoundError as _:
         msgr.error(f"File not found: {spectrogram_times_path}")
         msgr.error("Did you create the spectrogram?")
         raise
@@ -85,12 +85,12 @@ def _make_snippet_table(
 
     try:
         label_filepointer = zarr.open(label_zarr_path, mode="r")
-    except FileNotFoundError as e:
+    except FileNotFoundError as _:
         msgr.warning(f"Label file not found: {label_zarr_path}")
         return (None, recording_duration, n_segments, recording, "missing label files")
     try:
         label_list = read_json(label_list_path)
-    except FileNotFoundError as e:
+    except FileNotFoundError as _:
         msgr.warning(f"Label file not found: {label_list_path}")
         return (None, recording_duration, n_segments, recording, "missing label files")
 
@@ -596,7 +596,7 @@ def create_tvt_data(
                 overwrite=overwrite,
                 compression=data_compression,
             )
-        except FileExistsError as e:
+        except FileExistsError as _:
             msgr.warning(
                 f"File {dataset_paths[itype]} already exists. Skipping. Set overwrite=True to overwrite."
             )
