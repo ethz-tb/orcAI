@@ -4,13 +4,13 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from keras.metrics import MeanMetricWrapper
 from keras.optimizers import Adam
 from tqdm.keras import TqdmCallback
 
 from orcAI.architectures import (
     build_model,
     masked_binary_accuracy,
+    masked_roc_auc,
     masked_binary_crossentropy,
 )
 
@@ -161,31 +161,25 @@ def train(
         msgr.part("Loading model")
         model, _, _ = load_orcai_model(model_dir)
     else:
-    msgr.part("Building model")
-    model = build_model(
-        tuple(dataset_shape["spectrogram"]),
-        orcai_parameter,
-        msgr=msgr,
-    )
+        msgr.part("Building model")
+        model = build_model(
+            tuple(dataset_shape["spectrogram"]),
+            orcai_parameter,
+            msgr=msgr,
+        )
 
-    # Compiling Model
-    msgr.part("Compiling model: " + model_name)
+        # Compiling Model
+        msgr.part("Compiling model: " + model_name)
 
-    # Metrics
-    masked_binary_accuracy_metric = MeanMetricWrapper(
-        fn=masked_binary_accuracy,
-        name="masked_binary_accuracy",
-    )
-
-    model.compile(
-        optimizer=Adam(learning_rate=model_parameter["learning_rate"]),
-        loss=masked_binary_crossentropy,
-        metrics=[masked_binary_accuracy_metric],
-    )
+        model.compile(
+            optimizer=Adam(learning_rate=model_parameter["learning_rate"]),
+            loss=masked_binary_crossentropy,
+            metrics=[masked_roc_auc, masked_binary_accuracy],
+        )
 
     # Callbacks
     early_stopping = EarlyStopping(
-        monitor="val_masked_binary_accuracy",
+        monitor="val_masked_roc_auc",
         patience=model_parameter["patience"],
         mode="max",
         restore_best_weights=True,
@@ -193,12 +187,12 @@ def train(
     )
     model_checkpoint = ModelCheckpoint(
         model_dir.joinpath(model_name + ".keras"),
-        monitor="val_masked_binary_accuracy",
+        monitor="val_masked_roc_auc",
         save_best_only=True,
         verbose=0 if verbosity < 3 else 1,
     )
     reduce_lr = ReduceLROnPlateau(
-        monitor="val_masked_binary_accuracy",
+        monitor="val_masked_roc_auc",
         factor=0.5,
         patience=model_parameter["patience"] // 2,
         min_lr=model_parameter["min_learning_rate"],
@@ -208,6 +202,7 @@ def train(
     total_params = model.count_params()
     trainable_params = _count_params(model.trainable_weights)
     non_trainable_params = _count_params(model.non_trainable_weights)
+
     msgr.info("Model size:", indent=1)
     msgr.info(f"Total parameters: {total_params}")
     msgr.info(f"Trainable parameters: {trainable_params}")
