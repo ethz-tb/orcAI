@@ -433,10 +433,10 @@ def create_tvt_snippet_tables(
     if isinstance(snippet_table, (Path | str)):
         snippet_table = pd.read_csv(snippet_table)
 
-    selected_snippet_stats = _compute_snippet_stats(
+    all_snippet_stats = _compute_snippet_stats(
         snippet_table, for_calls=orcai_parameter["calls"]
     )
-    all_snippet_stats_duration = selected_snippet_stats.filter(
+    all_snippet_stats_duration = all_snippet_stats.filter(
         regex=".*(?<!_ef)$", axis=1
     ).map(seconds_to_hms)
     msgr.info("Snippet stats [HMS]:", indent=1)
