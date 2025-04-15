@@ -19,7 +19,8 @@
         "n_batch_test": 320,
         "shuffle": true,
         "learning_rate": 1e-3,
-        "min_learning_rate": 1e-6
+        "min_learning_rate": 1e-6,
+        "call_weights": null
     },
     "spectrogram": {
         "sampling_rate": 48000,
