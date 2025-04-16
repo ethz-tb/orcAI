@@ -393,7 +393,7 @@ def test_model(
 
     if recording_data_dir is not None:
         msgr.part("Testing model on new, unfiltered sample of test snippets")
-        all_snippets = pd.read_csv(recording_data_dir.joinpath("all_snippets.csv.gz"))
+        all_snippets = pd.read_csv(data_dir.joinpath("all_snippets.csv.gz"))
         all_test_snippets = all_snippets[all_snippets["data_type"] == "test"]
         test_data_sample_size = n_batches_additional * model_parameter["batch_size"]
         rng = np.random.default_rng(
