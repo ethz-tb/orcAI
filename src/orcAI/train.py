@@ -36,47 +36,6 @@ def _count_params(trainable_weights: list) -> int:
     return np.sum([np.prod(w.shape) for w in trainable_weights])
 
 
-def _get_call_weights(
-    dataset: tf.data.Dataset, n_calls: int, method: str = "balanced"
-) -> np.ndarray:
-    """Get call weights from a dataset
-
-    Parameters
-    ----------
-    dataset : tf.data.Dataset
-        Dataset to get call weights from
-    n_calls : int
-        Number of classes in the dataset
-    method : str
-        Method to calculate call weights. Currently only "balanced" is supported.
-        "balanced" uses the same heuristic as sklearn.utils.class_weight.compute_class_weight
-        "max" uses the maximum number of samples for each class
-        "uniform" uses uniform weights for all classes
-
-    Returns
-    -------
-    np.ndarray
-        Dictionary of call weights
-    """
-    if method not in ["balanced", "max", "uniform"]:
-        raise ValueError(
-            f"Method {method} not supported. Use 'balanced', 'max' or 'uniform'."
-        )
-    if method == "uniform":
-        return np.ones(n_calls)
-
-    call_counts = np.zeros(n_calls)
-    for _, y_batch in dataset:
-        call_counts += np.sum(np.sum(y_batch, axis=1, where=y_batch > 0) > 0, axis=0)
-
-    if method == "balanced":
-        call_weights = call_counts.sum() / (n_calls * call_counts)
-    elif method == "max":
-        call_weights = 1 / call_counts * call_counts.max()
-
-    return dict(enumerate(call_weights))
-
-
 def train(
     data_dir: Path | str,
     output_dir: Path | str,
@@ -153,6 +112,13 @@ def train(
         compression=data_compression,
         seed=[SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
+    if orcai_parameter["model"]["call_weights"] is not None:
+        call_weights = read_json(
+            data_dir.joinpath("call_weights.json"),
+        )
+        msgr.info(f"Call weights: {call_weights}")
+    else:
+        call_weights = None
 
     msgr.info(f"Batch size {model_parameter['batch_size']}")
     model_dir = output_dir.joinpath(model_name)
@@ -207,14 +173,6 @@ def train(
     msgr.info(f"Total parameters: {total_params}")
     msgr.info(f"Trainable parameters: {trainable_params}")
     msgr.info(f"Non-trainable parameters: {non_trainable_params}")
-
-    if model_parameter["call_weights"] is not None:
-        call_weights = _get_call_weights(
-            train_dataset, len(label_calls), method=model_parameter["call_weights"]
-        )
-        msgr.info(f"Call weights: {call_weights}")
-    else:
-        call_weights = None
 
     msgr.print_memory_usage()
 

@@ -499,6 +499,47 @@ def create_tvt_snippet_tables(
     return
 
 
+def _get_call_weights(
+    dataset: tf.data.Dataset, n_calls: int, method: str = "balanced"
+) -> np.ndarray:
+    """Get call weights from a dataset
+
+    Parameters
+    ----------
+    dataset : tf.data.Dataset
+        Dataset to get call weights from
+    n_calls : int
+        Number of classes in the dataset
+    method : str
+        Method to calculate call weights.
+        "balanced" uses the same heuristic as sklearn.utils.class_weight.compute_class_weight
+        "max" uses the maximum number of samples for each class
+        "uniform" uses uniform weights for all classes
+
+    Returns
+    -------
+    np.ndarray
+        Dictionary of call weights
+    """
+    if method not in ["balanced", "max", "uniform"]:
+        raise ValueError(
+            f"Method {method} not supported. Use 'balanced', 'max' or 'uniform'."
+        )
+    if method == "uniform":
+        return np.ones(n_calls)
+
+    call_counts = np.zeros(n_calls)
+    for _, y_batch in tqdm(dataset, desc="Calculating call weights", unit="batch"):
+        call_counts += np.sum(np.sum(y_batch, axis=1, where=y_batch > 0) > 0, axis=0)
+
+    if method == "balanced":
+        call_weights = call_counts.sum() / (n_calls * call_counts)
+    elif method == "max":
+        call_weights = 1 / call_counts * call_counts.max()
+
+    return dict(enumerate(call_weights))
+
+
 def create_tvt_data(
     tvt_dir: Path | str,
     orcai_parameter: dict | (Path | str) = files("orcAI.defaults").joinpath(
@@ -586,8 +627,22 @@ def create_tvt_data(
         dataset[itype] = dataset[itype].prefetch(tf.data.experimental.AUTOTUNE)
         msgr.info(f"{itype.capitalize()} dataset created. Length {len(loader[itype])}.")
 
-    msgr.part("Saving datasets to disk")
+    if orcai_parameter["model"]["call_weights"] is not None:
+        msgr.part("Calculating training call weights")
+        call_weights = _get_call_weights(
+            dataset["train"],
+            label_sample.shape[1],
+            method=orcai_parameter["model"]["call_weights"],
+        )
+        write_json(
+            call_weights,
+            Path(tvt_dir, "call_weights.json"),
+        )
+        msgr.info(f"Call weights: {call_weights}")
+    else:
+        call_weights = None
 
+    msgr.part("Saving datasets to disk")
     for itype in data_types:
         try:
             save_dataset(
