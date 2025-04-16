@@ -6,12 +6,12 @@ from keras import Model
 import keras_tuner as kt
 import tensorflow as tf
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.metrics import MeanMetricWrapper
+
 from keras.optimizers import Adam
 
 from orcAI.architectures import (
     build_model,
-    masked_binary_accuracy,
+    masked_binary_accuracy_metric,
     masked_binary_crossentropy,
 )
 from orcAI.auxiliary import SEED_ID_LOAD_TEST_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
@@ -76,11 +76,6 @@ def _hp_model_builder(
             )
 
     model = build_model(input_shape, orcai_parameter, msgr=msgr)
-
-    masked_binary_accuracy_metric = MeanMetricWrapper(
-        fn=masked_binary_accuracy,
-        name="masked_binary_accuracy",
-    )
 
     model.compile(
         optimizer=Adam(learning_rate=0.001),

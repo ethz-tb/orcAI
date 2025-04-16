@@ -248,11 +248,10 @@ def read_annotation_file(annotation_file_path):
 
 
 def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
-    from keras.metrics import MeanMetricWrapper
     from keras.saving import load_model
 
     from orcAI.architectures import (
-        masked_binary_accuracy,
+        masked_binary_accuracy_metric,
         masked_binary_crossentropy,
         res_net_LSTM_arch,
     )
@@ -271,10 +270,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
         # legacy model
         model = res_net_LSTM_arch(**shape, **orcai_parameter["model"])
         model.load_weights(model_dir.joinpath("model_weights.h5"))
-        masked_binary_accuracy_metric = MeanMetricWrapper(
-            fn=masked_binary_accuracy,
-            name="masked_binary_accuracy",
-        )
+
         model.compile(
             optimizer=keras.optimizers.Adam(
                 learning_rate=orcai_parameter["model"]["learning_rate"]

@@ -1,9 +1,10 @@
-import tensorflow as tf
 import keras
+import tensorflow as tf
 from keras import layers
+from keras.metrics import MeanMetricWrapper
 from keras.saving import register_keras_serializable
 
-from orcAI.auxiliary import Messenger, MASK_VALUE
+from orcAI.auxiliary import MASK_VALUE, Messenger
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -234,7 +235,13 @@ def masked_binary_accuracy(y_true: any, y_pred: any):
 
     # Compute binary accuracy on masked values
     accuracy = keras.metrics.binary_accuracy(y_true_masked, y_pred_masked)
-    return tf.reduce_mean(accuracy)
+    return accuracy
+
+
+masked_binary_accuracy_metric = MeanMetricWrapper(
+    fn=masked_binary_accuracy,
+    name="masked_binary_accuracy",
+)
 
 
 @register_keras_serializable(name="masked_roc_auc")
@@ -264,6 +271,11 @@ def masked_roc_auc(y_true: any, y_pred: any):
     roc_auc = keras.metrics.AUC(curve="ROC")
     return roc_auc(y_true_masked, y_pred_masked)
 
+
+masked_roc_auc_metric = MeanMetricWrapper(
+    fn=masked_binary_accuracy,
+    name="masked_binary_accuracy",
+)
 
 ORCAI_ARCHITECTURES_FN = {
     "ResNet1DConv": res_net_1Dconv_arch,

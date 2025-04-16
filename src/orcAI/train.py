@@ -9,8 +9,8 @@ from tqdm.keras import TqdmCallback
 
 from orcAI.architectures import (
     build_model,
-    masked_binary_accuracy,
-    masked_roc_auc,
+    masked_binary_accuracy_metric,
+    masked_roc_auc_metric,
     masked_binary_crossentropy,
 )
 
@@ -174,7 +174,7 @@ def train(
         model.compile(
             optimizer=Adam(learning_rate=model_parameter["learning_rate"]),
             loss=masked_binary_crossentropy,
-            metrics=[masked_roc_auc, masked_binary_accuracy],
+            metrics=[masked_roc_auc_metric, masked_binary_accuracy_metric],
         )
 
     # Callbacks
