@@ -228,11 +228,10 @@ def _test_model_on_dataset(
     """Test a model on a dataset."""
     msgr.part(f"Testing model on {dataset_name}")
     msgr.info(f"Evaluating model on {dataset_name}")
-    data_loss, data_metric = model.evaluate(
-        dataset, verbose=0 if msgr.verbosity < 3 else 1
+    data_metrics = model.evaluate(
+        dataset, return_dict=True, verbose=0 if msgr.verbosity < 3 else 1
     )
-    msgr.info(f"loss: {data_loss:.4f}")
-    msgr.info(f"masked binary accuracy: {data_metric:.4f}")
+    msgr.info(data_metrics)
     msgr.debug(f"Input (spectrogram) shape: {model.input_shape}")
     msgr.debug(f"Output (labels) shape: {model.output_shape}", indent=-1)
 
@@ -274,8 +273,7 @@ def _test_model_on_dataset(
 
     return {
         "dataset": dataset_name,
-        "loss": data_loss,
-        "masked_binary_accuracy": data_metric,
+        "data_metrics": data_metrics,
         "confusion_table": confusion_table,
         "misclassification_tables": missclassification_tables,
     }
@@ -287,16 +285,12 @@ def _save_test_results(
     msgr: Messenger,
 ):
     """Save test results to disk."""
-    msgr.part(f"Saving test results")
+    msgr.part("Saving test results")
     dataset_name = results["dataset"]
     os.makedirs(save_results_dir, exist_ok=True)
-    metrics = {
-        key: value
-        for key, value in results.items()
-        if key in ["loss", "masked_binary_accuracy"]
-    }
+
     with open(save_results_dir.joinpath(dataset_name + "_metrics.json"), "w") as f:
-        json.dump(metrics, f)
+        json.dump(results["data_metrics"], f)
 
     results["confusion_table"].to_csv(
         save_results_dir.joinpath(dataset_name + "_confusion_table.csv"),
