@@ -117,6 +117,11 @@ def train(
             data_dir.joinpath("call_weights.json"),
         )
         msgr.info(f"Call weights: {call_weights}")
+        if list(call_weights.keys()) != label_calls:
+            raise ValueError(
+                "Call weights do not match label calls. Please check the call weights file. Order of calls must be the same as in the orcAI parameter file."
+            )
+        call_weights_int = {n: call_weights[key] for n, key in enumerate(call_weights)}
     else:
         call_weights = None
 
@@ -197,7 +202,7 @@ def train(
             ],
             steps_per_epoch=model_parameter["n_batch_train"],
             validation_steps=model_parameter["n_batch_val"],
-            class_weight=call_weights,
+            class_weight=call_weights_int,
             verbose=0,
         )
 

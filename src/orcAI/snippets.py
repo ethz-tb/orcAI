@@ -500,7 +500,10 @@ def create_tvt_snippet_tables(
 
 
 def _get_call_weights(
-    dataset: tf.data.Dataset, n_calls: int, method: str = "balanced"
+    dataset: tf.data.Dataset,
+    dataset_length: int,
+    call_names: list[str],
+    method: str = "balanced",
 ) -> np.ndarray:
     """Get call weights from a dataset
 
@@ -521,6 +524,7 @@ def _get_call_weights(
     np.ndarray
         Dictionary of call weights
     """
+    n_calls = len(call_names)
     if method not in ["balanced", "max", "uniform"]:
         raise ValueError(
             f"Method {method} not supported. Use 'balanced', 'max' or 'uniform'."
@@ -529,15 +533,17 @@ def _get_call_weights(
         return np.ones(n_calls)
 
     call_counts = np.zeros(n_calls)
-    for _, y_batch in tqdm(dataset, desc="Calculating call weights", unit="batch"):
-        call_counts += np.sum(np.sum(y_batch, axis=1, where=y_batch > 0) > 0, axis=0)
+    for _, y in tqdm(
+        dataset, desc="Calculating call weights", unit="sample", total=dataset_length
+    ):
+        call_counts += np.sum(y, axis=0, where=y > 0)
 
     if method == "balanced":
         call_weights = call_counts.sum() / (n_calls * call_counts)
     elif method == "max":
         call_weights = 1 / call_counts * call_counts.max()
 
-    return dict(enumerate(call_weights))
+    return dict(zip(call_names, call_weights))
 
 
 def create_tvt_data(
@@ -631,7 +637,8 @@ def create_tvt_data(
         msgr.part("Calculating training call weights")
         call_weights = _get_call_weights(
             dataset["train"],
-            label_sample.shape[1],
+            len(loader["train"]),
+            call_names=orcai_parameter["calls"],
             method=orcai_parameter["model"]["call_weights"],
         )
         write_json(
