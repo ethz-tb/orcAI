@@ -17,6 +17,8 @@
     - Use `null` (in Json, `None` in python) to disable class weights.
 - __Breaking__: switch to class based metrics
 - __Breaking__: implement AUC ROC metric
+- __Breaking__: making the choice of metric to monitor for callbacks an option in orcai_parameters.json
+  - to unbreak add `"monitor": "val_MBA"` to the model section of orcai_parameters.json
 - make ReduceLROnPlateau callback patience == model_parameters['patience'] // __3__
 - define metrics in architectures.py
 - new arg parameter to overwrite default orcai parameter on project init

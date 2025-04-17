@@ -20,7 +20,8 @@
         "shuffle": true,
         "learning_rate": 1e-3,
         "min_learning_rate": 1e-6,
-        "call_weights": null
+        "call_weights": null,
+        "monitor": "val_MAUC"
     },
     "spectrogram": {
         "sampling_rate": 48000,

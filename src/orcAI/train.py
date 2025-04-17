@@ -149,8 +149,9 @@ def train(
         )
 
     # Callbacks
+
     early_stopping = EarlyStopping(
-        monitor="val_MAUC",
+        monitor=model_parameter["monitor"],
         patience=model_parameter["patience"],
         mode="max",
         restore_best_weights=True,
@@ -158,12 +159,12 @@ def train(
     )
     model_checkpoint = ModelCheckpoint(
         model_dir.joinpath(model_name + ".keras"),
-        monitor="val_MAUC",
+        monitor=model_parameter["monitor"],
         save_best_only=True,
         verbose=0 if verbosity < 3 else 1,
     )
     reduce_lr = ReduceLROnPlateau(
-        monitor="val_MAUC",
+        monitor=model_parameter["monitor"],
         factor=0.5,
         patience=model_parameter["patience"] // 3,
         min_lr=model_parameter["min_learning_rate"],
@@ -183,6 +184,7 @@ def train(
 
     # Train model
     msgr.part(f"Fitting model: {model_name}")
+    msgr.info(f"Monitoring {model_parameter['monitor']}")
 
     with tf.device("/GPU:0"):
         history = model.fit(
