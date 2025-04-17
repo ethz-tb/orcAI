@@ -4,7 +4,6 @@
 
 ### Changes
 
-- __Breaking__: experimental masked_roc_auc metric to monitor.
 - __Breaking__: in train, load model instead of weights when restarting
   - the argument `load_weights` is now `load_model`
   - the flag option in the cli `--load_weights` is now `--load_model`
@@ -16,8 +15,10 @@
     - `"max"` is 1/count \* total,
     - `"uniform"` is all ones and equal to None.
     - Use `null` (in Json, `None` in python) to disable class weights.
-- __Breaking__: remove `--no-weights` option from train
-
+- __Breaking__: switch to class based metrics
+- __Breaking__: implement AUC ROC metric
+- make ReduceLROnPlateau callback patience == model_parameters['patience'] // __3__
+- define metrics in architectures.py
 
 ## [0.15.1] - 2025-04-15
 

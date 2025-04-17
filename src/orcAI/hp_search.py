@@ -2,17 +2,17 @@ from functools import partial
 from importlib.resources import files
 from pathlib import Path
 
-from keras import Model
 import keras_tuner as kt
 import tensorflow as tf
+from keras import Model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-
 from keras.optimizers import Adam
 
 from orcAI.architectures import (
+    MaskedAUC,
+    MaskedBinaryAccuracy,
+    MaskedBinaryCrossentropy,
     build_model,
-    masked_binary_accuracy_metric,
-    masked_binary_crossentropy,
 )
 from orcAI.auxiliary import SEED_ID_LOAD_TEST_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
 from orcAI.io import load_dataset, read_json, write_json
@@ -79,8 +79,8 @@ def _hp_model_builder(
 
     model.compile(
         optimizer=Adam(learning_rate=0.001),
-        loss=masked_binary_crossentropy,
-        metrics=[masked_binary_accuracy_metric],
+        loss=MaskedBinaryCrossentropy(),
+        metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
     )
     return model
 
@@ -175,7 +175,7 @@ def hyperparameter_search(
                     orcai_parameter=orcai_parameter,
                     hps_parameter=hps_parameter,
                 ),
-                objective=kt.Objective("val_masked_binary_accuracy", direction="max"),
+                objective=kt.Objective("val_MAUC", direction="max"),
                 max_epochs=10,
                 directory=hps_logs_dir,
                 project_name=model_name,
@@ -190,13 +190,13 @@ def hyperparameter_search(
                 orcai_parameter=orcai_parameter,
                 hps_parameter=hps_parameter,
             ),
-            objective=kt.Objective("val_masked_binary_accuracy", direction="max"),
+            objective=kt.Objective("val_MAUC", direction="max"),
             max_epochs=10,
             directory=hps_logs_dir,
             project_name=model_name,
         )
     early_stopping = EarlyStopping(
-        monitor="val_masked_binary_accuracy",
+        monitor="val_MAUC",
         patience=5,
         mode="max",
         restore_best_weights=True,
@@ -206,7 +206,7 @@ def hyperparameter_search(
         msgr.info(f"Saving models to hps/{model_name}.keras")
         model_checkpoint = ModelCheckpoint(
             Path(output_dir).joinpath(model_name, "hps", model_name + ".keras"),
-            monitor="val_masked_binary_accuracy",
+            monitor="val_MAUC",
             save_best_only=True,
         )
     tuner.search(

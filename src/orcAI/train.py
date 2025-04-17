@@ -8,15 +8,15 @@ from keras.optimizers import Adam
 from tqdm.keras import TqdmCallback
 
 from orcAI.architectures import (
+    MaskedAUC,
+    MaskedBinaryAccuracy,
+    MaskedBinaryCrossentropy,
     build_model,
-    masked_binary_accuracy_metric,
-    masked_roc_auc_metric,
-    masked_binary_crossentropy,
 )
 
 # import local
 from orcAI.auxiliary import SEED_ID_LOAD_TRAIN_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
-from orcAI.io import load_dataset, read_json, write_json, load_orcai_model
+from orcAI.io import load_dataset, load_orcai_model, read_json, write_json
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -139,13 +139,13 @@ def train(
 
         model.compile(
             optimizer=Adam(learning_rate=model_parameter["learning_rate"]),
-            loss=masked_binary_crossentropy,
-            metrics=[masked_roc_auc_metric, masked_binary_accuracy_metric],
+            loss=MaskedBinaryCrossentropy(),
+            metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
         )
 
     # Callbacks
     early_stopping = EarlyStopping(
-        monitor="val_masked_roc_auc",
+        monitor="val_MAUC",
         patience=model_parameter["patience"],
         mode="max",
         restore_best_weights=True,
@@ -153,12 +153,12 @@ def train(
     )
     model_checkpoint = ModelCheckpoint(
         model_dir.joinpath(model_name + ".keras"),
-        monitor="val_masked_roc_auc",
+        monitor="val_MAUC",
         save_best_only=True,
         verbose=0 if verbosity < 3 else 1,
     )
     reduce_lr = ReduceLROnPlateau(
-        monitor="val_masked_roc_auc",
+        monitor="val_MAUC",
         factor=0.5,
         patience=model_parameter["patience"] // 3,
         min_lr=model_parameter["min_learning_rate"],

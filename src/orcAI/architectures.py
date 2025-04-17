@@ -1,7 +1,8 @@
 import keras
 import tensorflow as tf
 from keras import layers
-from keras.metrics import MeanMetricWrapper
+from keras.losses import BinaryCrossentropy, Loss
+from keras.metrics import AUC, BinaryAccuracy
 from keras.saving import register_keras_serializable
 
 from orcAI.auxiliary import MASK_VALUE, Messenger
@@ -179,103 +180,65 @@ def res_net_LSTM_arch(
     return keras.Model(inputs, outputs)
 
 
-@register_keras_serializable(name="masked_binary_crossentropy")
-def masked_binary_crossentropy(y_true: any, y_pred: any):
-    """Custom binary cross-entropy loss function with label masking.
+@register_keras_serializable(name="MaskedBinaryCrossentropy")
+class MaskedBinaryCrossentropy(Loss):
+    def __init__(
+        self,
+        mask_value=MASK_VALUE,
+        from_logits=False,
+        name="MBCE",
+        **kwargs,
+    ):
+        super().__init__(name=name, **kwargs)
+        self.mask_value = mask_value
+        self.from_logits = from_logits
+        self.loss_fn = BinaryCrossentropy(
+            from_logits=from_logits, reduction=tf.keras.losses.Reduction.NONE
+        )
 
-    Parameters
-    ----------
-    y_true : any
-        True labels (with -1 indicating missing labels).
-    y_pred : any
-        Predicted probabilities for each label.
+    def call(self, y_true, y_pred):
+        mask = tf.not_equal(y_true, tf.cast(self.mask_value, y_true.dtype))
 
-    Returns
-    -------
-    tf.reduce_mean(loss) :
-        The reduced tensor
+        y_true_masked = tf.boolean_mask(y_true, mask)
+        y_pred_masked = tf.boolean_mask(y_pred, mask)
 
-    """
-    # Ensure mask_value has the same type as y_true
-    mask_value = tf.cast(MASK_VALUE, y_true.dtype)
+        # Compute element-wise loss (not reduced yet)
+        loss = self.loss_fn(y_true_masked, y_pred_masked)
 
-    # Create a mask: where y_true != mask_value
-    mask = tf.not_equal(y_true, mask_value)
-    y_true_masked = tf.boolean_mask(y_true, mask)
-    y_pred_masked = tf.boolean_mask(y_pred, mask)
-
-    # Standard binary cross-entropy on the masked values
-    loss_fn = keras.losses.BinaryCrossentropy(from_logits=False)
-    loss = loss_fn(y_true_masked, y_pred_masked)
-    return tf.reduce_mean(loss)
+        # Reduce manually (mean of non-masked losses)
+        return tf.reduce_mean(loss)
 
 
-@register_keras_serializable(name="masked_binary_accuracy")
-def masked_binary_accuracy(y_true: any, y_pred: any):
-    """Custom binary accuracy metric that excludes masked labels.
+@register_keras_serializable(name="MaskedBinaryAccuracy")
+class MaskedBinaryAccuracy(BinaryAccuracy):
+    def __init__(self, mask_value=MASK_VALUE, name="MBA", **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.mask_value = mask_value
 
-    Parameters
-    ----------
-    y_true : any
-        True labels (with orcai.auxiliary.MASK_VALUE indicating missing labels).
-    y_pred : any
-        Predicted probabilities.
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        mask = tf.not_equal(y_true, tf.cast(self.mask_value, y_true.dtype))
+        y_true = tf.boolean_mask(y_true, mask)
+        y_pred = tf.boolean_mask(y_pred, mask)
 
-    Returns
-    -------
-    tf.reduce_mean(accuracy) :
-        The reduced tensor
-    """
-    # Ensure mask_value has the same type as y_true
-    mask_value = tf.cast(MASK_VALUE, y_true.dtype)
-    # Create a mask: where y_true != mask_value
-    mask = tf.not_equal(y_true, mask_value)
-    y_true_masked = tf.boolean_mask(y_true, mask)
-    y_pred_masked = tf.boolean_mask(y_pred, mask)
-
-    # Compute binary accuracy on masked values
-    accuracy = keras.metrics.binary_accuracy(y_true_masked, y_pred_masked)
-    return accuracy
+        return super().update_state(y_true, y_pred, sample_weight)
 
 
-masked_binary_accuracy_metric = MeanMetricWrapper(
-    fn=masked_binary_accuracy,
-    name="masked_binary_accuracy",
-)
+@register_keras_serializable(name="MaskedAUC")
+class MaskedAUC(AUC):
+    def __init__(self, mask_value=MASK_VALUE, name="MAUC", **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.mask_value = mask_value
 
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Mask out invalid values
+        mask = tf.not_equal(y_true, tf.cast(self.mask_value, y_true.dtype))
 
-@register_keras_serializable(name="masked_roc_auc")
-def masked_roc_auc(y_true: any, y_pred: any):
-    """Custom ROC AUC metric that excludes masked labels.
+        # Flatten for binary/multi-label case
+        y_true = tf.boolean_mask(y_true, mask)
+        y_pred = tf.boolean_mask(y_pred, mask)
 
-    Parameters
-    ----------
-    y_true : any
-        True labels (with orcai.auxiliary.MASK_VALUE indicating missing labels).
-    y_pred : any
-        Predicted probabilities.
+        return super().update_state(y_true, y_pred, sample_weight)
 
-    Returns
-    -------
-    tf.reduce_mean(roc_auc) :
-        The reduced tensor
-    """
-    # Ensure mask_value has the same type as y_true
-    mask_value = tf.cast(MASK_VALUE, y_true.dtype)
-    # Create a mask: where y_true != mask_value
-    mask = tf.not_equal(y_true, mask_value)
-    y_true_masked = tf.boolean_mask(y_true, mask)
-    y_pred_masked = tf.boolean_mask(y_pred, mask)
-
-    # Compute ROC AUC on masked values
-    roc_auc = keras.metrics.AUC(curve="ROC")
-    return roc_auc(y_true_masked, y_pred_masked)
-
-
-masked_roc_auc_metric = MeanMetricWrapper(
-    fn=masked_binary_accuracy,
-    name="masked_binary_accuracy",
-)
 
 ORCAI_ARCHITECTURES_FN = {
     "ResNet1DConv": res_net_1Dconv_arch,
