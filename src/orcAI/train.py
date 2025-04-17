@@ -123,7 +123,7 @@ def train(
             )
         call_weights_int = {n: call_weights[key] for n, key in enumerate(call_weights)}
     else:
-        call_weights = None
+        call_weights_int = None
 
     msgr.info(f"Batch size {model_parameter['batch_size']}")
     model_dir = output_dir.joinpath(model_name)
