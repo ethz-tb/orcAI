@@ -15,6 +15,7 @@ def init_project(
     project_name: str,
     verbosity: int = 2,
     msgr: Messenger | None = None,
+    parameter: Path | str | dict | None = None,
 ) -> None:
     """Initialize a new orcAI project.
 
@@ -28,7 +29,8 @@ def init_project(
         Verbosity level. 0: only errors, 1: only warnings, 2: info, 3: debug.
     msgr : Messenger
         Messenger object for logging. If None, a new Messenger object is created.
-
+    parameter : Path | str | dict | None
+        OrcAI Parameters to overwrite defaults
     Returns
     -------
     None
@@ -55,9 +57,25 @@ def init_project(
             "default_orcai_parameter.json".replace("default", project_name)
         )
     )
-    msgr.info(f"Setting seed")
-    orcai_parameter_new["seed"] = SeedSequence().entropy
-    orcai_parameter_new["name"] = project_name
+    if parameter is not None:
+        if isinstance(parameter, (Path | str)):
+            parameter = read_json(parameter)
+
+        for key in parameter.keys():
+            if key not in orcai_parameter_new:
+                msgr.warning(f"{key} not found in default orcAI parameters. Ignoring.")
+            orcai_parameter_new[key].update(parameter[key])
+            msgr.info(
+                f'Updating "{key}" in default orcAI parameters with',
+                indent=1,
+            )
+            msgr.info(parameter[key], indent=-1)
+
+        if "seed" not in parameter:
+            msgr.info("Generating random seed")
+            orcai_parameter_new["seed"] = SeedSequence().entropy
+            orcai_parameter_new["name"] = project_name
+
     write_json(
         orcai_parameter_new,
         project_dir.joinpath(

@@ -229,6 +229,14 @@ def cli_filter_predictions(**kwargs):
 @click.argument("project_dir", type=ClickDirPathWcreate)
 @click.argument("project_name", type=str)
 @click.option(
+    "--parameter",
+    "-p",
+    type=ClickFilePathR,
+    default=None,
+    show_default=True,
+    help="Path to a JSON file containing OrcAI parameter (or a subset of). Only needed if overwriting defaults.",
+)
+@click.option(
     "--verbosity",
     "-v",
     type=click.IntRange(0, 3),
@@ -594,8 +602,6 @@ def cli_create_tvt_data(**kwargs):
     "--orcai_parameter",
     "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
-    show_default="default_orcai_parameter.json",
     help="Path to the OrcAI parameter file.",
 )
 @click.option(

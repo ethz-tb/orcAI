@@ -19,6 +19,7 @@
 - __Breaking__: implement AUC ROC metric
 - make ReduceLROnPlateau callback patience == model_parameters['patience'] // __3__
 - define metrics in architectures.py
+- new arg parameter to overwrite default orcai parameter on project init
 
 ## [0.15.1] - 2025-04-15
 
