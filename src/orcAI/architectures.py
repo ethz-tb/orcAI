@@ -1,9 +1,6 @@
 import keras
 import tensorflow as tf
 from keras import layers
-from keras.losses import BinaryCrossentropy, Loss
-from keras.metrics import AUC, BinaryAccuracy
-from keras.saving import register_keras_serializable
 
 from orcAI.auxiliary import MASK_VALUE, Messenger
 
@@ -180,8 +177,8 @@ def res_net_LSTM_arch(
     return keras.Model(inputs, outputs)
 
 
-@register_keras_serializable(name="MaskedBinaryCrossentropy")
-class MaskedBinaryCrossentropy(Loss):
+@keras.saving.register_keras_serializable(name="MaskedBinaryCrossentropy")
+class MaskedBinaryCrossentropy(keras.losses.Loss):
     def __init__(
         self,
         mask_value=MASK_VALUE,
@@ -192,7 +189,7 @@ class MaskedBinaryCrossentropy(Loss):
         super().__init__(name=name, **kwargs)
         self.mask_value = mask_value
         self.from_logits = from_logits
-        self.loss_fn = BinaryCrossentropy(
+        self.loss_fn = keras.losses.BinaryCrossentropy(
             from_logits=from_logits, reduction=tf.keras.losses.Reduction.NONE
         )
 
@@ -202,15 +199,13 @@ class MaskedBinaryCrossentropy(Loss):
         y_true_masked = tf.boolean_mask(y_true, mask)
         y_pred_masked = tf.boolean_mask(y_pred, mask)
 
-        # Compute element-wise loss (not reduced yet)
         loss = self.loss_fn(y_true_masked, y_pred_masked)
 
-        # Reduce manually (mean of non-masked losses)
         return tf.reduce_mean(loss)
 
 
-@register_keras_serializable(name="MaskedBinaryAccuracy")
-class MaskedBinaryAccuracy(BinaryAccuracy):
+@keras.saving.register_keras_serializable(name="MaskedBinaryAccuracy")
+class MaskedBinaryAccuracy(keras.metrics.BinaryAccuracy):
     def __init__(self, mask_value=MASK_VALUE, name="MBA", **kwargs):
         super().__init__(name=name, **kwargs)
         self.mask_value = mask_value
@@ -223,8 +218,8 @@ class MaskedBinaryAccuracy(BinaryAccuracy):
         return super().update_state(y_true, y_pred, sample_weight)
 
 
-@register_keras_serializable(name="MaskedAUC")
-class MaskedAUC(AUC):
+@keras.saving.register_keras_serializable(name="MaskedAUC")
+class MaskedAUC(keras.metrics.AUC):
     def __init__(self, mask_value=MASK_VALUE, name="MAUC", **kwargs):
         super().__init__(name=name, **kwargs)
         self.mask_value = mask_value
@@ -233,7 +228,6 @@ class MaskedAUC(AUC):
         # Mask out invalid values
         mask = tf.not_equal(y_true, tf.cast(self.mask_value, y_true.dtype))
 
-        # Flatten for binary/multi-label case
         y_true = tf.boolean_mask(y_true, mask)
         y_pred = tf.boolean_mask(y_pred, mask)
 
