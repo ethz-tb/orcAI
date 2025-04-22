@@ -21,7 +21,7 @@
         "learning_rate": 1e-3,
         "min_learning_rate": 1e-6,
         "call_weights": null,
-        "monitor": "val_MAUC"
+        "monitor": "val_MBA"
     },
     "spectrogram": {
         "sampling_rate": 48000,
