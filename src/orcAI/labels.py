@@ -16,8 +16,7 @@ from orcAI.io import (
 
 
 def _convert_annotation(
-    annotation_file_path: Path | str,
-    recording_data_dir: Path | str,
+    label_calls: list,
     labels_present: list,
     labels_masked: list,
     call_equivalences: (Path | str) | dict = None,
@@ -32,6 +31,8 @@ def _convert_annotation(
         Path to the annotation file.
     recording_data_dir : Path | str
         Path to the recording data directory where the spectrogram is stored.
+    label_calls : list
+        List of labels that are intended for teaching.
     labels_present : list
         List of labels that are present in the annotation file.
     labels_masked : list
@@ -99,16 +100,15 @@ def _convert_annotation(
             MASK_VALUE * np.ones(len(t_vec), dtype=int)
         )  # set mask value to -1 for label to be masked, set to zero if labels should be assumed absent
 
-    # sort columns alphabetically
-    annotations_array = annotations_array.reindex(
-        sorted(annotations_array.columns), axis=1
-    )
+    # sort columns in original order
+    annotations_array = annotations_array.reindex(label_calls, axis=1)
 
-    label_list = dict.fromkeys(labels_present, "present") | dict.fromkeys(
+    label_dict = dict.fromkeys(labels_present, "present") | dict.fromkeys(
         labels_masked, "masked"
     )
-    label_list = dict(sorted(label_list.items()))
-    return annotations_array, label_list
+    # sort label_dict in original order
+    label_dict = {k: label_dict[k] for k in label_calls}
+    return annotations_array, label_dict
 
 
 def create_label_arrays(
