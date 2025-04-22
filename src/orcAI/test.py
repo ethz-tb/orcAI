@@ -244,6 +244,7 @@ def _test_model_on_dataset(
         dataset,
         disable=True if msgr.verbosity < 2 else None,
         desc="predicting data",
+        unit="batch",
     ):
         data_true.append(label_batch.numpy())
         data_predicted.append(model.predict(spectrogram_batch, verbose=0))
