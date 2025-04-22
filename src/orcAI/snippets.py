@@ -21,7 +21,7 @@ tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse onl
 
 
 def _make_snippet_table(
-    recording_dir: Path | str,
+    recording_dir: Path,
     orcai_parameter: dict,
     rng=np.random.default_rng(),
     msgr: Messenger = Messenger(verbosity=2),
@@ -32,7 +32,7 @@ def _make_snippet_table(
 
     Parameters
     ----------
-    recording_dir : Path | str
+    recording_dir : Path
         Path to the recording data directory
     orcai_parameter : dict
         dict containing orcai parameter
@@ -52,10 +52,10 @@ def _make_snippet_table(
     status: str
         status of snippet table creation (success or reason for failure)
     """
-    recording = Path(recording_dir).stem
-    label_zarr_path = Path(recording_dir).joinpath("labels", "labels.zarr")
-    label_list_path = Path(recording_dir).joinpath("labels", "label_list.json")
-    spectrogram_times_path = Path(recording_dir).joinpath("spectrogram", "times.json")
+    recording = recording_dir.stem
+    label_zarr_path = recording_dir.joinpath("labels", "labels.zarr")
+    label_list_path = recording_dir.joinpath("labels", "label_list.json")
+    spectrogram_times_path = recording_dir.joinpath("spectrogram", "times.json")
 
     try:
         spectrogram_times = read_json(spectrogram_times_path)
@@ -64,8 +64,6 @@ def _make_snippet_table(
         msgr.error("Did you create the spectrogram?")
         raise
 
-    if isinstance(orcai_parameter, (Path | str)):
-        orcai_parameter = read_json(orcai_parameter)
     model_parameter = orcai_parameter["model"]
     snippet_parameter = orcai_parameter["snippets"]
 
@@ -139,7 +137,7 @@ def _make_snippet_table(
                     list(
                         [
                             recording,
-                            recording_dir,
+                            str(recording_dir),
                             type,
                             index_t_start,
                             index_t_stop,
@@ -274,7 +272,7 @@ def create_snippet_table(
     ):
         snippet_table, recording_length, n_segments, recording, result = (
             _make_snippet_table(
-                recording_table.loc[i, "recording_data_dir"],
+                Path(recording_table.loc[i, "recording_data_dir"]),
                 orcai_parameter=orcai_parameter,
                 rng=rng,
                 msgr=Messenger(verbosity=0),
