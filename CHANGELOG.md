@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.0] - 2025-04-22
+
+### Changes
+
+- cleanup imports
+- refactor error-prone sorting of annotations
+- __Breaking__: new parameter in orcai_parameter: "EarlyStopping_patience": 10, "ReduceLROnPlateau_patience": 3, "ReduceLROnPlateau_factor": 0.5
+  - add to orcai_parameters.json to unbreak.
+
 ## [0.16.0] - 2025-04-22
 
 ### Changes
