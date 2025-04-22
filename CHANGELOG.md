@@ -323,3 +323,4 @@
 [0.15.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.15.0
 [0.15.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.15.1
 [0.16.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.16.0
+[0.17.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.17.0
