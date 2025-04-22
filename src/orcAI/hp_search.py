@@ -2,11 +2,9 @@ from functools import partial
 from importlib.resources import files
 from pathlib import Path
 
+import keras
 import keras_tuner as kt
 import tensorflow as tf
-from keras import Model
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.optimizers import Adam
 
 from orcAI.architectures import (
     MaskedAUC,
@@ -26,7 +24,7 @@ def _hp_model_builder(
     orcai_parameter: dict,
     hps_parameter: dict,
     msgr: Messenger = Messenger(verbosity=0),
-) -> Model:
+) -> keras.Model:
     """Build a model for hyperparameter search
     Parameters
     ----------
@@ -78,7 +76,7 @@ def _hp_model_builder(
     model = build_model(input_shape, orcai_parameter, msgr=msgr)
 
     model.compile(
-        optimizer=Adam(learning_rate=0.001),
+        optimizer=keras.optimizers.Adam(learning_rate=0.001),
         loss=MaskedBinaryCrossentropy(),
         metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
     )
@@ -175,7 +173,9 @@ def hyperparameter_search(
                     orcai_parameter=orcai_parameter,
                     hps_parameter=hps_parameter,
                 ),
-                objective=kt.Objective("val_MAUC", direction="max"),
+                objective=kt.Objective(
+                    orcai_parameter["model"]["monitor"], direction="max"
+                ),
                 max_epochs=10,
                 directory=hps_logs_dir,
                 project_name=model_name,
@@ -190,13 +190,15 @@ def hyperparameter_search(
                 orcai_parameter=orcai_parameter,
                 hps_parameter=hps_parameter,
             ),
-            objective=kt.Objective("val_MAUC", direction="max"),
+            objective=kt.Objective(
+                orcai_parameter["model"]["monitor"], direction="max"
+            ),
             max_epochs=10,
             directory=hps_logs_dir,
             project_name=model_name,
         )
-    early_stopping = EarlyStopping(
-        monitor="val_MAUC",
+    early_stopping = keras.callbacks.EarlyStopping(
+        monitor=orcai_parameter["model"]["monitor"],
         patience=5,
         mode="max",
         restore_best_weights=True,
@@ -204,9 +206,9 @@ def hyperparameter_search(
     )
     if save_best_model:
         msgr.info(f"Saving models to hps/{model_name}.keras")
-        model_checkpoint = ModelCheckpoint(
+        model_checkpoint = keras.callbacks.ModelCheckpoint(
             Path(output_dir).joinpath(model_name, "hps", model_name + ".keras"),
-            monitor="val_MAUC",
+            monitor=orcai_parameter["model"]["monitor"],
             save_best_only=True,
         )
     tuner.search(

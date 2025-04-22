@@ -1,10 +1,9 @@
 from importlib.resources import files
 from pathlib import Path
 
+import keras
 import numpy as np
 import tensorflow as tf
-from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from keras.optimizers import Adam
 from tqdm.keras import TqdmCallback
 
 from orcAI.architectures import (
@@ -143,27 +142,29 @@ def train(
         msgr.part("Compiling model: " + model_name)
 
         model.compile(
-            optimizer=Adam(learning_rate=model_parameter["learning_rate"]),
+            optimizer=keras.optimizers.Adam(
+                learning_rate=model_parameter["learning_rate"]
+            ),
             loss=MaskedBinaryCrossentropy(),
             metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
         )
 
     # Callbacks
 
-    early_stopping = EarlyStopping(
+    early_stopping = keras.callbacks.EarlyStopping(
         monitor=model_parameter["monitor"],
         patience=model_parameter["patience"],
         mode="max",
         restore_best_weights=True,
         verbose=0 if verbosity < 3 else 1,
     )
-    model_checkpoint = ModelCheckpoint(
+    model_checkpoint = keras.callbacks.ModelCheckpoint(
         model_dir.joinpath(model_name + ".keras"),
         monitor=model_parameter["monitor"],
         save_best_only=True,
         verbose=0 if verbosity < 3 else 1,
     )
-    reduce_lr = ReduceLROnPlateau(
+    reduce_lr = keras.callbacks.ReduceLROnPlateau(
         monitor=model_parameter["monitor"],
         factor=0.5,
         patience=model_parameter["patience"] // 3,

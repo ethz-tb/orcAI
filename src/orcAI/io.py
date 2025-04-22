@@ -248,7 +248,7 @@ def read_annotation_file(annotation_file_path):
 
 
 def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
-    from keras.saving import load_model
+    import keras
 
     from orcAI.architectures import (
         MaskedAUC,
@@ -261,7 +261,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
     shape = read_json(model_dir.joinpath("model_shape.json"))
 
     if model_dir.joinpath(orcai_parameter["name"] + ".keras").exists():
-        model = load_model(
+        model = keras.saving.load_model(
             model_dir.joinpath(orcai_parameter["name"] + ".keras"),
             custom_objects=None,
             compile=True,
