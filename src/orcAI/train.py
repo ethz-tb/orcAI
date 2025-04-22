@@ -59,7 +59,7 @@ def train(
     data_compression: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
     load_model : bool
-        Load weights from previous training.
+        Load model from previous training.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     """
