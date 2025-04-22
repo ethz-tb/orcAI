@@ -267,7 +267,7 @@ def create_spectrograms(
         is_included = recording_table[label_calls].apply(lambda x: x.any(), axis=1)
         if sum(~is_included) > 0:
             msgr.info(
-                f"Excluded recordings because they lack any possible annotations:",
+                "Excluded recordings because they lack any possible annotations:",
                 indent=1,
             )
             msgr.info(str(recording_table[~is_included]["recording"].values), indent=-1)

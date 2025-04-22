@@ -176,7 +176,7 @@ def filter_predictions(
         )
         msgr.info(f"Filtered predictions saved to {output_file}")
 
-    msgr.success(f"Filtering predictions finished.")
+    msgr.success("Filtering predictions finished.")
 
     return predicted_labels_duration_ok
 
@@ -372,7 +372,7 @@ def _predict_wav(
             ).to_csv(predictions_path, index_label="time", compression="gzip")
             msgr.success(f"Prediction probabilities saved to {predictions_path}")
     else:
-        msgr.success(f"Prediction finished.")
+        msgr.success("Prediction finished.")
     return predicted_labels
 
 
