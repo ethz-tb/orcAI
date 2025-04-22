@@ -93,13 +93,13 @@ def make_spectrogram(
     msgr.part("Extracting frequency range and clipping spectrogram")
 
     # extract frequency range, clip according to quantiles, and normalise
-    freqMinInd = np.argwhere(frequencies <= spectrogram_parameter["freq_range"][0])[0][
+    freq_min_i = np.argwhere(frequencies <= spectrogram_parameter["freq_range"][0])[0][
         0
     ]
-    freqMaxInd = np.argwhere(frequencies >= spectrogram_parameter["freq_range"][1])[0][
+    freq_max_i = np.argwhere(frequencies >= spectrogram_parameter["freq_range"][1])[0][
         0
     ]
-    spectrogram = spectrogram[freqMinInd:freqMaxInd, :]
+    spectrogram = spectrogram[freq_min_i:freq_max_i, :]
 
     lower_percentile = np.percentile(
         spectrogram, 100 * spectrogram_parameter["quantiles"][0], method="nearest"
@@ -111,7 +111,7 @@ def make_spectrogram(
     # Clip the spectrogram to the computed percentiles
     spectrogram = np.clip(spectrogram, lower_percentile, upper_percentile)
 
-    msgr.part("Normailizing spectrogram")
+    msgr.part("Normalizing spectrogram")
 
     # Normalize the spectrogram to range [0, 1]
     min_val = np.min(spectrogram)

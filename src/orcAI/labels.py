@@ -16,6 +16,8 @@ from orcAI.io import (
 
 
 def _convert_annotation(
+    annotation_file_path: Path,
+    recording_data_dir: Path,
     label_calls: list,
     labels_present: list,
     labels_masked: list,
@@ -27,9 +29,9 @@ def _convert_annotation(
 
     Parameters
 
-    annotation_file_path : Path | str
+    annotation_file_path : Path
         Path to the annotation file.
-    recording_data_dir : Path | str
+    recording_data_dir : Path
         Path to the recording data directory where the spectrogram is stored.
     label_calls : list
         List of labels that are intended for teaching.
@@ -52,7 +54,7 @@ def _convert_annotation(
     """
     msgr.part("Converting annotation to label array")
     # read annotation file
-    recording = Path(annotation_file_path).stem
+    recording = annotation_file_path.stem
     annotations = read_annotation_file(annotation_file_path)
 
     if call_equivalences is not None:
@@ -64,10 +66,10 @@ def _convert_annotation(
         call_equivalences_keys = set(call_equivalences.keys())
         labels_not_in_equivalences = all_orig_labels.difference(call_equivalences_keys)
         if len(labels_not_in_equivalences) > 0:
-            msgr.info("labels not in call_dict:", labels_not_in_equivalences)
+            msgr.info("labels not in call equivalences:", labels_not_in_equivalences)
 
     annotations = annotations[["start", "stop", "label"]]
-    spectrogram_dir = Path(recording_data_dir).joinpath(recording, "spectrogram")
+    spectrogram_dir = recording_data_dir.joinpath(recording, "spectrogram")
 
     # load t_vec of spectrogram
     try:
@@ -96,9 +98,9 @@ def _convert_annotation(
 
     # Create a column for each label masked
     for label in labels_masked:
-        annotations_array[label] = (
-            MASK_VALUE * np.ones(len(t_vec), dtype=int)
-        )  # set mask value to -1 for label to be masked, set to zero if labels should be assumed absent
+        annotations_array[label] = MASK_VALUE * np.ones(
+            len(t_vec), dtype=int
+        )  # set mask value to -1 for label to be masked
 
     # sort columns in original order
     annotations_array = annotations_array.reindex(label_calls, axis=1)
@@ -132,7 +134,7 @@ def create_label_arrays(
         teaching (corresponding to calls in label_call) indicating possibility of presence of calls
         (even if no instance of this call is annotated).
     output_dir : Path | str
-        Output directory for the labels. If None the labels are saved in the same directory as the wav files.
+        Output directory for the labels. Labels are stored in subdirectories named '<recording>/labels'
     base_dir_annotation : Path
         Base directory for the annotation files. If None the base_dir_annotation is taken from the recording_table.
     orcai_parameter : (Path | str) | dict
@@ -149,6 +151,7 @@ def create_label_arrays(
         msgr = Messenger(verbosity=verbosity, title="Making label arrays")
 
     msgr.part("Reading recordings table")
+    output_dir = Path(output_dir)
 
     recording_table = pd.read_csv(recording_table_path)
 
@@ -167,7 +170,7 @@ def create_label_arrays(
 
     if not overwrite:
         existing_labels = recording_table["recording"].apply(
-            lambda x: Path(output_dir).joinpath(x, "labels").exists()
+            lambda x: output_dir.joinpath(x, "labels").exists()
         )
         msgr.info(
             f"Skipping {sum(existing_labels)} recordings because they already have Labels."
@@ -186,13 +189,14 @@ def create_label_arrays(
 
         if len(labels_present) > 0:
             labels_masked = list(set(label_calls).difference(labels_present))
-            annotations_array, label_list = _convert_annotation(
-                Path(recording_table.loc[i, "base_dir_annotation"]).joinpath(
-                    recording_table.loc[i, "rel_annotation_path"]
-                ),
-                Path(output_dir),
-                labels_present,
-                labels_masked,
+            annotations_array, label_dict = _convert_annotation(
+                annotation_file_path=Path(
+                    recording_table.loc[i, "base_dir_annotation"]
+                ).joinpath(recording_table.loc[i, "rel_annotation_path"]),
+                recording_data_dir=output_dir,
+                label_calls=label_calls,
+                labels_present=labels_present,
+                labels_masked=labels_masked,
                 call_equivalences=call_equivalences,
                 msgr=Messenger(verbosity=0),
             )
@@ -206,7 +210,7 @@ def create_label_arrays(
                 annotations_array.to_numpy(),
                 recording_output_dir.joinpath("labels.zarr"),
             )
-            write_json(label_list, recording_output_dir.joinpath("label_list.json"))
+            write_json(label_dict, recording_output_dir.joinpath("label_list.json"))
 
         else:
             recordings_no_labels.append(recording_table.loc[i, "recording"])
