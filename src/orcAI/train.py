@@ -153,7 +153,7 @@ def train(
 
     early_stopping = keras.callbacks.EarlyStopping(
         monitor=model_parameter["monitor"],
-        patience=model_parameter["patience"],
+        patience=model_parameter["EarlyStopping_patience"],
         mode="max",
         restore_best_weights=True,
         verbose=0 if verbosity < 3 else 1,
@@ -166,8 +166,8 @@ def train(
     )
     reduce_lr = keras.callbacks.ReduceLROnPlateau(
         monitor=model_parameter["monitor"],
-        factor=0.5,
-        patience=model_parameter["patience"] // 3,
+        factor=model_parameter["ReduceLROnPlateau_factor"],
+        patience=model_parameter["ReduceLROnPlateau_patience"],
         min_lr=model_parameter["min_learning_rate"],
         verbose=0 if verbosity < 3 else 1,
     )
