@@ -273,9 +273,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
         model.load_weights(model_dir.joinpath("model_weights.h5"))
 
         model.compile(
-            optimizer=keras.optimizers.Adam(
-                learning_rate=orcai_parameter["model"]["learning_rate"]
-            ),
+            optimizer="adam",
             loss=MaskedBinaryCrossentropy(),
             metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
         )

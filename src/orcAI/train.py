@@ -142,9 +142,7 @@ def train(
         msgr.part("Compiling model: " + model_name)
 
         model.compile(
-            optimizer=keras.optimizers.Adam(
-                learning_rate=model_parameter["learning_rate"]
-            ),
+            optimizer="adam",
             loss=MaskedBinaryCrossentropy(),
             metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
         )

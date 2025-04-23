@@ -76,7 +76,7 @@ def _hp_model_builder(
     model = build_model(input_shape, orcai_parameter, msgr=msgr)
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=0.001),
+        optimizer="adam",
         loss=MaskedBinaryCrossentropy(),
         metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
     )
