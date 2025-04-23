@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from humanize import naturalsize
 
-from orcAI.io import JsonEncoderExt
+from orcAI.json_encoder import JsonEncoderExt
 
 SEED_ID_MAKE_SNIPPET_TABLE = 1
 SEED_ID_FILTER_SNIPPET_TABLE = 2

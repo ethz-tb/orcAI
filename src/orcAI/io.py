@@ -7,6 +7,8 @@ import pandas as pd
 import tensorflow as tf
 import zarr
 
+from orcAI.json_encoder import JsonEncoderExt
+
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 SHUFFLE_BUFFER_SIZE = 1000
 
@@ -200,15 +202,6 @@ def read_json(filename):
         dictionary = json.load(file)
     return dictionary
 
-class JsonEncoderExt(json.JSONEncoder):
-    """Custom JSON encoder to handle additional data types."""
-
-    def default(self, obj):
-        if isinstance(obj, Path):
-            return str(obj)
-        if isinstance(obj, np.float32):
-            return obj.astype(np.float64)
-        return super().default(obj)
 
 def write_json(dictionary, filename):
     """write dictionary into json file"""
