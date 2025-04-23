@@ -159,7 +159,7 @@ def train(
         verbose=0 if verbosity < 3 else 1,
     )
     model_checkpoint = keras.callbacks.ModelCheckpoint(
-        model_dir.joinpath(model_name + ".keras"),
+        str(model_dir.joinpath(model_name + ".keras")),
         monitor=model_parameter["monitor"],
         save_best_only=True,
         verbose=0 if verbosity < 3 else 1,
