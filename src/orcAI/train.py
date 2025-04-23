@@ -166,7 +166,7 @@ def train(
         monitor=model_parameter["monitor"],
         factor=model_parameter["ReduceLROnPlateau_factor"],
         patience=model_parameter["ReduceLROnPlateau_patience"],
-        min_lr=model_parameter["min_learning_rate"],
+        min_lr=model_parameter["ReduceLROnPlateau_min_learning_rate"],
         verbose=0 if verbosity < 3 else 1,
     )
 
@@ -209,9 +209,7 @@ def train(
 
     msgr.part("Saving Model")
 
-    model.save(
-        model_dir.joinpath(model_name + ".keras")
-    )
+    model.save(model_dir.joinpath(model_name + ".keras"))
 
     write_json(
         history.history,

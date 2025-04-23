@@ -20,8 +20,7 @@
         "EarlyStopping_patience": 10,
         "ReduceLROnPlateau_patience": 3,
         "ReduceLROnPlateau_factor": 0.5,
-        "learning_rate": 1e-3,
-        "min_learning_rate": 1e-6,
+        "ReduceLROnPlateau_min_learning_rate": 1e-6,
         "call_weights": null,
         "monitor": "val_MBA"
     },
