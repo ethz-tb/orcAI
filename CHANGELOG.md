@@ -5,6 +5,10 @@
 ### Changes
 
 - __Breaking__: downgrade keras to keras 2 (tf-keras)
+- __Breaking__: move JSONEncoderExt to seperate module to optimize loading
+- __Breaking__: revert to Sebs DataLoader function, inheriting from keras.utils.Sequence
+- __Breaking__: new parameter in orcai_parameter: "ReduceLROnPlateau_min_learning_rate": 1e-06
+  - add to orcai_parameters.json to unbreak.
 
 
 ## [0.17.0] - 2025-04-22
