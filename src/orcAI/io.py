@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import keras
+import tf_keras as keras
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -248,7 +248,7 @@ def read_annotation_file(annotation_file_path):
 
 
 def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
-    import keras
+    import tf_keras as keras
 
     from orcAI.architectures import (
         MaskedAUC,

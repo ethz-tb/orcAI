@@ -209,7 +209,7 @@ class Messenger:
         import platform
         import sys
 
-        import keras
+        import tf_keras as keras
         import tensorflow as tf
 
         self.info(

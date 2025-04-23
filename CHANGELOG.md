@@ -1,5 +1,12 @@
 # Changelog
 
+## [dev]
+
+### Changes
+
+- __Breaking__: downgrade keras to keras 2 (tf-keras)
+
+
 ## [0.17.0] - 2025-04-22
 
 ### Changes

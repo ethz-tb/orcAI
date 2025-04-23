@@ -2,8 +2,8 @@ from functools import partial
 from importlib.resources import files
 from pathlib import Path
 
-import keras
-import keras_tuner as kt
+import tf_keras as keras
+import tf_keras as keras_tuner as kt
 import tensorflow as tf
 
 from orcAI.architectures import (

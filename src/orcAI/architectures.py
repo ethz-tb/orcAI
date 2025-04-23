@@ -1,6 +1,5 @@
-import keras
+import tf_keras as keras
 import tensorflow as tf
-from keras import layers
 
 from orcAI.auxiliary import MASK_VALUE, Messenger
 
@@ -44,36 +43,36 @@ def res_net_1Dconv_arch(
     inputs = keras.Input(shape=input_shape)
 
     # Entry block
-    x = layers.Conv2D(16, kernel_size, padding="same")(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = keras.layers.Conv2D(16, kernel_size, padding="same")(inputs)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
 
     previous_block_activation = x  # Set aside residual
 
     for size in filters:
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, kernel_size, padding="same")(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, kernel_size, padding="same")(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.MaxPooling2D((3, 2), strides=(2, 2), padding="same")(x)
-        residual = layers.Conv2D(size, 1, strides=(2, 2), padding="same")(
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = keras.layers.BatchNormalization()(x)
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = keras.layers.BatchNormalization()(x)
+        x = keras.layers.MaxPooling2D((3, 2), strides=(2, 2), padding="same")(x)
+        residual = keras.layers.Conv2D(size, 1, strides=(2, 2), padding="same")(
             previous_block_activation
         )
-        x = layers.add([x, residual])  # Add back residual
+        x = keras.layers.add([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
-        x = layers.Dropout(dropout_rate)(x)  # Dropout
+        x = keras.layers.Dropout(dropout_rate)(x)  # Dropout
 
-    x = layers.SeparableConv2D(36, kernel_size, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
-    x = layers.Dropout(dropout_rate)(x)  # Dropout after the final CNN block
+    x = keras.layers.SeparableConv2D(36, kernel_size, padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
+    x = keras.layers.Dropout(dropout_rate)(x)  # Dropout after the final CNN block
 
     x = tf.reduce_mean(x, axis=2)
     # 1D convolutional layer over time axis
     k_size = x.shape[2]
-    outputs = layers.Conv1D(
+    outputs = keras.layers.Conv1D(
         num_labels, kernel_size=k_size, padding="same", activation="sigmoid"
     )(x)
 
@@ -119,60 +118,60 @@ def res_net_LSTM_arch(
     inputs = keras.Input(shape=input_shape)
 
     # Entry block
-    x = layers.Conv2D(16, kernel_size, padding="same")(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = keras.layers.Conv2D(16, kernel_size, padding="same")(inputs)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
 
     previous_block_activation = x  # Set aside residual
 
     # Residual blocks
     for size in filters:
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, kernel_size, padding="same")(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, kernel_size, padding="same")(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.MaxPooling2D((3, 2), strides=(2, 2), padding="same")(x)
-        residual = layers.Conv2D(size, 1, strides=(2, 2), padding="same")(
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = keras.layers.BatchNormalization()(x)
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = keras.layers.BatchNormalization()(x)
+        x = keras.layers.MaxPooling2D((3, 2), strides=(2, 2), padding="same")(x)
+        residual = keras.layers.Conv2D(size, 1, strides=(2, 2), padding="same")(
             previous_block_activation
         )
-        x = layers.add([x, residual])  # Add back residual
+        x = keras.layers.add([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
 
     # Final CNN processing block
-    x = layers.SeparableConv2D(36, kernel_size, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = keras.layers.SeparableConv2D(36, kernel_size, padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
 
     # Reshape for LSTM input
-    x = layers.Reshape(target_shape=(-1, x.shape[-2] * x.shape[-1]))(x)
+    x = keras.layers.Reshape(target_shape=(-1, x.shape[-2] * x.shape[-1]))(x)
 
     # LSTM layers with regularization
-    x = layers.Bidirectional(
-        layers.LSTM(
+    x = keras.layers.Bidirectional(
+        keras.layers.LSTM(
             lstm_units,
             return_sequences=True,
             kernel_regularizer=keras.regularizers.l2(0.001),
         )
     )(x)
-    x = layers.Dropout(dropout_rate)(x)
-    x = layers.Bidirectional(
-        layers.LSTM(
+    x = keras.layers.Dropout(dropout_rate)(x)
+    x = keras.layers.Bidirectional(
+        keras.layers.LSTM(
             lstm_units,
             return_sequences=True,
             kernel_regularizer=keras.regularizers.l2(0.001),
         )
     )(x)
-    x = layers.Dropout(dropout_rate)(x)
+    x = keras.layers.Dropout(dropout_rate)(x)
 
     # Fully connected layers with regularization
-    x = layers.Dense(
+    x = keras.layers.Dense(
         128, activation="relu", kernel_regularizer=keras.regularizers.l2(0.001)
     )(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dropout(dropout_rate)(x)
-    outputs = layers.Dense(num_labels, activation="sigmoid")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Dropout(dropout_rate)(x)
+    outputs = keras.layers.Dense(num_labels, activation="sigmoid")(x)
 
     return keras.Model(inputs, outputs)
 

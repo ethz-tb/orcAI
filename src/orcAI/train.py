@@ -1,7 +1,7 @@
 from importlib.resources import files
 from pathlib import Path
 
-import keras
+import tf_keras as keras
 import numpy as np
 import tensorflow as tf
 from tqdm.keras import TqdmCallback
