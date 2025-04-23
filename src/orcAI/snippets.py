@@ -15,7 +15,7 @@ from orcAI.auxiliary import (
     resolve_recording_data_dir,
     seconds_to_hms,
 )
-from orcAI.io import DataLoader, read_json, save_dataset, write_json
+from orcAI.io import DataLoader, data_generator, read_json, save_dataset, write_json
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -598,7 +598,8 @@ def create_tvt_data(
     loader = {
         key: DataLoader.from_csv(
             path,
-            len(orcai_parameter["model"]["filters"]),
+            batch_size=orcai_parameter["model"]["batch_size"],
+            n_filters=len(orcai_parameter["model"]["filters"]),
             shuffle=True,
             rng=np.random.default_rng(
                 seed=[SEED_ID_CREATE_DATALOADER.get(key, 0), orcai_parameter["seed"]]
@@ -608,34 +609,67 @@ def create_tvt_data(
     }
 
     msgr.info("Data shape:", indent=1)
-    spectrogram_sample, label_sample = loader[data_types[0]][0]
-    msgr.info(f"Input spectrogram batch shape: {spectrogram_sample.shape}")
-    msgr.info(f"Input label batch shape: {label_sample.shape}", indent=-1)
+    spectrogram_batch, label_batch = loader[data_types[0]][0]
+    spectrogram_sample = spectrogram_batch[0]
+    label_sample = label_batch[0]
+    msgr.info(f"Input spectrogram shape: {spectrogram_sample.shape}")
+    msgr.info(f"Input label shape: {label_sample.shape}", indent=-1)
 
     msgr.part("Creating test, validation and training datasets")
-    dataset = {}
-    for itype in data_types:
-        dataset[itype] = tf.data.Dataset.from_generator(
-            loader[itype].__iter__,
-            output_signature=(
-                tf.TensorSpec(
-                    shape=spectrogram_sample.shape,
-                    dtype=tf.float32,
-                ),
-                tf.TensorSpec(
-                    shape=label_sample.shape,
-                    dtype=tf.float32,
-                ),
+
+    # when doing this in a loop the datasets report wrong lengths afterwards
+    # (all of them reported 9984=n_batch_test*batch_size).
+    # But not after loading them back...
+    # very weird. This wasn't an issue in before switching to the old dataloader
+    # and keras2
+    # it also feels quite a bit slower
+    train_dataset = tf.data.Dataset.from_generator(
+        lambda: data_generator(loader["train"]),
+        output_signature=(
+            tf.TensorSpec(
+                shape=spectrogram_sample.shape,
+                dtype=tf.float32,
             ),
-        )
-        dataset[itype] = dataset[itype].prefetch(tf.data.experimental.AUTOTUNE)
-        msgr.info(f"{itype.capitalize()} dataset created. Length {len(loader[itype])}.")
+            tf.TensorSpec(
+                shape=label_sample.shape,
+                dtype=tf.float32,
+            ),
+        ),
+    )
+
+    val_dataset = tf.data.Dataset.from_generator(
+        lambda: data_generator(loader["val"]),
+        output_signature=(
+            tf.TensorSpec(
+                shape=spectrogram_sample.shape,
+                dtype=tf.float32,
+            ),
+            tf.TensorSpec(
+                shape=label_sample.shape,
+                dtype=tf.float32,
+            ),
+        ),
+    )
+
+    test_dataset = tf.data.Dataset.from_generator(
+        lambda: data_generator(loader["test"]),
+        output_signature=(
+            tf.TensorSpec(
+                shape=spectrogram_sample.shape,
+                dtype=tf.float32,
+            ),
+            tf.TensorSpec(
+                shape=label_sample.shape,
+                dtype=tf.float32,
+            ),
+        ),
+    )
 
     if orcai_parameter["model"]["call_weights"] is not None:
         msgr.part("Calculating training call weights")
         call_weights = _get_call_weights(
-            dataset["train"],
-            len(loader["train"]),
+            train_dataset,
+            len(loader["train"]) * orcai_parameter["model"]["batch_size"],
             call_names=orcai_parameter["calls"],
             method=orcai_parameter["model"]["call_weights"],
         )
@@ -643,24 +677,48 @@ def create_tvt_data(
             call_weights,
             Path(tvt_dir, "call_weights.json"),
         )
-        msgr.info(f"Call weights: {call_weights}")
+        msgr.info("Call weights:")
+        msgr.info(call_weights)
     else:
         call_weights = None
 
     msgr.part("Saving datasets to disk")
-    for itype in data_types:
-        try:
-            save_dataset(
-                dataset[itype],
-                path=dataset_paths[itype],
-                overwrite=overwrite,
-                compression=data_compression,
-            )
-        except FileExistsError as _:
-            msgr.warning(
-                f"File {dataset_paths[itype]} already exists. Skipping. Set overwrite=True to overwrite."
-            )
-        msgr.print_directory_size(dataset_paths[itype])
+    try:
+        save_dataset(
+            train_dataset,
+            path=dataset_paths["train"],
+            overwrite=overwrite,
+            compression=data_compression,
+        )
+    except FileExistsError as _:
+        msgr.warning(
+            f"File {dataset_paths['train']} already exists. Skipping. Set overwrite=True to overwrite."
+        )
+    msgr.print_directory_size(dataset_paths["train"])
+    try:
+        save_dataset(
+            val_dataset,
+            path=dataset_paths["val"],
+            overwrite=overwrite,
+            compression=data_compression,
+        )
+    except FileExistsError as _:
+        msgr.warning(
+            f"File {dataset_paths['val']} already exists. Skipping. Set overwrite=True to overwrite."
+        )
+    msgr.print_directory_size(dataset_paths["val"])
+    try:
+        save_dataset(
+            test_dataset,
+            path=dataset_paths["test"],
+            overwrite=overwrite,
+            compression=data_compression,
+        )
+    except FileExistsError as _:
+        msgr.warning(
+            f"File {dataset_paths['test']} already exists. Skipping. Set overwrite=True to overwrite."
+        )
+    msgr.print_directory_size(dataset_paths["test"])
 
     write_json(
         {
@@ -671,4 +729,4 @@ def create_tvt_data(
     )
     msgr.success("Train, validation and test datasets created and saved to disk")
 
-    return dataset
+    return train_dataset, val_dataset, test_dataset
