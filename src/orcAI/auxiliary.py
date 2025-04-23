@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 from humanize import naturalsize
 
+from orcAI.io import JsonEncoderExt
+
 SEED_ID_MAKE_SNIPPET_TABLE = 1
 SEED_ID_FILTER_SNIPPET_TABLE = 2
 SEED_ID_CREATE_DATALOADER = {"train": 3, "val": 4, "test": 5, "unfiltered_test": 6}
@@ -19,15 +21,6 @@ SEED_ID_LOAD_TEST_DATA = 9
 SEED_ID_UNFILTERED_TEST_DATA = 10
 
 MASK_VALUE = -1.0  # Value used to mask labels in the dataset
-
-
-class JsonEncoderExt(json.JSONEncoder):
-    """Custom JSON encoder to handle additional data types."""
-
-    def default(self, obj):
-        if isinstance(obj, Path):
-            return str(obj)
-        return super().default(obj)
 
 
 class Messenger:
