@@ -210,8 +210,7 @@ def train(
     msgr.part("Saving Model")
 
     model.save(
-        model_dir.joinpath(model_name + ".keras"),
-        include_optimizer=True,
+        model_dir.joinpath(model_name + ".keras")
     )
 
     write_json(
