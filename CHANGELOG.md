@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.18.0dev1]
+## [0.18.0dev]
 
 ### Changes
 
