@@ -57,6 +57,7 @@ def init_project(
             "default_orcai_parameter.json".replace("default", project_name)
         )
     )
+
     if parameter is not None:
         if isinstance(parameter, (Path | str)):
             parameter = read_json(parameter)
@@ -74,7 +75,11 @@ def init_project(
         if "seed" not in parameter:
             msgr.info("Generating random seed")
             orcai_parameter_new["seed"] = SeedSequence().entropy
-            orcai_parameter_new["name"] = project_name
+    else:
+        msgr.info("Generating random seed")
+        orcai_parameter_new["seed"] = SeedSequence().entropy
+    
+    orcai_parameter_new["name"] = project_name
 
     write_json(
         orcai_parameter_new,
