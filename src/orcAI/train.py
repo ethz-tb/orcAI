@@ -220,14 +220,14 @@ def train(
 
     write_json(
         orcai_parameter,
-        output_dir.joinpath("orcai_parameter.json"),
+        model_dir.joinpath("orcai_parameter.json"),
     )
 
     model_shape = {
         "input_shape": dataset_shape["spectrogram"],
         "num_labels": len(label_calls),
     }
-    write_json(model_shape, output_dir.joinpath("model_shape.json"))
+    write_json(model_shape, model_dir.joinpath("model_shape.json"))
 
     msgr.success(f"Training model finished. Model saved to {model_name + '.keras'}")
     return
