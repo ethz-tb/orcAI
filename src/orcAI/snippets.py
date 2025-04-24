@@ -598,7 +598,7 @@ def create_tvt_data(
     loader = {
         key: DataLoader.from_csv(
             path,
-            len(orcai_parameter["model"]["filters"]),
+            n_filters=len(orcai_parameter["model"]["filters"]),
             shuffle=True,
             rng=np.random.default_rng(
                 seed=[SEED_ID_CREATE_DATALOADER.get(key, 0), orcai_parameter["seed"]]
