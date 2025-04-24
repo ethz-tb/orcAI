@@ -13,7 +13,7 @@ tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse onl
 SHUFFLE_BUFFER_SIZE = 1000
 
 
-class DataLoader(keras.utils.Sequence):
+class DataLoader:
     """
     Data loader for extracting snippets from multiple Zarr files with reshaped labels and normalized spectrograms.
     """
@@ -21,7 +21,6 @@ class DataLoader(keras.utils.Sequence):
     def __init__(
         self,
         snippet_table: pd.DataFrame,
-        batch_size: int,
         n_filters: int,
         shuffle: bool = True,
         rng: np.random.Generator = np.random.default_rng(),
@@ -31,8 +30,6 @@ class DataLoader(keras.utils.Sequence):
         -----------
         snippet_table: pd.DataFrame
             DataFrame with columns ['recording_data_dir', 'row_start', 'row_stop'].
-        batch_size: int
-            Size of each batch.
         n_filters: int
             Number of filters for reshaping labels.
         shuffle: bool
@@ -40,49 +37,71 @@ class DataLoader(keras.utils.Sequence):
         rng: np.random.Generator
             Random number generator for shuffling.
         """
-        self.snippet_table = snippet_table
-        self.batch_size = batch_size
+
+        if shuffle:
+            self.snippet_table = snippet_table.sample(
+                frac=1, axis="index", random_state=rng
+            ).reset_index(drop=True)
+        else:
+            self.snippet_table = snippet_table
+
+        self.indices = snippet_table.index
         self.n_filters = n_filters
         self.shuffle = shuffle
         self.rng = rng
 
+        # Preload Zarr files and JSON label names
         self.zarr_files = [
             self._load_zarr_files(path)
             for path in self.snippet_table.recording_data_dir
         ]
 
-        # Prepare indices for batches
-        self.indices = [
-            (idx, row["row_start"], row["row_stop"])
-            for idx, row in self.snippet_table.iterrows()
-        ]
-
-        if self.shuffle:
-            rng.shuffle(self.indices)
-
     @classmethod
     def from_csv(
         cls,
         path: Path | str,
-        **kwargs,
+        n_filters: int,
+        shuffle: bool = True,
+        rng: np.random.Generator = np.random.default_rng(),
     ):
         """
-        Create a DataLoader from a snippet table saved at path.
+        Create a DataLoader from a snippet table saved at CSV file.
         """
         import pandas as pd
 
         snippet_table = pd.read_csv(path)
-        return cls(snippet_table, **kwargs)
+        return cls(snippet_table, n_filters, shuffle, rng)
 
     def __len__(self):
         """
-        Number of batches per epoch.
+        Number of snippets
         """
-        return len(self.indices) // self.batch_size
+        return len(self.indices)
+
+    def __iter__(self):
+        """
+        Return an iterator over the data loader.
+        """
+        for i in self.indices:
+            yield self[i]
+
+    def _load_zarr_files(self, path: Path | str):
+        """
+        Load Zarr files from the provided path.
+        """
+        path = Path(path)
+        spectrogram_zarr_path = path.joinpath("spectrogram", "spectrogram.zarr")
+        labels_zarr_path = path.joinpath("labels", "labels.zarr")
+
+        labels = zarr.open(labels_zarr_path, mode="r")
+        spectrogram = zarr.open(spectrogram_zarr_path, mode="r")
+
+        return spectrogram, labels
 
     def reshape_labels(self, labels):
         """
-        Reshape and process labels using the provided number of filters (n_filters) to achieve a time resolution on labels which is time_steps_spectogram//2**n_filters.
+        Reshape and process labels using the provided number of filters (n_filters)
+        to achieve a time resolution on labels which is time_steps_spectogram//2**n_filters.
         """
 
         if labels.shape[0] % (2**self.n_filters) == 0:
@@ -106,68 +125,26 @@ class DataLoader(keras.utils.Sequence):
                 "The number of rows in 'arr' must be divisible by 2**'n_filters'."
             )
 
-    def __getitem__(self, batch_index):
+    def __getitem__(self, index: int):
         """
         Retrieve a single batch, aggregating data from multiple Zarr files if needed.
         """
 
-        batch_start = batch_index * self.batch_size
-        batch_end = batch_start + self.batch_size
-        batch_indices = self.indices[batch_start:batch_end]
+        spectrogram, label = self.zarr_files[index]
+        start = self.snippet_table.iloc[index]["row_start"]
+        stop = self.snippet_table.iloc[index]["row_stop"]
+        spectrogram_chunk = spectrogram[start:stop, :]
+        label_chunk = label[start:stop, :]
 
-        spectrogram_batch, label_batch = [], []
+        # Normalize spectrogram
+        spectrogram_chunk = tf.expand_dims(spectrogram_chunk, axis=-1)
 
-        for df_index, start, stop in batch_indices:
-            spectrogram, label = self.zarr_files[df_index]
-            spectrogram_chunk = spectrogram[start:stop, :]
-            label_chunk = label[start:stop, :]
-            if spectrogram_chunk.shape[0] == 0:
-                continue
-            spectrogram_chunk = tf.expand_dims(spectrogram_chunk, axis=-1)
-
-            if label_chunk.shape[0] != 736:
-                print(spectrogram_chunk.shape[0], label_chunk.shape[0], flush=True)
-
-            label_chunk = self.reshape_labels(
-                tf.convert_to_tensor(label_chunk, dtype=tf.float32)
-            )
-            if label_chunk.shape[0] == 0:
-                continue
-
-            spectrogram_batch.append(spectrogram_chunk)
-            label_batch.append(label_chunk)
-
-        return (
-            tf.stack(spectrogram_batch, axis=0),
-            tf.stack(label_batch, axis=0),
+        # Reshape labels
+        label_chunk = self.reshape_labels(
+            tf.convert_to_tensor(label_chunk, dtype=tf.float32)
         )
 
-    def on_epoch_end(self):
-        """
-        Shuffle indices at the end of each epoch if needed.
-        """
-        if self.shuffle:
-            self.rng.shuffle(self.indices)
-
-    def _load_zarr_files(self, path: Path):
-        """
-        Load Zarr files from the provided path.
-        """
-        path = Path(path)
-        spectrogram_zarr_path = path.joinpath("spectrogram", "spectrogram.zarr")
-        labels_zarr_path = path.joinpath("labels", "labels.zarr")
-
-        labels = zarr.open(labels_zarr_path, mode="r")
-        spectrogram = zarr.open(spectrogram_zarr_path, mode="r")
-
-        return spectrogram, labels
-
-
-# data generator
-def data_generator(loader):
-    for spectrogram_batch, label_batch in loader:
-        for spectrogram, label in zip(spectrogram_batch, label_batch):
-            yield spectrogram, label
+        return (spectrogram_chunk, label_chunk)
 
 
 def load_dataset(
