@@ -429,7 +429,7 @@ def cli_create_spectrograms(**kwargs):
     type=ClickFilePathR,
     default=None,
     show_default="None",
-    help="Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels.",
+    help="Optional path to a call equivalences file. A dictionary associating original call labels with new call labels.",
 )
 @click.option(
     "--overwrite",
