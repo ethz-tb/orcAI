@@ -78,7 +78,7 @@ def init_project(
     else:
         msgr.info("Generating random seed")
         orcai_parameter_new["seed"] = SeedSequence().entropy
-    
+
     orcai_parameter_new["name"] = project_name
 
     write_json(
@@ -248,7 +248,7 @@ def create_recording_table(
         ]
     ]
 
-    msgr.part(f"Saving recording table to {output_path.relative_to(Path.cwd())}")
+    msgr.part(f"Saving recording table to {output_path}")
     recording_table.to_csv(output_path)
     msgr.info(
         f"Total recordings: {len(recording_table)}",
