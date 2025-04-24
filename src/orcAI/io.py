@@ -280,7 +280,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
             metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
         )
     else:
-        ValueError(
+        raise ValueError(
             f"Couldn't find model weights (model_weights.h5) or keras model file in {model_dir}"
         )
 
