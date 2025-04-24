@@ -442,7 +442,6 @@ def create_tvt_snippet_tables(
     all_snippet_stats_duration.to_csv(
         output_dir.joinpath("all_snippet_stats_duration.csv"), index=True
     )
-    all_snippet_stats.to_csv(output_dir.joinpath("all_snippet_stats.csv"), index=True)
 
     rng = np.random.default_rng(
         seed=[SEED_ID_FILTER_SNIPPET_TABLE, orcai_parameter["seed"]]
@@ -491,9 +490,6 @@ def create_tvt_snippet_tables(
     msgr.info(selected_snippet_stats_duration, indent=-1)
     selected_snippet_stats_duration.to_csv(
         output_dir.joinpath("selected_snippet_stats_duration.csv"), index=True
-    )
-    selected_snippet_stats.to_csv(
-        output_dir.joinpath("selected_snippet_stats.csv"), index=True
     )
 
     msgr.success("Train, val and test snippet tables created and saved to disk")
