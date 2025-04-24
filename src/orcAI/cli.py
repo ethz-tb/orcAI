@@ -291,7 +291,7 @@ def cli_init_project(**kwargs):
     type=ClickFilePathR,
     default=None,
     show_default="None",
-    help="Path to a JSON file containing OrcAI parameter. Only needed if preparing table for generating training data.",
+    help="Path to the OrcAI parameter file. Only needed if preparing table for generating training data.",
 )
 @click.option(
     "--update_table",
@@ -421,7 +421,7 @@ def cli_create_spectrograms(**kwargs):
     type=ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
-    help="Path to a JSON file containing orcai parameter.",
+    help="Path to the OrcAI parameter file.",
 )
 @click.option(
     "--call_equivalences",
@@ -477,7 +477,7 @@ def cli_create_label_arrays(**kwargs):
     type=ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
-    help="Path to the snippet parameter file.",
+    help="Path to the OrcAI parameter file.",
 )
 @click.option(
     "--verbosity",
@@ -510,7 +510,7 @@ def cli_create_snippet_table(**kwargs):
     type=ClickFilePathR,
     default=None,
     show_default="None",
-    help="Path to the snippet table csv or the snippet table itself. None if the snippet table should be read from RECORDING_DATA_DIR/all_snippets.csv.gz.",
+    help="Path to the snippet table csv. None if the snippet table should be read from RECORDING_DATA_DIR/all_snippets.csv.gz.",
 )
 @click.option(
     "--orcai_parameter",
@@ -518,7 +518,7 @@ def cli_create_snippet_table(**kwargs):
     type=ClickFilePathR,
     default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
-    help="Path to the snippet parameter file.",
+    help="Path to the OrcAI parameter file.",
 )
 @click.option(
     "--verbosity",
