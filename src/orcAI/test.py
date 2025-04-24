@@ -344,7 +344,6 @@ def test_model(
     None
         Saves results to disk if save_results_dir is provided.
     """
-
     # Initialize messenger
     if msgr is None:
         msgr = Messenger(verbosity=verbosity, title="Testing model")
@@ -373,7 +372,9 @@ def test_model(
         seed=[
             SEED_ID_LOAD_TEST_DATA,
             orcai_parameter["seed"],
-        ],
+        ]
+        if orcai_parameter["seed"] is not None
+        else None,
     )
 
     results_test_dataset = _test_model_on_dataset(
@@ -412,7 +413,9 @@ def test_model(
                 seed=[
                     SEED_ID_CREATE_DATALOADER["unfiltered_test"],
                     orcai_parameter["seed"],
-                ],
+                ]
+                if orcai_parameter["seed"] is not None
+                else None,
             ),
         )
         test_sampled_dataset = tf.data.Dataset.from_generator(
