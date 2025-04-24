@@ -3,7 +3,7 @@ from importlib.resources import files
 from pathlib import Path
 
 import tf_keras as keras
-import tf_keras as keras_tuner as kt
+import keras_tuner as kt
 import tensorflow as tf
 
 from orcAI.architectures import (
