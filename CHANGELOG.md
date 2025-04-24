@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.18.0dev]
+## [0.18.0] - 2025-04-24
 
 ### Changes
 
@@ -11,6 +11,7 @@
 
 ### Notes
 
+- keras 2 trains better models. Reason unknown.
 - tried to revert to Sebs DataLoader function, inheriting from keras.utils.Sequence. No difference detected except worse performance.
 
 
@@ -338,3 +339,4 @@
 [0.15.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.15.1
 [0.16.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.16.0
 [0.17.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.17.0
+[0.18.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.18.0
