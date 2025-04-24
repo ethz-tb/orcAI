@@ -178,6 +178,7 @@ def _compute_snippet_stats(
     """
 
     snippet_stats = snippet_table.groupby("data_type")[for_calls].sum().T
+    snippet_stats = snippet_stats.reindex(columns=["train", "val", "test"])
     snippet_stats["total"] = snippet_stats.sum(axis=1)
 
     equalizing_factors = snippet_stats.apply(lambda x: 1 / x * x.max(), axis=0)
