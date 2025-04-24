@@ -277,10 +277,11 @@ def create_spectrograms(
         existing_spectrograms = recording_table["recording"].apply(
             lambda x: output_dir.joinpath(x, "spectrogram").exists()
         )
-        msgr.info(
-            f"Skipping {sum(existing_spectrograms)} recordings because they already have spectrograms."
-        )
-        recording_table = recording_table[~existing_spectrograms]
+        if sum(existing_spectrograms) > 0:
+            msgr.info(
+                f"Skipping {sum(existing_spectrograms)} recordings because they already have spectrograms."
+            )
+            recording_table = recording_table[~existing_spectrograms]
 
     if base_dir_recording is not None:
         recording_table["base_dir_recording"] = base_dir_recording
