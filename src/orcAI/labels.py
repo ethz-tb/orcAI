@@ -100,7 +100,7 @@ def _convert_annotation(
     for label in labels_masked:
         annotations_array[label] = MASK_VALUE * np.ones(
             len(t_vec), dtype=int
-        )  # set mask value to -1 for label to be masked
+        )  # set mask value for label to be masked
 
     # sort columns in original order
     annotations_array = annotations_array.reindex(label_calls, axis=1)
