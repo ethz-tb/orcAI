@@ -15,7 +15,7 @@ from orcAI.io import read_json, save_as_zarr, write_vector_to_json
 def make_spectrogram(
     wav_file_path: Path | str,
     channel: int = 1,
-    orcai_parameter: Path | str = files("orcAI.defaults").joinpath(
+    orcai_parameter: (Path | str) | dict = files("orcAI.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     verbosity: int = 2,
