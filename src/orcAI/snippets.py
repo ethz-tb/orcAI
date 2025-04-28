@@ -128,7 +128,6 @@ def _make_snippet_table(
 
                 # Find the max index where entries are smaller than t_start
                 index_t_start = np.searchsorted(times, t_start, side="left") - 1
-                # Find the min index where entries are smaller or equal to t_stop
                 index_t_stop = index_t_start + n_spectrogram_snippet_steps
                 label_chunk = label_filepointer[index_t_start:index_t_stop, :]
                 label_duration_snippet = label_chunk.sum(axis=0) * delta_t
