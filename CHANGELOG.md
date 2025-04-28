@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.19.0] - 2025-04-28
+
+### Changes
+
+- __Breaking__: filter duplicate snippets. These duplicates stem from randomly sampling.
+- Minor reformatting of code and help
+
+
 ## [0.18.0] - 2025-04-24
 
 ### Changes
@@ -340,3 +348,4 @@
 [0.16.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.16.0
 [0.17.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.17.0
 [0.18.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.18.0
+[0.19.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.19.0
