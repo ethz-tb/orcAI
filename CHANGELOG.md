@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.1] - 2025-04-28
+
+### Changes
+
+- fix path passed to to callbacks
+
 ## [0.20.0] - 2025-04-28
 
 ### Changes

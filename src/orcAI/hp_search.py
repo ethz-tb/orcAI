@@ -206,7 +206,7 @@ def hyperparameter_search(
 
     msgr.info(f"Saving best model to hps/{model_name}.keras")
     model_checkpoint = keras.callbacks.ModelCheckpoint(
-        Path(output_dir).joinpath(model_name, "hps", model_name + ".keras"),
+        str(Path(output_dir).joinpath(model_name, "hps", model_name + ".keras")),
         monitor=orcai_parameter["model"]["monitor"],
         save_best_only=True,
     )
