@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.20.0] - 2025-04-28
+
+### Changes
+
+- __Breaking__: remove `--save_best_model` flag from `hpsearch` command
+- update pipeline.
+- minor prettifications.
+
 ## [0.19.0] - 2025-04-28
 
 ### Changes
