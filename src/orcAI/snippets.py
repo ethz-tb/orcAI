@@ -144,6 +144,7 @@ def _make_snippet_table(
                     )
                     + list(label_duration_snippet)
                 ]
+
     snippet_table = pd.DataFrame(
         snippet_table_raw,
         columns=[
@@ -155,6 +156,8 @@ def _make_snippet_table(
         ]
         + label_names,
     )
+    # filter duplicates (that arise from random sampling)
+    snippet_table = snippet_table.drop_duplicates()
     return (snippet_table, recording_duration, n_segments, recording, "success")
 
 
@@ -272,7 +275,7 @@ def create_snippet_table(
     ):
         snippet_table, recording_length, n_segments, recording, result = (
             _make_snippet_table(
-                Path(recording_table.loc[i, "recording_data_dir"]),
+                recording_dir=Path(recording_table.loc[i, "recording_data_dir"]),
                 orcai_parameter=orcai_parameter,
                 rng=rng,
                 msgr=Messenger(verbosity=0),
