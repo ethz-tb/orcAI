@@ -610,8 +610,8 @@ def create_tvt_data(
         for key, path in csv_paths.items()
     }
 
-    msgr.info("Data shape:", indent=1)
     spectrogram_sample, label_sample = loader[data_types[0]][0]
+    msgr.info("Data shape:", indent=1)
     msgr.info(f"Input spectrogram batch shape: {spectrogram_sample.shape}")
     msgr.info(f"Input label batch shape: {label_sample.shape}", indent=-1)
 
