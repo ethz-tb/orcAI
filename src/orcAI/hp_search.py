@@ -93,7 +93,6 @@ def hyperparameter_search(
         "default_hps_parameter.json"
     ),
     parallel: bool = False,
-    save_best_model: bool = False,
     data_compression: str | None = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -204,13 +203,13 @@ def hyperparameter_search(
         restore_best_weights=True,
         verbose=0 if verbosity < 3 else 1,
     )
-    if save_best_model:
-        msgr.info(f"Saving models to hps/{model_name}.keras")
-        model_checkpoint = keras.callbacks.ModelCheckpoint(
-            Path(output_dir).joinpath(model_name, "hps", model_name + ".keras"),
-            monitor=orcai_parameter["model"]["monitor"],
-            save_best_only=True,
-        )
+
+    msgr.info(f"Saving best model to hps/{model_name}.keras")
+    model_checkpoint = keras.callbacks.ModelCheckpoint(
+        Path(output_dir).joinpath(model_name, "hps", model_name + ".keras"),
+        monitor=orcai_parameter["model"]["monitor"],
+        save_best_only=True,
+    )
     tuner.search(
         train_dataset,
         validation_data=val_dataset,

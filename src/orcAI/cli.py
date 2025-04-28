@@ -733,12 +733,6 @@ def cli_test(**kwargs):
     help="Run hyperparameter search on multiple GPUs in parallel.",
 )
 @click.option(
-    "--save_best_model",
-    "-s",
-    is_flag=True,
-    help="Save the best model to the output directory.",
-)
-@click.option(
     "--data_compression",
     "-dc",
     type=click.Choice(["GZIP", "None"], case_sensitive=False),
