@@ -17,6 +17,7 @@
         "n_batch_val": 320,
         "n_batch_test": 320,
         "shuffle": true,
+        "learning_rate": 0.001,
         "EarlyStopping_patience": 10,
         "ReduceLROnPlateau_patience": 3,
         "ReduceLROnPlateau_factor": 0.5,

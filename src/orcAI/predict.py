@@ -3,7 +3,7 @@ import time
 from importlib.resources import files
 from pathlib import Path
 
-import tf_keras as keras
+import keras
 import numpy as np
 import pandas as pd
 from tqdm import tqdm

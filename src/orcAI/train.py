@@ -1,7 +1,7 @@
 from importlib.resources import files
 from pathlib import Path
 
-import tf_keras as keras
+import keras
 import numpy as np
 import tensorflow as tf
 from tqdm.keras import TqdmCallback
@@ -142,7 +142,9 @@ def train(
         msgr.part("Compiling model: " + model_name)
 
         model.compile(
-            optimizer="adam",
+            optimizer=keras.optimizers.Adam(
+                learning_rate=model_parameter["learning_rate"]
+            ),
             loss=MaskedBinaryCrossentropy(),
             metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
         )
@@ -157,7 +159,7 @@ def train(
         verbose=0 if verbosity < 3 else 1,
     )
     model_checkpoint = keras.callbacks.ModelCheckpoint(
-        str(model_dir.joinpath(model_name + ".keras")),
+        model_dir.joinpath(model_name + ".keras"),
         monitor=model_parameter["monitor"],
         save_best_only=True,
         verbose=0 if verbosity < 3 else 1,
@@ -209,7 +211,7 @@ def train(
 
     msgr.part("Saving Model")
 
-    model.save(model_dir.joinpath(model_name + ".keras"))
+    model.save(model_dir.joinpath(model_name + ".keras"), include_optimizer=True)
 
     write_json(
         history.history,
