@@ -87,7 +87,7 @@ def train(
     label_calls = orcai_parameter["calls"]
 
     msgr.debug(model_parameter)
-    msgr.debug("Calls for labeling")
+    msgr.debug("Calls for labeling", indent=1)
     msgr.debug(label_calls, indent=-1)
 
     # load data sets from local disk
