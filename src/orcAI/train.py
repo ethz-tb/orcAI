@@ -70,6 +70,7 @@ def train(
         )
     msgr.print_platform_info(set_indent=1)
     msgr.print_tf_device_info(set_indent=1)
+    tf.config.set_soft_device_placement(True)
 
     msgr.part("Loading parameter")
 
@@ -91,7 +92,6 @@ def train(
 
     # load data sets from local disk
     msgr.part(f"Loading training and validation datasets from {data_dir}")
-    tf.config.set_soft_device_placement(True)
     if data_dir.joinpath("dataset_shapes.json").exists():
         msgr.info("Loading dataset shapes from JSON file")
         dataset_shape = read_json(data_dir.joinpath("dataset_shapes.json"))
