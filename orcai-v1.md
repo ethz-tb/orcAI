@@ -231,38 +231,28 @@ orcAI 0.19.0 [started @ 2025-04-28 13:58:31]
 ## create tvt data
 
 ```bash
-orcai create-tvt-data tvt_data -p orcai-v1_orcai_parameter.json
+orcai orcai create-tvt-data ../orca_recordings/tvt_data -p orcai_parameter.json
 ```
 
 ```console
 🐳 Creating train, validation and test datasets
-orcAI 0.19.0 [started @ 2025-04-28 14:00:21]
-🐳 Reading in snippet tables and generating loaders [0:00:02]
-    Data shape:
+orcAI 0.21.0 [started @ 2025-04-29 09:52:57]
+🐳 Reading in snippet tables and generating loaders [0:00:03]
 WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-I0000 00:00:1745841816.804498 1214646 pluggable_device_factory.cc:305] Could not identify NUMA node of platform GPU ID 0, defaulting to 0. Your kernel may not have been built with NUMA support.
-I0000 00:00:1745841816.804547 1214646 pluggable_device_factory.cc:271] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 0 MB memory) -> physical PluggableDevice (device: 0, name: METAL, pci bus id: <undefined>)
+I0000 00:00:1745913367.073332  357666 pluggable_device_factory.cc:305] Could not identify NUMA node of platform GPU ID 0, defaulting to 0. Your kernel may not have been built with NUMA support.
+I0000 00:00:1745913367.073522  357666 pluggable_device_factory.cc:271] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 0 MB memory) -> physical PluggableDevice (device: 0, name: METAL, pci bus id: <undefined>)
+    Data shape:
         Input spectrogram batch shape: (736, 171, 1)
         Input label batch shape: (46, 7)
-🐳 Creating test, validation and training datasets [0:03:16, 𝚫 0:03:13]
+🐳 Creating test, validation and training datasets [0:03:09, 𝚫 0:03:06]
     Train dataset created. Length 240000.
     Val dataset created. Length 24000.
     Test dataset created. Length 24000.
-🐳 Calculating training call weights [0:03:16, 𝚫 0:00:00]
-Calculating call weights: 100%|████| 240000/240000 [18:28<00:00, 216.60sample/s]
-    Call weights: {
-        'BR': np.float64(4.761733061514688),
-        'BUZZ': np.float64(1.7712440912923),
-        'HERDING': np.float64(6.736158578263842),
-        'PHS': np.float64(15.312291490721774),
-        'SS': np.float64(0.16933388111048092),
-        'TAILSLAP': np.float64(13.100920178047467),
-        'WHISTLE': np.float64(33.518011623037715)}
-🐳 Saving datasets to disk [0:21:44, 𝚫 0:18:28]
+🐳 Saving datasets to disk [0:03:09, 𝚫 0:00:00]
     Size on disk of train_dataset: 27.79 GB
     Size on disk of val_dataset: 2.72 GB
     Size on disk of test_dataset: 2.71 GB
-🐳 Train, validation and test datasets created and saved to disk [0:51:31, 𝚫 0:29:47]
+🐳 Train, validation and test datasets created and saved to disk [1:19:18, 𝚫 1:16:08]
 ```
 
 ## running hyperparameter search
