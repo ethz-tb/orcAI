@@ -157,7 +157,6 @@ def hyperparameter_search(
         compression=data_compression,
         seed=[SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
-    msgr.info(f"Batch size {orcai_parameter['model']['batch_size']}")
 
     msgr.part("Searching hyperparameters")
     hps_logs_dir = Path(output_dir).joinpath("hps_logs")
