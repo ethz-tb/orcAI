@@ -69,7 +69,7 @@ def res_net_1Dconv_arch(
     x = keras.layers.Activation("relu")(x)
     x = keras.layers.Dropout(dropout_rate)(x)  # Dropout after the final CNN block
 
-    x = tf.reduce_mean(x, axis=2)
+    x = keras.layers.Lambda(lambda t: tf.reduce_mean(t, axis=2))(x)
     # 1D convolutional layer over time axis
     k_size = x.shape[2]
     outputs = keras.layers.Conv1D(
