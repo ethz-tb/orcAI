@@ -2,7 +2,7 @@ from functools import partial
 from importlib.resources import files
 from pathlib import Path
 
-import tf_keras as keras
+import keras
 import keras_tuner as kt
 import tensorflow as tf
 
@@ -76,7 +76,9 @@ def _hp_model_builder(
     model = build_model(input_shape, orcai_parameter, msgr=msgr)
 
     model.compile(
-        optimizer="adam",
+        optimizer=keras.optimizers.Adam(
+            learning_rate=orcai_parameter["model"]["learning_rate"]
+        ),
         loss=MaskedBinaryCrossentropy(),
         metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
     )

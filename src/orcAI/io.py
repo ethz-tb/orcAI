@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import tf_keras as keras
+import keras
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -250,7 +250,7 @@ def read_annotation_file(annotation_file_path):
 
 
 def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
-    import tf_keras as keras
+    import keras
 
     from orcAI.architectures import (
         MaskedAUC,
@@ -275,7 +275,9 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
         model.load_weights(model_dir.joinpath("model_weights.h5"))
 
         model.compile(
-            optimizer="adam",
+            optimizer=keras.optimizers.Adam(
+                learning_rate=orcai_parameter["model"]["learning_rate"]
+            ),
             loss=MaskedBinaryCrossentropy(),
             metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
         )
