@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.21.0] - 2025-04-29
+
+### Changes
+
+- __Breaking__: switch back to keras 3. keras_tuner is not compatible with tf_keras.
+
 ## [0.20.1] - 2025-04-28
 
 ### Changes
@@ -363,3 +369,6 @@
 [0.17.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.17.0
 [0.18.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.18.0
 [0.19.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.19.0
+[0.20.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.20.0
+[0.20.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.20.1
+[0.21.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.21.0
