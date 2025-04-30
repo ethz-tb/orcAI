@@ -13,6 +13,7 @@ def res_net_1Dconv_arch(
     filters: list[int],
     kernel_size: int,
     dropout_rate: float,
+    conv_initializer: str = "glorot_uniform",
     **unused,
 ) -> keras.Model:
     """TensorFlow/Keras model architecture for a Convolutional Neural Network
@@ -31,6 +32,8 @@ def res_net_1Dconv_arch(
         Size of the convolutional kernel
     dropout_rate : float
         Dropout rate for the model
+    conv_initializer : str
+        Initializer for the convolutional layers, default to "glorot_uniform"
     **unused :
         Additional keyword arguments, unused
 
@@ -43,7 +46,9 @@ def res_net_1Dconv_arch(
     inputs = keras.Input(shape=input_shape)
 
     # Entry block
-    x = keras.layers.Conv2D(16, kernel_size, padding="same")(inputs)
+    x = keras.layers.Conv2D(
+        16, kernel_size, padding="same", kernel_initializer=conv_initializer
+    )(inputs)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation("relu")(x)
 
@@ -51,20 +56,43 @@ def res_net_1Dconv_arch(
 
     for size in filters:
         x = keras.layers.Activation("relu")(x)
-        x = keras.layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = keras.layers.SeparableConv2D(
+            size,
+            kernel_size,
+            padding="same",
+            depthwise_initializer=conv_initializer,
+            pointwise_initializer=conv_initializer,
+        )(x)
         x = keras.layers.BatchNormalization()(x)
         x = keras.layers.Activation("relu")(x)
-        x = keras.layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = keras.layers.SeparableConv2D(
+            size,
+            kernel_size,
+            padding="same",
+            depthwise_initializer=conv_initializer,
+            pointwise_initializer=conv_initializer,
+        )(x)
         x = keras.layers.BatchNormalization()(x)
         x = keras.layers.MaxPooling2D((3, 2), strides=(2, 2), padding="same")(x)
-        residual = keras.layers.Conv2D(size, 1, strides=(2, 2), padding="same")(
-            previous_block_activation
-        )
+        residual = keras.layers.Conv2D(
+            size,
+            1,
+            strides=(2, 2),
+            padding="same",
+            depthwise_initializer=conv_initializer,
+            pointwise_initializer=conv_initializer,
+        )(previous_block_activation)
         x = keras.layers.add([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
         x = keras.layers.Dropout(dropout_rate)(x)  # Dropout
 
-    x = keras.layers.SeparableConv2D(36, kernel_size, padding="same")(x)
+    x = keras.layers.SeparableConv2D(
+        36,
+        kernel_size,
+        padding="same",
+        depthwise_initializer=conv_initializer,
+        pointwise_initializer=conv_initializer,
+    )(x)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation("relu")(x)
     x = keras.layers.Dropout(dropout_rate)(x)  # Dropout after the final CNN block
@@ -73,7 +101,11 @@ def res_net_1Dconv_arch(
     # 1D convolutional layer over time axis
     k_size = x.shape[2]
     outputs = keras.layers.Conv1D(
-        num_labels, kernel_size=k_size, padding="same", activation="sigmoid"
+        num_labels,
+        kernel_size=k_size,
+        padding="same",
+        activation="sigmoid",
+        kernel_initializer=conv_initializer,
     )(x)
 
     return keras.Model(inputs, outputs)
@@ -86,6 +118,8 @@ def res_net_LSTM_arch(
     kernel_size: int,
     dropout_rate: float,
     lstm_units: int,
+    conv_initializer: str = "glorot_uniform",
+    lstm_initializer: str = "glorot_uniform",
     **unused,
 ) -> keras.Model:
     """TensorFlow/Keras model architecture for a Convolutional Neural Network
@@ -106,6 +140,10 @@ def res_net_LSTM_arch(
         Dropout rate for the model
     lstm_units : int
         Dimensionality of the output space of the LSTM layer
+    conv_initializer : str
+        Initializer for the convolutional layers, default to "glorot_uniform"
+    lstm_initializer : str
+        Initializer for the LSTM layers, default to "glorot_uniform"
     **unused :
         Additional keyword arguments, unused
 
@@ -118,7 +156,9 @@ def res_net_LSTM_arch(
     inputs = keras.Input(shape=input_shape)
 
     # Entry block
-    x = keras.layers.Conv2D(16, kernel_size, padding="same")(inputs)
+    x = keras.layers.Conv2D(
+        16, kernel_size, padding="same", kernel_initializer=conv_initializer
+    )(inputs)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation("relu")(x)
 
@@ -127,20 +167,38 @@ def res_net_LSTM_arch(
     # Residual blocks
     for size in filters:
         x = keras.layers.Activation("relu")(x)
-        x = keras.layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = keras.layers.SeparableConv2D(
+            size,
+            kernel_size,
+            padding="same",
+            depthwise_initializer=conv_initializer,
+            pointwise_initializer=conv_initializer,
+        )(x)
         x = keras.layers.BatchNormalization()(x)
         x = keras.layers.Activation("relu")(x)
-        x = keras.layers.SeparableConv2D(size, kernel_size, padding="same")(x)
+        x = keras.layers.SeparableConv2D(
+            size,
+            kernel_size,
+            padding="same",
+            depthwise_initializer=conv_initializer,
+            pointwise_initializer=conv_initializer,
+        )(x)
         x = keras.layers.BatchNormalization()(x)
         x = keras.layers.MaxPooling2D((3, 2), strides=(2, 2), padding="same")(x)
-        residual = keras.layers.Conv2D(size, 1, strides=(2, 2), padding="same")(
-            previous_block_activation
-        )
+        residual = keras.layers.Conv2D(
+            size, 1, strides=(2, 2), padding="same", kernel_initializer=conv_initializer
+        )(previous_block_activation)
         x = keras.layers.add([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
 
     # Final CNN processing block
-    x = keras.layers.SeparableConv2D(36, kernel_size, padding="same")(x)
+    x = keras.layers.SeparableConv2D(
+        36,
+        kernel_size,
+        padding="same",
+        depthwise_initializer=conv_initializer,
+        pointwise_initializer=conv_initializer,
+    )(x)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation("relu")(x)
 
@@ -151,23 +209,30 @@ def res_net_LSTM_arch(
     x = keras.layers.Bidirectional(
         keras.layers.LSTM(
             lstm_units,
-            return_sequences=True,
+            kernel_initializer=lstm_initializer,
+            recurrent_initializer="orthogonal",
             kernel_regularizer=keras.regularizers.l2(0.001),
+            return_sequences=True,
         )
     )(x)
     x = keras.layers.Dropout(dropout_rate)(x)
     x = keras.layers.Bidirectional(
         keras.layers.LSTM(
             lstm_units,
-            return_sequences=True,
+            kernel_initializer=lstm_initializer,
+            recurrent_initializer="orthogonal",
             kernel_regularizer=keras.regularizers.l2(0.001),
+            return_sequences=True,
         )
     )(x)
     x = keras.layers.Dropout(dropout_rate)(x)
 
     # Fully connected layers with regularization
     x = keras.layers.Dense(
-        128, activation="relu", kernel_regularizer=keras.regularizers.l2(0.001)
+        128,
+        activation="relu",
+        kernel_initializer=conv_initializer,
+        kernel_regularizer=keras.regularizers.l2(0.001),
     )(x)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Dropout(dropout_rate)(x)
