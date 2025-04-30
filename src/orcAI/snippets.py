@@ -19,6 +19,8 @@ from orcAI.io import DataLoader, read_json, save_dataset, write_json
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
+DATA_TYPES = ["train", "val", "test"]
+
 
 def _make_snippet_table(
     recording_dir: Path,
@@ -111,7 +113,7 @@ def _make_snippet_table(
     for i_segment in range(n_segments):  # iterate over all segments
         msgr.info(f"Segment {i_segment + 1} of {n_segments}")
         slice = (0, 0)
-        for type in list(["train", "val", "test"]):  # iterate over type of snippet
+        for type in DATA_TYPES:  # iterate over type of snippet
             slice = (slice[1], slice[1] + snippet_parameter[type])
             t_min = (i_segment + slice[0]) * snippet_parameter["segment_duration"]
             for j in range(
@@ -180,7 +182,7 @@ def _compute_snippet_stats(
     """
 
     snippet_stats = snippet_table.groupby("data_type")[for_calls].sum().T
-    snippet_stats = snippet_stats.reindex(columns=["train", "val", "test"])
+    snippet_stats = snippet_stats.reindex(columns=DATA_TYPES)
     snippet_stats["total"] = snippet_stats.sum(axis=1)
 
     equalizing_factors = snippet_stats.apply(lambda x: 1 / x * x.max(), axis=0)
@@ -457,7 +459,7 @@ def create_tvt_snippet_tables(
     )
 
     snippets = []
-    for i, itype in enumerate(["train", "val", "test"]):
+    for i, itype in enumerate(DATA_TYPES):
         n_snippets = (
             (orcai_parameter["model"][f"n_batch_{itype}"])
             * orcai_parameter["model"]["batch_size"]
@@ -589,14 +591,12 @@ def create_tvt_data(
 
     msgr.part("Reading in snippet tables and generating loaders")
 
-    data_types = ["train", "val", "test"]
-
-    dataset_paths = {itype: Path(tvt_dir, f"{itype}_dataset") for itype in data_types}
+    dataset_paths = {itype: Path(tvt_dir, f"{itype}_dataset") for itype in DATA_TYPES}
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
 
-    csv_paths = {itype: Path(tvt_dir, f"{itype}.csv.gz") for itype in data_types}
+    csv_paths = {itype: Path(tvt_dir, f"{itype}.csv.gz") for itype in DATA_TYPES}
 
     loader = {
         key: DataLoader.from_csv(
@@ -610,14 +610,14 @@ def create_tvt_data(
         for key, path in csv_paths.items()
     }
 
-    spectrogram_sample, label_sample = loader[data_types[0]][0]
+    spectrogram_sample, label_sample = loader[DATA_TYPES[0]][0]
     msgr.info("Data shape:", indent=1)
     msgr.info(f"Input spectrogram batch shape: {spectrogram_sample.shape}")
     msgr.info(f"Input label batch shape: {label_sample.shape}", indent=-1)
 
     msgr.part("Creating test, validation and training datasets")
     dataset = {}
-    for itype in data_types:
+    for itype in DATA_TYPES:
         dataset[itype] = tf.data.Dataset.from_generator(
             loader[itype].__iter__,
             output_signature=(
@@ -646,12 +646,11 @@ def create_tvt_data(
             call_weights,
             Path(tvt_dir, "call_weights.json"),
         )
-        msgr.info(f"Call weights: {call_weights}")
-    else:
-        call_weights = None
+        msgr.info("Call weights:")
+        msgr.info(call_weights)
 
     msgr.part("Saving datasets to disk")
-    for itype in data_types:
+    for itype in DATA_TYPES:
         try:
             save_dataset(
                 dataset[itype],
