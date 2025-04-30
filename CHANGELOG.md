@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.22.0dev]
+## [0.22.0] - 2025-04-30
 
 ### Changes
 
@@ -12,6 +12,8 @@
     - "conv_initializer": default "glorot_uniform" (the keras default), "he_normal" might be better suited for layers with ReLU activations
     - "lstm_initializer": default "glorot_uniform" (the keras default), which should be fine for LSTMs. Included for completeness.
     - if values are not in orcai_parameters.json, the default values are used.
+- __Breaking__: removed maskedAUC reporting. Class is still available but unused.
+  - parameter orcai_parameter["monitor"] can only be "val_MBA"
 - minor refactoring
 
 ## [0.21.1] - 2025-04-29
@@ -393,3 +395,4 @@
 [0.20.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.20.1
 [0.21.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.21.0
 [0.21.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.21.1
+[0.22.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.22.0
