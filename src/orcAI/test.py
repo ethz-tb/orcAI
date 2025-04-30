@@ -418,15 +418,16 @@ def test_model(
                 else None,
             ),
         )
+        spectrogram_sample, label_sample = sampled_test_snippets_loader[0]
         test_sampled_dataset = tf.data.Dataset.from_generator(
             sampled_test_snippets_loader.__iter__,
             output_signature=(
                 tf.TensorSpec(
-                    shape=(model.input_shape[1], model.input_shape[2], 1),
+                    shape=spectrogram_sample.shape,
                     dtype=tf.float32,
                 ),  # Single spectrogram shape
                 tf.TensorSpec(
-                    shape=(model.output_shape[1], model.output_shape[2]),
+                    shape=label_sample.shape,
                     dtype=tf.float32,
                 ),  # Single label shape
             ),
