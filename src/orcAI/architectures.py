@@ -79,8 +79,7 @@ def res_net_1Dconv_arch(
             1,
             strides=(2, 2),
             padding="same",
-            depthwise_initializer=conv_initializer,
-            pointwise_initializer=conv_initializer,
+            kernel_initializer=conv_initializer,
         )(previous_block_activation)
         x = keras.layers.add([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
