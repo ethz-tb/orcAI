@@ -755,6 +755,6 @@ def cli_hpsearch(**kwargs):
     )
     if kwargs["data_compression"] == "None":
         kwargs["data_compression"] = None
-    from orcAI.hp_search import hyperparameter_search
+    from orcAI.hpsearch import hyperparameter_search
 
     hyperparameter_search(**kwargs)
