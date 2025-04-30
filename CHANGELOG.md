@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.22.0dev]
+
+### Changes
+
+- __Breaking__: rename module hp_search to hpsearch
+
 ## [0.21.1] - 2025-04-29
 
 ### Changes
