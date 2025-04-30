@@ -203,8 +203,6 @@ def train(
                     verbose=1 if verbosity > 2 else 0,
                 ),
             ],
-            steps_per_epoch=model_parameter["n_batch_train"],
-            validation_steps=model_parameter["n_batch_val"],
             class_weight=call_weights_int,
             verbose=0,
         )
