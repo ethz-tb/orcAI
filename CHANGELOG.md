@@ -5,6 +5,14 @@
 ### Changes
 
 - __Breaking__: rename module hp_search to hpsearch
+- Potential fix for training routine that lead to incomplete epochs because not enough batches could be extracted.
+- increase Shuffle buffer size to 20000
+- add initializers as parameters to model architectures.
+  - two new parameter in orcai_parameter["model"]
+    - "conv_initializer": default "glorot_uniform" (the keras default), "he_normal" might be better suited for layers with ReLU activations
+    - "lstm_initializer": default "glorot_uniform" (the keras default), which should be fine for LSTMs. Included for completeness.
+    - if values are not in orcai_parameters.json, the default values are used.
+- minor refactoring
 
 ## [0.21.1] - 2025-04-29
 
