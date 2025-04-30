@@ -7,7 +7,6 @@ import tensorflow as tf
 from tqdm.keras import TqdmCallback
 
 from orcAI.architectures import (
-    MaskedAUC,
     MaskedBinaryAccuracy,
     MaskedBinaryCrossentropy,
     build_model,
@@ -146,7 +145,7 @@ def train(
                 learning_rate=model_parameter["learning_rate"]
             ),
             loss=MaskedBinaryCrossentropy(),
-            metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
+            metrics=[MaskedBinaryAccuracy()],
         )
 
     # Callbacks

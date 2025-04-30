@@ -253,7 +253,6 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
     import keras
 
     from orcAI.architectures import (
-        MaskedAUC,
         MaskedBinaryAccuracy,
         MaskedBinaryCrossentropy,
         res_net_LSTM_arch,
@@ -279,7 +278,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
                 learning_rate=orcai_parameter["model"]["learning_rate"]
             ),
             loss=MaskedBinaryCrossentropy(),
-            metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
+            metrics=[MaskedBinaryAccuracy()],
         )
     else:
         raise ValueError(

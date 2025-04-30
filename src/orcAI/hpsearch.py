@@ -7,7 +7,6 @@ import keras_tuner as kt
 import tensorflow as tf
 
 from orcAI.architectures import (
-    MaskedAUC,
     MaskedBinaryAccuracy,
     MaskedBinaryCrossentropy,
     build_model,
@@ -80,7 +79,7 @@ def _hp_model_builder(
             learning_rate=orcai_parameter["model"]["learning_rate"]
         ),
         loss=MaskedBinaryCrossentropy(),
-        metrics=[MaskedAUC(), MaskedBinaryAccuracy()],
+        metrics=[MaskedBinaryAccuracy()],
     )
     return model
 
