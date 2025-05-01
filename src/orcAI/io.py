@@ -10,7 +10,7 @@ import zarr
 from orcAI.json_encoder import JsonEncoderExt
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
-SHUFFLE_BUFFER_SIZE = 20000
+SHUFFLE_BUFFER_SIZE = 10000
 
 
 class DataLoader:

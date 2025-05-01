@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.22.1] - 2025-05-01
+
+### Changes
+
+- Buffer size to 10000
+
 ## [0.22.0] - 2025-04-30
 
 ### Changes
