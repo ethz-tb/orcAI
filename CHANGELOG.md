@@ -4,7 +4,7 @@
 
 ### Changes
 
-- Buffer size to 10000
+- Buffer size back to 1000. OOM errors on some machines with 20000.
 
 ## [0.22.0] - 2025-04-30
 
