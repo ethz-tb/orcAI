@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.23.0dev]
+## [0.23.0] - 2025-05-02
 
 ### Changes
 
@@ -409,3 +409,4 @@
 [0.21.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.21.0
 [0.21.1]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.21.1
 [0.22.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.22.0
+[0.23.0]:https://gitlab.ethz.ch/tb/orcai/-/tags/v0.23.0
