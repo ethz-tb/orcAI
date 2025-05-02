@@ -7,6 +7,13 @@ tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse onl
 
 
 # CNN model with residual connection
+
+
+class ReduceFrequencyMean(keras.layers.Layer):
+    def call(self, inputs):
+        return tf.reduce_mean(inputs, axis=2)
+
+
 def res_net_1Dconv_arch(
     input_shape: tuple[int, int, int],
     num_labels: int,
@@ -96,7 +103,7 @@ def res_net_1Dconv_arch(
     x = keras.layers.Activation("relu")(x)
     x = keras.layers.Dropout(dropout_rate)(x)  # Dropout after the final CNN block
 
-    x = keras.layers.Lambda(lambda t: tf.reduce_mean(t, axis=2))(x)
+    x = ReduceFrequencyMean()(x)
     # 1D convolutional layer over time axis
     k_size = x.shape[2]
     outputs = keras.layers.Conv1D(
