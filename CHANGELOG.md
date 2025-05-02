@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0dev]
+
+### Changes
+
+- subclass layer for frequency reduction in 1DConv model for serialization. Fixes serialization of 1D Conv models.
+- save data of all trials as csv in hpsearch
+
 ## [0.22.1] - 2025-05-01
 
 ### Changes

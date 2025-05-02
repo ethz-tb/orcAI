@@ -4,6 +4,7 @@ from pathlib import Path
 
 import keras
 import keras_tuner as kt
+import pandas as pd
 import tensorflow as tf
 
 from orcAI.architectures import (
@@ -82,6 +83,28 @@ def _hp_model_builder(
         metrics=[MaskedBinaryAccuracy()],
     )
     return model
+
+
+def _save_trial_data(
+    tuner: kt.Tuner, path: Path, msgr: Messenger = Messenger(verbosity=0)
+) -> None:
+    trials = tuner.oracle.trials.values()
+    results = []
+    for trial in trials:
+        row = trial.hyperparameters.values.copy()
+        row["score"] = trial.score
+        row["status"] = trial.status
+
+        for metric_name, metric_val in trial.metrics.metrics.items():
+            best_val = metric_val.get_best_value()
+            row[metric_name] = best_val
+
+        results.append(row)
+
+    df = pd.DataFrame(results)
+    df.to_csv(path, index=False)
+
+    msgr.info(f"Saved trial data to {path}")
 
 
 def hyperparameter_search(
@@ -222,6 +245,11 @@ def hyperparameter_search(
     write_json(
         tuner.get_best_hyperparameters()[0].values,
         hps_logs_dir.joinpath("best_hyperparameters.json"),
+    )
+    _save_trial_data(
+        tuner,
+        hps_logs_dir.joinpath("all_trials.csv"),
+        msgr=msgr,
     )
 
     msgr.success("Hyperparameter search completed")
