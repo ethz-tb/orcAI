@@ -2,9 +2,13 @@
 
 ## [0.23.2] - 2025-05-05
 
+### Changes
+
 - general polish
 
 ## [0.23.1] - 2025-05-05
+
+### Changes
 
 - update default parameters for orcai-v1
 - update default parameters for hyperparameter search
@@ -419,4 +423,7 @@
 [0.21.0]:https://github.com/ethz-tb/orcAI/releases/tag/v0.21.0
 [0.21.1]:https://github.com/ethz-tb/orcAI/releases/tag/v0.21.1
 [0.22.0]:https://github.com/ethz-tb/orcAI/releases/tag/v0.22.0
+[0.22.1]:https://github.com/ethz-tb/orcAI/releases/tag/v0.22.1
 [0.23.0]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.0
+[0.23.1]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.1
+[0.23.2]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.2
