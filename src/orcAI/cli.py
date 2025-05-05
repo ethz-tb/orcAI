@@ -6,6 +6,10 @@ import rich_click as click
 
 from orcAI.auxiliary import Messenger
 
+click.rich_click.STYLE_OPTIONS_PANEL_BOX = "SIMPLE"
+click.rich_click.STYLE_COMMANDS_PANEL_BOX = "SIMPLE"
+click.rich_click.MAX_WIDTH = 100
+
 click.rich_click.COMMAND_GROUPS = {
     "orcai": [
         {
@@ -61,11 +65,11 @@ INCLUDED_MODELS = [
     + click.style("orcAI", fg="blue", bold=True)
     + "\n"
     + "███ ███   ████████ "
-    + "  a tool for \n"
+    + "  a tool for training, testing & applying\n"
     + "  ████  ████░██░░░ "
-    + "  training, testing & applying AI models \n"
+    + "  AI models to detect acoustic signals in\n"
     + "    ██████████░░░  "
-    + "  to detect acoustic signals in spectrograms generated from audio recordings.\n"
+    + "  spectrograms generated from audio recordings.\n"
     + "     ░░██░░░░      "
     + "Version: "
     + version("orcAI")
