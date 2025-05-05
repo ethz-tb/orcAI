@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.3] - 2025-05-05
+
+### Changes
+
+- add overwrite flag to predict
+- better logging.
+
 ## [0.23.2] - 2025-05-05
 
 ### Changes
