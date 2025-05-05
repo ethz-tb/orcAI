@@ -434,3 +434,4 @@
 [0.23.0]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.0
 [0.23.1]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.1
 [0.23.2]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.2
+[0.23.3]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.3
