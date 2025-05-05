@@ -52,7 +52,8 @@ def make_spectrogram(
         orcai_parameter = read_json(orcai_parameter)
     spectrogram_parameter = orcai_parameter["spectrogram"]
 
-    msgr.part(
+    msgr.part("Making spectrogram")
+    msgr.info(
         f"Loading & resampling (to {spectrogram_parameter['sampling_rate'] / 1000:.2f} kHz) wav file: {wav_file_path.stem}"
     )
 
@@ -62,10 +63,10 @@ def make_spectrogram(
         mono=False,
     )
     if wav_file.ndim > 1:
-        msgr.info(f"Multiple channels found, using channel {channel}")
+        msgr.warning(f"Multiple channels found, using channel {channel}")
         wav_file = wav_file[channel - 1]
 
-    msgr.part("Calculating power spectrogram by STFT")
+    msgr.info("Calculating power spectrogram by STFT")
 
     # create spectrogram
     spectrogram = stft(
@@ -90,7 +91,7 @@ def make_spectrogram(
         np.abs(spectrogram), ref=np.max
     )  # Convert to power spectrogram (magnitude squared)
 
-    msgr.part("Extracting frequency range and clipping spectrogram")
+    msgr.info("Extracting frequency range and clipping spectrogram")
 
     # extract frequency range, clip according to quantiles, and normalise
     freq_min_i = np.argwhere(frequencies <= spectrogram_parameter["freq_range"][0])[0][
@@ -111,7 +112,7 @@ def make_spectrogram(
     # Clip the spectrogram to the computed percentiles
     spectrogram = np.clip(spectrogram, lower_percentile, upper_percentile)
 
-    msgr.part("Normalizing spectrogram")
+    msgr.info("Normalizing spectrogram")
 
     # Normalize the spectrogram to range [0, 1]
     min_val = np.min(spectrogram)
@@ -120,7 +121,7 @@ def make_spectrogram(
 
     # transpose spectogram
     spectrogram = spectrogram.T
-    msgr.success("Spectrogram created.")
+
     return spectrogram, frequencies, times
 
 
@@ -170,7 +171,6 @@ def save_spectrogram(
         times,
         Path(output_dir, "times.json"),
     )
-    msgr.success("Spectrogram saved.")
     return
 
 

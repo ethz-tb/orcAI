@@ -266,7 +266,7 @@ def _predict_wav(
     if progressbar:
         progressbar.set_description(f"{recording_path.stem} - Predicting annotations")
         progressbar.refresh()
-    start_time = time.time()
+
     # Parameter
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
     shift = snippet_length // 2  # Shift time steps for overlapping windows
@@ -343,10 +343,7 @@ def _predict_wav(
             "label": label_names,
         }
     ).sort_values(by=["start", "stop", "label"])
-    msgr.info(f"found {len(predicted_labels)} acoustic signals", indent=1)
-    msgr.info(
-        f"time for prediction and preparing annotation file: {time.time() - start_time:.2f}"
-    )
+    msgr.info(f"found {len(predicted_labels)} acoustic signals")
 
     if call_duration_limits is not None:
         predicted_labels = filter_predictions(
@@ -359,8 +356,7 @@ def _predict_wav(
 
     if output_path is not None:
         predicted_labels.round(4).to_csv(output_path, sep="\t", index=False)
-        msgr.success(f"Prediction finished.\nPredictions saved to {output_path}")
-        msgr.success(f"Predictions saved to {output_path}")
+        msgr.info(f"Predictions saved to {output_path}")
         if save_prediction_probabilities:
             predictions_path = output_path.with_name(
                 f"{output_path.stem}_probabilities.csv.gz"
@@ -375,9 +371,9 @@ def _predict_wav(
                 * time_steps_per_output_step
                 * range(len(aggregated_predictions)),
             ).to_csv(predictions_path, index_label="time", compression="gzip")
-            msgr.success(f"Prediction probabilities saved to {predictions_path}")
-    else:
-        msgr.success("Prediction finished.")
+            msgr.info(f"Prediction probabilities saved to {predictions_path}")
+
+    msgr.success("Prediction finished.")
     return predicted_labels
 
 
