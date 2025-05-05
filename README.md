@@ -9,7 +9,6 @@ OrcAI is a software package to detect acoustic signals in spectrograms generated
 
 OrcAI uses audio recordings together with annotations of the above sound types to train machine learning models which can then be used to predict annotation of sounds patterns found in recordings that have not yet been annotated.
 
-
 OrcAI is a software package to detect acoustic signals in spectrograms generated from audio recordings. It is trained on audio recordings of killer whales producing a variety of intentional acoustic signals produced for communication (such as calls, whistles, herding calls, and buzzes) as well as sounds not intended for communication (such as prey handling sounds, breathing or tailslaps).
 
 OrcAI uses audio recordings together with annotations of the above sound types to train machine learning models which can then be used to predict annotation of sounds patterns found in recordings that have not yet been annotated.
@@ -30,7 +29,7 @@ orcAI requires Python 3.11 and should work on all platforms supported by Python.
 To install the latest version of orcAI, run the following command:
 
 ```bash
-pipx install git+https://gitlab.ethz.ch/tb/orcai.git --python python3.11
+pipx install git+https://github.com/ethz-tb/orcAI.git --python python3.11
 ```
 
 ## Command Line Interface

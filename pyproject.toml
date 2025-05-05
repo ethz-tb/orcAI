@@ -43,7 +43,7 @@ version = {attr = "orcAI.__version__"}
 dev = ["ipython", "ruff"]
 
 [project.urls]
-Repository = "https://gitlab.ethz.ch/tb/orcai"
+Repository = "https://github.com/ethz-tb/orcAI"
 
 [project.scripts]
 orcai = "orcAI.cli:cli"

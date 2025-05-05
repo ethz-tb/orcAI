@@ -6,7 +6,7 @@
 pyenv virtualenv 3.11 orcai
 pyenv activate orcai
 python -m pip install --upgrade pip
-pip install -U git+https://gitlab.ethz.ch/tb/orcai.git
+pip install -U git+https://github.com/ethz-tb/orcAI.git
 ```
 
 ```bash
@@ -49,7 +49,7 @@ orcai create-recording-table ../orca_recordings/Acoustics \
 -ut ../orca_recordings/original_recording_table.csv \
 -p orcai_parameter.json \
 -ep files_exclude.json \
-1-up
+-up
 ```
 
 ```console
@@ -270,7 +270,7 @@ export CUDA_DIR=$CUDA_EULER_ROOT
 python -m venv venv
 source venv/bin/activate
 
-pip install -U git+https://gitlab.ethz.ch/tb/orcai.git
+pip install -U git+https://github.com/ethz-tb/orcAI.git
 orcai --version
 ```
 
@@ -311,6 +311,62 @@ orcai --version
 eval $hp_search_cmd
 ```
 
+```console
+Many modules are hidden in this stack. Use "module --show_hidden spider SOFTWARE" if you are not able to find the required software
+
+running rsync -avz /nfs/nas22/fs2201/usys_ibz_tb_data/TB-data/Daniel_Angst/orcAI/orcai_tvt_data_3750.zip /scratch/tmp.30631690.angstd
+
+sending incremental file list
+orcai_tvt_data_3750.zip
+
+sent 33,226,309,469 bytes  received 35 bytes  64,205,428.99 bytes/sec
+total size is 33,218,790,656  speedup is 1.00
+
+running unzip /scratch/tmp.30631690.angstd/orcai_tvt_data_3750.zip -d /scratch/tmp.30631690.angstd
+
+Archive:  /scratch/tmp.30631690.angstd/orcai_tvt_data_3750.zip
+
+running orcai hpsearch /scratch/tmp.30631690.angstd /cluster/home/angstd/orcAI/20250428_orcai -p /cluster/home/angstd/orcAI/20250428_orcai/orcai_parameter_HPS.json -hp /cluster/home/angstd/orcAI/20250428_orcai/hps_parameter.json -pl
+
+orcai, version 0.22.1
+🐳 Hyperparameter search
+orcAI 0.22.1 [started @ 2025-05-02 10:53:12]
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1746175993.820539  322561 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1746175993.827003  322561 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1746175993.848934  322561 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1746175993.848983  322561 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1746175993.848988  322561 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1746175993.848992  322561 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+🐳 Loading Hyperparameter search parameter [0:00:28]
+🐳 Loading training and validation datasets from /scratch/tmp.30631690.angstd [0:00:28, 𝚫 0:00:00]
+I0000 00:00:1746176023.107064  322561 gpu_device.cc:2019] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 22807 MB memory:  -> device: 0, name: Quadro RTX 6000, pci bus id: 0000:01:00.0, compute capability: 7.5
+I0000 00:00:1746176023.112165  322561 gpu_device.cc:2019] Created device /job:localhost/replica:0/task:0/device:GPU:1 with 22807 MB memory:  -> device: 1, name: Quadro RTX 6000, pci bus id: 0000:21:00.0, compute capability: 7.5
+I0000 00:00:1746176023.113749  322561 gpu_device.cc:2019] Created device /job:localhost/replica:0/task:0/device:GPU:2 with 22807 MB memory:  -> device: 2, name: Quadro RTX 6000, pci bus id: 0000:22:00.0, compute capability: 7.5
+I0000 00:00:1746176023.115533  322561 gpu_device.cc:2019] Created device /job:localhost/replica:0/task:0/device:GPU:3 with 22807 MB memory:  -> device: 3, name: Quadro RTX 6000, pci bus id: 0000:81:00.0, compute capability: 7.5
+🐳 Searching hyperparameters [0:00:34, 𝚫 0:00:07]
+    Parallel - running on 4 GPU
+Reloading Tuner from /cluster/home/angstd/orcAI/20250428_orcai/hps_logs/orcai-v1-3750-LSTM_HPS/tuner0.json
+    Saving best model to hps/orcai-v1-3750-LSTM_HPS.keras
+I0000 00:00:1746176045.407298  322656 cuda_dnn.cc:529] Loaded cuDNN version 90300
+/cluster/home/angstd/orcAI/venv/lib/python3.11/site-packages/keras/src/saving/saving_lib.py:757: UserWarning: Skipping variable loading for optimizer 'adam', because it has 2 variables whereas the saved optimizer has 152 variables. 
+  saveable.load_own_variables(weights_store.get(inner_path))
+🐳 Best Hyperparameters [2 days, 10:29:01, 𝚫 2 days, 10:28:27]
+    {
+        "filters": "set3",
+        "kernel_size": 3,
+        "dropout_rate": 0.5,
+        "batch_size": 64,
+        "lstm_units": 128,
+        "tuner/epochs": 10,
+        "tuner/initial_epoch": 4,
+        "tuner/bracket": 1,
+        "tuner/round": 1,
+        "tuner/trial_id": "0018"
+    }
+🐳 Hyperparameter search completed [2 days, 10:29:01, 𝚫 0:00:00]
+```
+
 ## train model
 
 Run on ETHZ Euler cluster with GPU.
@@ -319,8 +375,46 @@ Run on ETHZ Euler cluster with GPU.
 Training:
 
 ```bash
+#!/usr/bin/bash
+#SBATCH --job-name=orcai-v1
+#SBATCH --output=/cluster/home/angstd/orcAI/orcai-v1/logs/training_output_%j.log
+#SBATCH --tmp=80G
 
+#SBATCH --gpus=1
+#SBATCH --time=48:00:00
+#SBATCH --mem-per-cpu=24g
+#SBATCH --gres=gpumem:24g
+module load stack/2024-06 gcc/12.2.0 openblas/0.3.24 cuda/12.4.1 python_cuda/3.11.6 py-pip
+export XLA_FLAGS=--xla_gpu_cuda_data_dir=$CUDA_EULER_ROOT
+export CUDA_DIR=$CUDA_EULER_ROOT
+source /cluster/home/angstd/orcAI/venv/bin/activate
 
+SOURCE_FILE="/nfs/nas22/fs2201/usys_ibz_tb_data/TB-data/Daniel_Angst/orcAI/orcai_tvt_data_3750.zip"
+filename=$(basename -- "$SOURCE_FILE")
+
+rsync_cmd="rsync -avz $SOURCE_FILE $TMPDIR"
+echo -e "\nrunning $rsync_cmd\n"
+eval $rsync_cmd
+
+unzip_cmd="unzip $TMPDIR/$filename -d $TMPDIR"
+echo -e "\nrunning $unzip_cmd\n"
+eval $unzip_cmd
+
+data_dir="$TMPDIR"
+output_dir="/cluster/home/angstd/orcAI"
+parameter_file="$output_dir/orcai_parameter_v1.json"
+
+orcai_train_cmd="orcai train $data_dir $output_dir -p $parameter_file"
+echo -e "\nrunning $orcai_train_cmd\n"
+orcai --version
+eval $orcai_train_cmd
+
+model_dir="$output_dir/orcai-v1"
+
+orcai_test_cmd="orcai test $model_dir $data_dir"
+echo -e "\nrunning $orcai_test_cmd\n"
+eval $orcai_test_cmd
+```
 
 ## test model
 

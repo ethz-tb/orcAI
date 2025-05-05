@@ -77,7 +77,7 @@ INCLUDED_MODELS = [
     # TODO: Add reference
     epilog="For further information see the help pages of the individual subcommands (e.g. "
     + click.style("orcai predict --help", italic=True)
-    + ") and/or visit: https://gitlab.ethz.ch/tb/orcai",
+    + ") and/or visit: https://github.com/ethz-tb/orcAI",
 )
 @click.version_option()
 def cli():
@@ -89,7 +89,7 @@ def cli():
     help="Predicts call annotations from RECORDING_PATH. This can either be a path to a wav file or a recording table (created with create-recording-table) as .csv.",
     short_help="Predicts call annotations.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("recording_path", type=ClickFilePathR)
 @click.option(
@@ -177,7 +177,7 @@ def cli_predict(**kwargs):
     help="Filters predictions in the predictions file at PREDICTION_FILE_PATH.",
     short_help="Filters predictions.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("predicted_labels", type=ClickFilePathR)
 @click.option(
@@ -224,7 +224,7 @@ def cli_filter_predictions(**kwargs):
     help="Initializes a new orcAI project with PROJECT_NAME in PROJECT_DIR.",
     short_help="Initializes a new orcAI project.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("project_dir", type=ClickDirPathWcreate)
 @click.argument("project_name", type=str)
@@ -258,7 +258,7 @@ def cli_init_project(**kwargs):
     help="Create a table of recordings in BASE_DIR_RECORDING for use with other orcAI functions.",
     short_help="Create a table of recordings.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("base_dir_recording", type=ClickDirPathR)
 @click.option(
@@ -343,7 +343,7 @@ def cli_create_recordings_table(**kwargs):
     help="Creates spectrograms for all files in recording table at RECORDING_TABLE_PATH and writes them to OUTPUT_DIR.",
     short_help="Creates spectrograms.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("recording_table_path", type=ClickFilePathR)
 @click.argument("output_dir", type=ClickDirPathWcreate)
@@ -403,7 +403,7 @@ def cli_create_spectrograms(**kwargs):
     help="Creates label arrays for all files in recording table at RECORDING_TABLE_PATH and writes them to OUTPUT_DIR.",
     short_help="Creates label arrays.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("recording_table_path", type=ClickFilePathR)
 @click.argument("output_dir", type=ClickDirPathW)
@@ -459,7 +459,7 @@ def cli_create_label_arrays(**kwargs):
     help="Creates a table of snippets for all files in recording table at RECORDING_TABLE_PATH and writes them to RECORDING_DATA_DIR.",
     short_help="Creates snippet table.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("recording_table_path", type=ClickFilePathR)
 @click.argument("recording_data_dir", type=ClickDirPathW)
@@ -501,7 +501,7 @@ def cli_create_snippet_table(**kwargs):
     help="Creates snippet tables for training, validation and test datasets and saves them to OUTPUT_DIR.",
     short_help="Creates TVT snippet tables.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("output_dir", type=ClickDirPathWcreate)
 @click.option(
@@ -543,7 +543,7 @@ def cli_create_tvt_snippet_tables(**kwargs):
     help="Creates training, validation and test datasets from snippet tables in TVT_DIR.",
     short_help="Creates TVT datasets.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("tvt_dir", type=ClickDirPathR)
 @click.option(
@@ -594,7 +594,7 @@ def cli_create_tvt_data(**kwargs):
     help="Trains a model on the training dataset in DATA_DIR and saves it to OUTPUT_DIR.",
     short_help="Trains a model.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("data_dir", type=ClickDirPathR)
 @click.argument("output_dir", type=ClickDirPathW)
@@ -644,7 +644,7 @@ def cli_train(**kwargs):
     help="Tests a model at MODEL_DIR on the test dataset in DATA_DIR and saves the results to OUTPUT_DIR.",
     short_help="Tests a model.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("model_dir", type=ClickDirPathR)
 @click.argument("data_dir", type=ClickDirPathR)
@@ -706,7 +706,7 @@ def cli_test(**kwargs):
     help="Performs hyperparameter search on the training dataset in DATA_DIR and saves the results to OUTPUT_DIR.",
     short_help="Performs hyperparameter search.",
     no_args_is_help=True,
-    epilog="For further information visit: https://gitlab.ethz.ch/tb/orcai",
+    epilog="For further information visit: https://github.com/ethz-tb/orcAI",
 )
 @click.argument("data_dir", type=ClickDirPathR)
 @click.argument("output_dir", type=ClickDirPathW)
