@@ -7,9 +7,10 @@ tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse onl
 
 
 # CNN model with residual connection
-
-
 class ReduceFrequencyMean(keras.layers.Layer):
+    """Custom Keras layer to reduce the frequency dimension of a 4D tensor
+    by taking the mean across the frequency axis (axis=2)"""
+
     def call(self, inputs):
         return tf.reduce_mean(inputs, axis=2)
 
@@ -40,7 +41,7 @@ def res_net_1Dconv_arch(
     dropout_rate : float
         Dropout rate for the model
     conv_initializer : str
-        Initializer for the convolutional layers, default to "glorot_uniform"
+        Initializer for the convolutional layers, defaults to "glorot_uniform"
     **unused :
         Additional keyword arguments, unused
 
@@ -59,7 +60,7 @@ def res_net_1Dconv_arch(
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation("relu")(x)
 
-    previous_block_activation = x  # Set aside residual
+    previous_block_activation = x
 
     for size in filters:
         x = keras.layers.Activation("relu")(x)
@@ -88,9 +89,9 @@ def res_net_1Dconv_arch(
             padding="same",
             kernel_initializer=conv_initializer,
         )(previous_block_activation)
-        x = keras.layers.add([x, residual])  # Add back residual
-        previous_block_activation = x  # Set aside next residual
-        x = keras.layers.Dropout(dropout_rate)(x)  # Dropout
+        x = keras.layers.add([x, residual])
+        previous_block_activation = x
+        x = keras.layers.Dropout(dropout_rate)(x)
 
     x = keras.layers.SeparableConv2D(
         36,
@@ -101,10 +102,9 @@ def res_net_1Dconv_arch(
     )(x)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation("relu")(x)
-    x = keras.layers.Dropout(dropout_rate)(x)  # Dropout after the final CNN block
+    x = keras.layers.Dropout(dropout_rate)(x)
 
     x = ReduceFrequencyMean()(x)
-    # 1D convolutional layer over time axis
     k_size = x.shape[2]
     outputs = keras.layers.Conv1D(
         num_labels,
@@ -124,7 +124,7 @@ def res_net_LSTM_arch(
     kernel_size: int,
     dropout_rate: float,
     lstm_units: int,
-    conv_initializer: str = "glorot_uniform",
+    conv_initializer: str = "he_normal",
     lstm_initializer: str = "glorot_uniform",
     **unused,
 ) -> keras.Model:
@@ -147,9 +147,9 @@ def res_net_LSTM_arch(
     lstm_units : int
         Dimensionality of the output space of the LSTM layer
     conv_initializer : str
-        Initializer for the convolutional layers, default to "glorot_uniform"
+        Initializer for the convolutional layers, defaults to "he_normal"
     lstm_initializer : str
-        Initializer for the LSTM layers, default to "glorot_uniform"
+        Initializer for the LSTM layers, defaults to "glorot_uniform"
     **unused :
         Additional keyword arguments, unused
 
@@ -161,16 +161,14 @@ def res_net_LSTM_arch(
     """
     inputs = keras.Input(shape=input_shape)
 
-    # Entry block
     x = keras.layers.Conv2D(
         16, kernel_size, padding="same", kernel_initializer=conv_initializer
     )(inputs)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation("relu")(x)
 
-    previous_block_activation = x  # Set aside residual
+    previous_block_activation = x
 
-    # Residual blocks
     for size in filters:
         x = keras.layers.Activation("relu")(x)
         x = keras.layers.SeparableConv2D(
@@ -194,10 +192,9 @@ def res_net_LSTM_arch(
         residual = keras.layers.Conv2D(
             size, 1, strides=(2, 2), padding="same", kernel_initializer=conv_initializer
         )(previous_block_activation)
-        x = keras.layers.add([x, residual])  # Add back residual
-        previous_block_activation = x  # Set aside next residual
+        x = keras.layers.add([x, residual])
+        previous_block_activation = x
 
-    # Final CNN processing block
     x = keras.layers.SeparableConv2D(
         36,
         kernel_size,
@@ -208,10 +205,8 @@ def res_net_LSTM_arch(
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation("relu")(x)
 
-    # Reshape for LSTM input
     x = keras.layers.Reshape(target_shape=(-1, x.shape[-2] * x.shape[-1]))(x)
 
-    # LSTM layers with regularization
     x = keras.layers.Bidirectional(
         keras.layers.LSTM(
             lstm_units,
@@ -233,7 +228,6 @@ def res_net_LSTM_arch(
     )(x)
     x = keras.layers.Dropout(dropout_rate)(x)
 
-    # Fully connected layers with regularization
     x = keras.layers.Dense(
         128,
         activation="relu",
@@ -249,6 +243,8 @@ def res_net_LSTM_arch(
 
 @keras.saving.register_keras_serializable(name="MaskedBinaryCrossentropy")
 class MaskedBinaryCrossentropy(keras.losses.Loss):
+    """Masked Binary Crossentropy loss function for Keras"""
+
     def __init__(
         self,
         mask_value=MASK_VALUE,
@@ -276,6 +272,8 @@ class MaskedBinaryCrossentropy(keras.losses.Loss):
 
 @keras.saving.register_keras_serializable(name="MaskedBinaryAccuracy")
 class MaskedBinaryAccuracy(keras.metrics.BinaryAccuracy):
+    """Masked Binary Accuracy metric for Keras"""
+
     def __init__(self, mask_value=MASK_VALUE, name="MBA", **kwargs):
         super().__init__(name=name, **kwargs)
         self.mask_value = mask_value
@@ -290,6 +288,8 @@ class MaskedBinaryAccuracy(keras.metrics.BinaryAccuracy):
 
 @keras.saving.register_keras_serializable(name="MaskedAUC")
 class MaskedAUC(keras.metrics.AUC):
+    """Masked Area Under the Curve (AUC) of ROC metric for Keras"""
+
     def __init__(self, mask_value=MASK_VALUE, name="MAUC", **kwargs):
         super().__init__(name=name, **kwargs)
         self.mask_value = mask_value
@@ -328,7 +328,6 @@ def build_model(
         OrcAI parameter dictionary
     msgr : Messenger
         Messenger object for messages
-         (Default value = Messenger())
 
     Returns
     -------
