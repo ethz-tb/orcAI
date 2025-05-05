@@ -187,6 +187,7 @@ def _predict_wav(
     orcai_parameter: dict,
     shape: dict,
     output_path: Path | str = "default",
+    overwrite: bool = False,
     save_prediction_probabilities: bool = False,
     call_duration_limits: (Path | str) | dict = None,
     label_suffix: str = "*",
@@ -210,6 +211,8 @@ def _predict_wav(
         Model shape dictionary.
     output_path : (Path | str) | "default"
         Path to the output file or "default" to save in the same directory as the wav file.
+    overwrite : bool
+        Overwrite the output file if it exists.
     save_prediction_probabilities : bool
         Save prediction probabilities to output_path
     call_duration_limits : (Path | str) | dict | None
@@ -241,7 +244,10 @@ def _predict_wav(
             output_path = Path(output_path)
         msgr.info(f"Output file: {output_path}")
         if output_path.exists():
-            raise FileExistsError(f"Annotation file already exists: {output_path}")
+            if overwrite:
+                msgr.warning(f"Output file {output_path} already exists. Overwriting.")
+            else:
+                raise FileExistsError(f"Annotation file already exists: {output_path}")
 
     # Generating spectrogram
     if progressbar:
@@ -380,6 +386,7 @@ def predict(
     channel: int = 1,
     model_dir: str | Path = files("orcAI.models").joinpath("orcai-v1"),
     output_path: str | Path = "default",
+    overwrite: bool = False,
     save_prediction_probabilities: bool = False,
     base_dir_recording: str | Path | None = None,
     call_duration_limits: str | Path | None = None,
@@ -401,6 +408,8 @@ def predict(
         Path to the directory containing the model.
     output_path : str | Path
         Path to the output file or "default" to save in the same directory as the wav file.
+    overwrite : bool
+        Overwrite the output file if it exists.
     save_prediction_probabilities : bool
         Save prediction probabilities to output_path
     base_dir_recording : str | Path | None
@@ -444,6 +453,7 @@ def predict(
             orcai_parameter=orcai_parameter,
             shape=shape,
             output_path=output_path,
+            overwrite=overwrite,
             save_prediction_probabilities=save_prediction_probabilities,
             call_duration_limits=call_duration_limits,
             label_suffix=label_suffix,
@@ -481,6 +491,7 @@ def predict(
                 orcai_parameter=orcai_parameter,
                 shape=shape,
                 output_path=recording_table.loc[i, "output_path"],
+                overwrite=overwrite,
                 save_prediction_probabilities=save_prediction_probabilities,
                 call_duration_limits=call_duration_limits,
                 label_suffix=label_suffix,

@@ -125,6 +125,12 @@ def cli():
     help="Path to the output file/folder or 'default' to save in the same directory as the wav file. None to not save predictions to disk.",
 )
 @click.option(
+    "--overwrite",
+    "-ow",
+    is_flag=True,
+    help="Overwrite existing predictions.",
+)
+@click.option(
     "--save_prediction_probabilities",
     "-sp",
     is_flag=True,
