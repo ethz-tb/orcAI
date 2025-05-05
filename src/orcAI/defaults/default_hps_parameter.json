@@ -24,17 +24,17 @@
         128
     ],
     "dropout_rate": [
+        0.3,
         0.4,
         0.5
     ],
     "kernel_size": [
         3,
-        5
+        5,
+        7
     ],
     "batch_size": [
-        32,
-        64,
-        128
+        64
     ],
     "multi_gpu": true
 }

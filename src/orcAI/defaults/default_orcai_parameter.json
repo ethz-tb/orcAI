@@ -3,27 +3,27 @@
     "architecture": "ResNetLSTM",
     "model": {
         "epochs": 30,
-        "batch_size": 32,
+        "batch_size": 64,
         "filters": [
             30,
             40,
             50,
             60
         ],
-        "relu_initializer": "glorot_uniform",
-        "kernel_size": 5,
-        "dropout_rate": 0.4,
-        "lstm_units": 64,
+        "conv_initializer": "he_normal",
+        "kernel_size": 3,
+        "dropout_rate": 0.5,
+        "lstm_units": 128,
         "lstm_initializer": "glorot_uniform",
-        "n_batch_train": 3200,
-        "n_batch_val": 320,
-        "n_batch_test": 320,
+        "n_batch_train": 3750,
+        "n_batch_val": 375,
+        "n_batch_test": 375,
         "shuffle": true,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-04,
         "EarlyStopping_patience": 10,
         "ReduceLROnPlateau_patience": 3,
         "ReduceLROnPlateau_factor": 0.5,
-        "ReduceLROnPlateau_min_learning_rate": 1e-7,
+        "ReduceLROnPlateau_min_learning_rate": 1e-07,
         "call_weights": null,
         "monitor": "val_MBA"
     },
@@ -58,5 +58,6 @@
         "train": 0.8,
         "val": 0.1,
         "test": 0.1
-    }
+    },
+    "seed": 68174147148830408427732199627917931389
 }
