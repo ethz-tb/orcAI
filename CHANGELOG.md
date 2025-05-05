@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.23.2] - 2025-05-05
+
+- general polish
+
 ## [0.23.1] - 2025-05-05
 
 - update default parameters for orcai-v1
