@@ -30,6 +30,13 @@ To install the latest version of orcAI, run the following command:
 pipx install git+https://github.com/ethz-tb/orcAI.git --python python3.11
 ```
 
+To updgrade an existing installation, run the following command:
+
+```bash
+pipx upgrade orcai
+```
+
+
 ## Command Line Interface
 
 The command line interface is available through the `orcai` and subcommands. The following subcommands are available:
