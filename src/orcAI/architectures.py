@@ -28,7 +28,7 @@ def res_net_1Dconv_arch(
     (CNN) with residual connections (ResNet) followed by a global temporal
     aggregation step using a 1D convolution
 
-    Parameters
+    Parameter
     ----------
     input_shape : tuple (int, int, int)
         Dimensions of the input data
@@ -132,7 +132,7 @@ def res_net_LSTM_arch(
     (CNN) with residual connections (ResNet) extended with bidirectional
     Long Short-Term Memory (LSTM) layers
 
-    Parameters
+    Parameter
     ----------
     input_shape : tuple (int, int, int)
         Dimensions of the input data
@@ -320,7 +320,7 @@ def build_model(
 ) -> keras.Model:
     """
 
-    Parameters
+    Parameter
     ----------
     input_shape : tuple (int, int, int)
         Dimensions of the input data

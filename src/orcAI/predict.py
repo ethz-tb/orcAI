@@ -1,4 +1,3 @@
-import sys
 import time
 from importlib.resources import files
 from pathlib import Path
@@ -17,11 +16,11 @@ def _check_duration(
     calls: pd.DataFrame,
     call_duration_limits: dict[str : tuple[float | None, float | None]],
     label_suffix: str = "*",
-):
+) -> str:
     """
-    Filter calls based on duration.
+    Checks duration of calls against call duration limits.
 
-    Parameters
+    Parameter
     ----------
     x : pd.DataFrame
         DataFrame with calls of a single label.
@@ -33,7 +32,7 @@ def _check_duration(
 
     Returns
     -------
-    x : str
+    out : str
         str "keep", "too long", or "too short"
 
     """
@@ -77,7 +76,7 @@ def filter_predictions(
     """
     Filter predictions based on duration.
 
-    Parameters
+    Parameter
     ----------
     predicted_labels : (pd.DataFrame | Path | str)
         DataFrame with predicted labels or path to a file with predicted labels.
@@ -193,11 +192,11 @@ def _predict_wav(
     label_suffix: str = "*",
     msgr: Messenger = Messenger(verbosity=0),
     progressbar: tqdm = None,
-):
+) -> pd.DataFrame:
     """
     Predicts calls in a single wav file.
 
-    Parameters
+    Parameter
     ----------
     recording_path : Path | str
         Path to the wav file.
@@ -231,7 +230,7 @@ def _predict_wav(
     ------
     ValueError
         If the frequency dimensions of the spectrogram do not match the input shape.
-    ValueError
+    FileExistsError
         If the output_path already exists.
     """
     if output_path is not None:
@@ -242,7 +241,7 @@ def _predict_wav(
             output_path = Path(output_path)
         msgr.info(f"Output file: {output_path}")
         if output_path.exists():
-            raise ValueError(f"Annotation file already exists: {output_path}")
+            raise FileExistsError(f"Annotation file already exists: {output_path}")
 
     # Generating spectrogram
     if progressbar:
@@ -262,7 +261,7 @@ def _predict_wav(
         progressbar.set_description(f"{recording_path.stem} - Predicting annotations")
         progressbar.refresh()
     start_time = time.time()
-    # Parameters
+    # Parameter
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
     shift = snippet_length // 2  # Shift time steps for overlapping windows
     time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
@@ -390,7 +389,8 @@ def predict(
 ) -> None:
     """
     Predicts calls in a wav file or a list of wav files.
-    Parameters
+
+    Parameter
     ----------
     recording_path : str | Path
         Path to the wav file or a CSV file of the recording table.
@@ -413,10 +413,16 @@ def predict(
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     msgr : Messenger
         Messenger object for logging. If None a new Messenger object is created.
+
     Returns
     -------
     None
         Saves the predicted labels to a file.
+
+    Raises
+    ------
+    ValueError
+        If the recording file is not a wav or csv file.
     """
     if msgr is None:
         msgr = Messenger(
@@ -447,8 +453,7 @@ def predict(
     elif recording_path.suffix == ".csv":
         recording_table = pd.read_csv(recording_path)
     else:
-        msgr.error("Recording file must be a wav or csv file")
-        sys.exit()
+        raise ValueError("Recording file must be a wav or csv file")
 
     if base_dir_recording is not None:
         recording_table["base_dir_recording"] = base_dir_recording

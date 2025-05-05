@@ -21,13 +21,13 @@ from orcAI.io import DataLoader, load_dataset, load_orcai_model
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 
-def _stack_batch(batch):
+def _stack_batch(batch: list[np.ndarray]) -> np.ndarray:
     """Stack a batch of label matrices."""
     stacked = np.vstack(batch).astype(int)
     return stacked
 
 
-def _get_mask_for_rows_with_atmost_one_1(matrix):
+def _get_mask_for_rows_with_atmost_one_1(matrix: np.ndarray) -> np.ndarray:
     """Get a boolean mask for rows with at most one '1' in a matrix."""
     count_ones_per_row = np.sum(matrix == 1, axis=1)
     # Create a boolean mask: True if the row has <= 1 '1'
@@ -36,11 +36,15 @@ def _get_mask_for_rows_with_atmost_one_1(matrix):
 
 
 def _compute_misclassification_table(
-    label_matrix_1, label_matrix_2, suffix_1, suffix_2, label_names
-):
+    label_matrix_1: np.ndarray,
+    label_matrix_2: np.ndarray,
+    suffix_1: str,
+    suffix_2: str,
+    label_names: list[str],
+) -> pd.DataFrame:
     """Compute the misclassification table between two label matrices.
 
-    Parameters
+    Parameter
     ----------
     label_matrix_1: np.ndarray
         Binary label matrix.
@@ -103,11 +107,15 @@ def _compute_misclassification_table(
 
 
 def compute_misclassification_tables(
-    label_matrix_1, label_matrix_2, suffix_1, suffix_2, label_names
-):
+    label_matrix_1: np.ndarray,
+    label_matrix_2: np.ndarray,
+    suffix_1: str,
+    suffix_2: str,
+    label_names: list[str],
+) -> dict[str, pd.DataFrame]:
     """Compute both misclassification tables for two label matrices (predicted and true).
 
-    Parameters
+    Parameter
     ----------
     label_matrix_1: np.ndarray
         Binary label matrix.
@@ -122,7 +130,7 @@ def compute_misclassification_tables(
 
     Returns
     -------
-    dict
+    dict[str, pd.DataFrame]
         A dictionary containing both misclassification tables (e.g. "true_pred" and "pred_true").
 
 
@@ -154,10 +162,10 @@ def compute_confusion_table(
     y_true_batch: np.ndarray,
     y_pred_batch: np.ndarray,
     label_names: list[str],
-):
+) -> pd.DataFrame:
     """Compute the confusion matrix for each label across the entire batch.
 
-    Parameters:
+    Parameter:
     ----------
     y_true_batch: np.ndarray
         Ground truth binary labels with shape (batch_size, time_steps, num_labels).
@@ -224,7 +232,7 @@ def _test_model_on_dataset(
     label_names: list[str],
     dataset_name: str,
     msgr: Messenger,
-):
+) -> dict[str, pd.DataFrame]:
     """Test a model on a dataset."""
     msgr.part(f"Testing model on {dataset_name}")
     msgr.info(f"Evaluating model on {dataset_name}")
@@ -318,8 +326,9 @@ def test_model(
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
-    """Test a trained model on test data and a sample of test snippets."
-    Parameters
+    """Test a trained model on test data and a sample of test snippets.
+
+    Parameter
     ----------
     model_dir : Path | str
         Path to the model directory.

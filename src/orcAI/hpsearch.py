@@ -26,7 +26,7 @@ def _hp_model_builder(
     msgr: Messenger = Messenger(verbosity=0),
 ) -> keras.Model:
     """Build a model for hyperparameter search
-    Parameters
+    Parameter
     ----------
     hp : kt.HyperParameters
         Hyperparameters for the model
@@ -35,9 +35,9 @@ def _hp_model_builder(
     num_labels : int
         Number of labels to predict
     orcai_parameter : dict
-        orcai parameters
+        orcai parameter
     hps_parameter : dict
-        Hyperparameter search parameters
+        Hyperparameter search parameter
     msgr : Messenger
         Messenger object for logging
 
@@ -64,13 +64,13 @@ def _hp_model_builder(
             )
         else:
             raise ValueError(
-                "LSTM units not in hyperparameter search parameters. "
+                "LSTM units not in hyperparameter search parameter. "
                 + "Is the right model specified?"
             )
     else:
         if "lstm_units" in hps_parameter.keys():
             raise ValueError(
-                "LSTM units not in model parameters. Is the right model specified?"
+                "LSTM units not in model parameter. Is the right model specified?"
             )
 
     model = build_model(input_shape, orcai_parameter, msgr=msgr)
@@ -122,7 +122,7 @@ def hyperparameter_search(
     msgr: Messenger | None = None,
 ) -> None:
     """Perform hyperparameter search
-    Parameters
+    Parameter
     ----------
     data_dir : Path | str
         Path to the data directory

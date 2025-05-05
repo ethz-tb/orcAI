@@ -26,7 +26,7 @@ class DataLoader:
         rng: np.random.Generator = np.random.default_rng(),
     ):
         """
-        Parameters:
+        Parameter:
         -----------
         snippet_table: pd.DataFrame
             DataFrame with columns ['recording_data_dir', 'row_start', 'row_stop'].
@@ -152,7 +152,25 @@ def load_dataset(
     batch_size: int,
     compression: str = "GZIP",
     seed: int | list[int] = None,
-):
+) -> tf.data.Dataset:
+    """Load a tf.data.Dataset from a directory.
+
+    Parameter
+    ----------
+    path : Path | str
+        Path to the directory containing the dataset.
+    batch_size : int
+        Batch size for the dataset.
+    compression : str
+        Compression type for the dataset. Default is "GZIP".
+    seed : int | list[int]
+        Random seed for shuffling the dataset. Default is None.
+
+    Returns
+    -------
+    dataset: tf.data.Dataset
+        The loaded dataset.
+    """
     dataset = (
         tf.data.Dataset.load(str(path), compression=compression)
         .shuffle(
@@ -173,7 +191,26 @@ def save_dataset(
     compression: str = "GZIP",
 ) -> None:
     """
-    Save a dataset
+    Save a tf.data.Dataset
+    Parameter
+    ----------
+    dataset : tf.data.Dataset
+        The dataset to save.
+    path : Path | str
+        Path to the directory where the dataset will be saved.
+    overwrite : bool
+        If True, overwrite the existing dataset. Default is False.
+    compression : str
+        Compression type for the dataset. Default is "GZIP".
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    FileExistsError
+        If the dataset already exists and overwrite is False.
     """
     if path.exists() and not overwrite:
         raise FileExistsError(f"File {path} already exists.")
@@ -181,30 +218,75 @@ def save_dataset(
     return
 
 
-def write_vector_to_json(vector, filename):
-    """write out equally spaced vector in short form with min, max and length"""
+def write_vector_to_json(vector: list, filename: Path | str) -> None:
+    """Write out equally spaced vector in short form with min, max and length
+
+    Parameter
+    ----------
+    vector : np.ndarray
+        The vector to write to the JSON file.
+    filename : str
+        The name of the JSON file to write to.
+
+    Returns
+    -------
+    None
+    """
     dictionary = {"min": vector[0], "max": vector[-1], "length": len(vector)}
     with open(filename, "w") as f:
         json.dump(dictionary, f, indent=4)
     return
 
 
-def generate_times_from_spectrogram(filename):
-    """read and generate equally spaced vector in short form from min, max and length"""
+def generate_times_from_spectrogram(filename: Path | str) -> np.ndarray:
+    """Read and generate equally spaced vector in short form from min, max and length
+
+    Parameter
+    ----------
+    filename : str
+        The name of the JSON file to read from.
+
+    Returns
+    -------
+    np.ndarray
+        The generated equally spaced vector.
+    """
     with open(filename, "r") as f:
         dictionary = json.load(f)
     return np.linspace(dictionary["min"], dictionary["max"], dictionary["length"])
 
 
-def read_json(filename):
-    """Read a JSON file into a dictionary"""
+def read_json(filename: Path | str) -> dict:
+    """Read a JSON file into a dictionary
+
+    Parameter
+    ----------
+    filename : str
+        The name of the JSON file to read from.
+
+    Returns
+    -------
+    dict
+        The dictionary containing the JSON data.
+    """
     with open(filename, "r") as file:
         dictionary = json.load(file)
     return dictionary
 
 
-def write_json(dictionary, filename):
-    """write dictionary into json file"""
+def write_json(dictionary, filename) -> None:
+    """write dictionary into json file
+    Parameter
+    ----------
+    dictionary : dict
+        The dictionary to write to the JSON file.
+    filename : str
+        The name of the JSON file to write to.
+
+    Returns
+    -------
+    None
+    """
     json_string = json.dumps(dictionary, indent=4, cls=JsonEncoderExt)
     with open(filename, "w") as file:
         file.write(json_string)
@@ -212,15 +294,28 @@ def write_json(dictionary, filename):
 
 
 def save_as_zarr(
-    obj,
+    obj: any,
     filename: Path,
     compressors: dict[str, list] = {
         "bytes": [{"configuration": {}, "name": "gzip"}],
         "numeric": [{"configuration": {}, "name": "gzip"}],
         "string": [{"configuration": {}, "name": "gzip"}],
     },
-):
-    """write object to zarr file"""
+) -> None:
+    """write object to zarr file
+    Parameter
+    ----------
+    obj : any
+        The object to write to the Zarr file.
+    filename : str
+        The name of the Zarr file to write to.
+    compressors : dict
+        The compressors to use for the Zarr file. Default is GZIP.
+
+    Returns
+    -------
+    None
+    """
 
     zarr.config.set({"array.v3_default_compressors": compressors})
 
@@ -236,8 +331,18 @@ def save_as_zarr(
     return
 
 
-def read_annotation_file(annotation_file_path):
-    """read annotation file and return with recording as additional column"""
+def read_annotation_file(annotation_file_path) -> pd.DataFrame:
+    """read annotation file and return with recording as additional column
+    Parameter
+    ----------
+    annotation_file_path : str
+        The path to the annotation file.
+
+    Returns
+    -------
+    pd.DataFrame
+        The DataFrame containing the annotation data with an additional column for the recording name.
+    """
     annotation_file = pd.read_csv(
         annotation_file_path,
         sep="\t",
@@ -250,6 +355,23 @@ def read_annotation_file(annotation_file_path):
 
 
 def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
+    """Load a trained orcAI model from a directory.
+
+    Parameter
+    ----------
+    model_dir : Path
+        Path to the directory containing the model files.
+
+    Returns
+    -------
+    tuple[keras.Model, dict, dict]
+        A tuple containing the loaded model, orcAI parameter, and model shape.
+
+    Raises
+    ------
+    ValueError
+        If the model weights or keras model file is not found in the specified directory.
+    """
     import keras
 
     from orcAI.architectures import (

@@ -1,6 +1,8 @@
 import json
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+
 
 class JsonEncoderExt(json.JSONEncoder):
     """Custom JSON encoder to handle additional data types."""

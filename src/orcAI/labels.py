@@ -23,11 +23,11 @@ def _convert_annotation(
     labels_masked: list,
     call_equivalences: (Path | str) | dict = None,
     msgr: Messenger = Messenger(),
-):
+) -> tuple[pd.DataFrame, dict]:
     """Transform annotation into array with 0 for absence and 1 for presence and
-    -1 for masked (presence not possible) of each label at times corresponding to spectrogram
+    MASK_VALUE for masked (presence not possible) of each label at times corresponding to spectrogram
 
-    Parameters
+    Parameter
 
     annotation_file_path : Path
         Path to the annotation file.
@@ -51,6 +51,10 @@ def _convert_annotation(
     label_list : dict
         Dictionary with labels present or masked.
 
+    Raises
+    ------
+    FileNotFoundError
+        If the spectrogram file is not found.
     """
     msgr.part("Converting annotation to label array")
     # read annotation file
@@ -124,10 +128,10 @@ def create_label_arrays(
     overwrite: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
-):
+) -> None:
     """Makes label arrays for all files in recording_table
 
-    Parameters
+    Parameter
     ----------
     recording_table_path : Path | str
         Path to .csv table with columns 'recording', 'channel' and columns corresponding to calls intendend for
@@ -138,7 +142,7 @@ def create_label_arrays(
     base_dir_annotation : Path
         Base directory for the annotation files. If None the base_dir_annotation is taken from the recording_table.
     orcai_parameter : (Path | str) | dict
-        Path to a JSON file containing orcAI parameters or a dictionary of the same.
+        Path to a JSON file containing orcAI parameter or a dictionary of the same.
     call_equivalences : (Path | str) | dict
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
@@ -146,6 +150,10 @@ def create_label_arrays(
     msgr : Messenger
         Messenger object for logging. If None, a new Messenger object is created.
 
+    Returns
+    -------
+    None
+        Creates label arrays and saves them in the specified output directory in named '<recording>/labels'.
     """
     if msgr is None:
         msgr = Messenger(verbosity=verbosity, title="Making label arrays")

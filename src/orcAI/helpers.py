@@ -19,7 +19,7 @@ def init_project(
 ) -> None:
     """Initialize a new orcAI project.
 
-    Parameters
+    Parameter
     ----------
     project_dir : Path | str
         Path to the project directory.
@@ -30,7 +30,7 @@ def init_project(
     msgr : Messenger
         Messenger object for logging. If None, a new Messenger object is created.
     parameter : Path | str | dict | None
-        OrcAI Parameters to overwrite defaults
+        OrcAI Parameter to overwrite defaults
     Returns
     -------
     None
@@ -64,10 +64,10 @@ def init_project(
 
         for key in parameter.keys():
             if key not in orcai_parameter_new:
-                msgr.warning(f"{key} not found in default orcAI parameters. Ignoring.")
+                msgr.warning(f"{key} not found in default orcAI parameter. Ignoring.")
             orcai_parameter_new[key].update(parameter[key])
             msgr.info(
-                f'Updating "{key}" in default orcAI parameters with',
+                f'Updating "{key}" in default orcAI parameter with',
                 indent=1,
             )
             msgr.info(parameter[key], indent=-1)
@@ -105,7 +105,7 @@ def create_recording_table(
 ) -> pd.DataFrame:
     """Create a table of recordings for use with other orcAI functions.
 
-    Parameters
+    Parameter
     ----------
     base_dir_recording : Path | str
         Base directory containing the recordings (possibly in subdirectories).

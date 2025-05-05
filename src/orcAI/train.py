@@ -19,17 +19,19 @@ from orcAI.io import load_dataset, load_orcai_model, read_json, write_json
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 
-# model parameters
+# model parameter
 def _count_params(trainable_weights: list) -> int:
-    """Count the number of trainable parameters in a model
-    Parameters
+    """Count the number of trainable parameter in a model
+
+    Parameter
     ----------
     trainable_weights : list
         List of trainable weights in the model
+
     Returns
     -------
     int
-        Number of parameters in the model
+        Number of parameter in the model
     """
     return np.sum([np.prod(w.shape) for w in trainable_weights])
 
@@ -44,10 +46,10 @@ def train(
     load_model: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
-):
+) -> None:
     """Trains an orcAI model
 
-    Parameters
+    Parameter
     ----------
     data_dir : Path | str
         Path to the directory containing the training, validation and test datasets.
@@ -61,6 +63,16 @@ def train(
         Load model from previous training.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
+
+    Returns
+    -------
+    None
+        Trains the model and saves it to the output directory.
+
+    Raises
+    ------
+    ValueError
+        If the call weights do not match the label calls in the orcAI parameter file.
     """
     if msgr is None:
         msgr = Messenger(
@@ -176,9 +188,9 @@ def train(
     non_trainable_params = _count_params(model.non_trainable_weights)
 
     msgr.info("Model size:", indent=1)
-    msgr.info(f"Total parameters: {total_params}")
-    msgr.info(f"Trainable parameters: {trainable_params}")
-    msgr.info(f"Non-trainable parameters: {non_trainable_params}")
+    msgr.info(f"Total parameter: {total_params}")
+    msgr.info(f"Trainable parameter: {trainable_params}")
+    msgr.info(f"Non-trainable parameter: {non_trainable_params}")
 
     msgr.print_memory_usage()
 

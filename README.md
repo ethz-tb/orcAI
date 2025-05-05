@@ -19,8 +19,6 @@ The package contains code to perform to distinct three sets of tasks:
 - The second set uses the generated training, validation and test data to develop and train models for prediction
 - The third set is to apply these models to predict annotation in as of yet unannotated recordings and, in as far as this is required, to post-process the predicted annotations.
 
-
-
 ## Installation
 
 orcAI can be installed using [pipx](https://pipx.pypa.io/stable/).
@@ -72,7 +70,7 @@ orcai predict path/to/recording_table.csv -o path/to/output_dir
 
 This will use the included model `orcai-V1` to predict annotations in the recordings listed in the recording table `path/to/recording_table.csv`. The output will be saved in the directory `path/to/output_dir` with the same name as the input file but with the extension `_orcai-V1_predicted.txt` and is compatible with Audacity.
 
-A appropriate recording table can be created using the `orcai create-recording-table` command, described below.
+A appropriate recording table can be created using the `orcai create-recording-table` command.
 
 See `orcai predict --help` for more options.
 
@@ -87,7 +85,7 @@ orcai filter-predictions path/to/annotations.txt
 This will filter the annotations in the input file `path/to/annotations.txt` based on the minimum and maximum duration specified in the default configuration file. The output will be saved in the same directory as the input file with the same name but with the extension `_filtered.txt`. To pass a custom configuration file, use the `--call_duration_limits` option.
 See `orcai filter-predictions --help` for more options.
 
-## Usage for Data preperation and training
+## Usage for data preperation and training
 
 All commands are documented, use `orcai command --help`.
 Please see [the example pipeline](orcai-v1.md) for a complete example of how to use orcAI to prepare data and train a model.

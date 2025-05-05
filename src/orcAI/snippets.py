@@ -30,9 +30,7 @@ def _make_snippet_table(
 ) -> tuple[pd.DataFrame, int, int, str, str]:
     """Generates times for snippets to be extracted from recordings
 
-    returns pd.DataFrame with recording, data_type, start, stop and duration for each label
-
-    Parameters
+    Parameter
     ----------
     recording_dir : Path
         Path to the recording data directory
@@ -168,7 +166,7 @@ def _compute_snippet_stats(
 ) -> pd.DataFrame:
     """Compute snippet stats for calls
 
-    Parameters
+    Parameter
     ----------
     snippet_table : pd.DataFrame
         snippet_table with columns recording, data_type, row_start, row_stop and call names
@@ -205,7 +203,7 @@ def create_snippet_table(
 ) -> None:
     """Generates snippet table for all recordings in recording_table and saves it to disk
 
-    Parameters
+    Parameter
     ----------
     recording_table_path : (Path | str)
         Path to the recording table
@@ -329,7 +327,7 @@ def _filter_snippet_table(
 ) -> pd.DataFrame:
     """Filters snippet table based on snippet parameter and label calls
 
-    Parameters
+    Parameter
     ----------
     snippet_table : pd.DataFrame
         snippet_table with columns recording, data_type, row_start, row_stop and call names
@@ -398,7 +396,7 @@ def create_tvt_snippet_tables(
 ) -> None:
     """Creates snippet tables for training, validation and test datasets and saves them to disk
 
-    Parameters
+    Parameter
     ----------
     output_dir : (Path | str)
         Path to the output directory
@@ -510,7 +508,7 @@ def _get_call_weights(
 ) -> np.ndarray:
     """Get call weights from a dataset
 
-    Parameters
+    Parameter
     ----------
     dataset : tf.data.Dataset
         Dataset to get call weights from
@@ -526,6 +524,10 @@ def _get_call_weights(
     -------
     np.ndarray
         Dictionary of call weights
+    Raises
+    ------
+    ValueError
+        If method is not "balanced", "max" or "uniform"
     """
     n_calls = len(call_names)
     if method not in ["balanced", "max", "uniform"]:
@@ -561,7 +563,7 @@ def create_tvt_data(
 ) -> dict[str, tf.data.Dataset]:
     """Creates train, validation and test datasets from snippet tables and saves them to disk
 
-    Parameters
+    Parameter
     ----------
     tvt_dir : (Path | str)
         Path to the directory containing the training, validation and test snippet tables

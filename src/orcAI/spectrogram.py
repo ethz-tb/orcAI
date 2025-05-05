@@ -23,14 +23,14 @@ def make_spectrogram(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Makes spectrogram from .wav file according to orcai_parameter
 
-    Parameters
+    Parameter
     ----------
     wav_file_path : (Path | Str)
         Path to the wav file.
     channel : int
         Channel of wav_file to use for the spectrogram.
     orcai_parameter : dict | (Path | str)
-        Dictionary with orcai parameters or path to JSON containing the same. Defaults to default_orcai_parameter.json.
+        Dictionary with orcai parameter or path to JSON containing the same. Defaults to default_orcai_parameter.json.
     verbosity : int
         Verbosity level. 0: only errors, 1: only warnings, 2: info, 3: debug.
     msgr : Messenger
@@ -134,7 +134,7 @@ def save_spectrogram(
 ) -> None:
     """Saves spectrogram as zarr file and frequency and time vectors as json files in output_dir
 
-    Parameters
+    Parameter
     ----------
     spectrogram : np.ndarray
         Spectrogram to be saved.
@@ -216,7 +216,7 @@ def create_spectrograms(
 ) -> None:
     """Creates spectrograms for all files in recording table at recording_table_path
 
-    Parameters
+    Parameter
     ----------
     recording_table_path : Path | str
         Path to .csv table with columns 'recording', 'channel', 'base_dir_recording',
@@ -226,7 +226,7 @@ def create_spectrograms(
     base_dir_recording : Path
         Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.
     orcai_parameter : (Path | str) | dict
-        Path to the orcai parameter file or a dictionary with parameters.
+        Path to the orcai parameter file or a dictionary with parameter.
     include_not_annotated: bool
         Include recordings without annotations.
     include_no_possible_annotations : bool

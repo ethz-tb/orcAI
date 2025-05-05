@@ -12,6 +12,7 @@ from humanize import naturalsize
 
 from orcAI.json_encoder import JsonEncoderExt
 
+# Sees IDs for different parts of the pipeline
 SEED_ID_MAKE_SNIPPET_TABLE = 1
 SEED_ID_FILTER_SNIPPET_TABLE = 2
 SEED_ID_CREATE_DATALOADER = {"train": 3, "val": 4, "test": 5, "unfiltered_test": 6}
@@ -20,7 +21,8 @@ SEED_ID_LOAD_VAL_DATA = 8
 SEED_ID_LOAD_TEST_DATA = 9
 SEED_ID_UNFILTERED_TEST_DATA = 10
 
-MASK_VALUE = -1.0  # Value used to mask labels in the dataset
+# Value used to mask labels in the dataset
+MASK_VALUE = -1.0
 
 
 class Messenger:
@@ -344,6 +346,18 @@ class Messenger:
 def resolve_recording_data_dir(
     recording: str, recording_data_dir: Path | str
 ) -> Path | None:
+    """Resolve the path to the recording data directory.
+    Parameter
+    ---------
+    recording: str
+        The name of the recording.
+    recording_data_dir: Path | str
+        The path to the recording data directory.
+    Returns
+    -------
+        Path | None: The resolved path to the recording data directory, or None if it does not exist.
+    """
+
     if Path(recording_data_dir, recording).exists():
         return Path(recording_data_dir, recording)
     else:
@@ -387,7 +401,16 @@ def filter_filepaths(
 
 
 def seconds_to_hms(seconds: int) -> str:
-    """convert seconds to hh:mm:ss format"""
+    """Convert seconds to hh:mm:ss format
+
+    Parameter
+    ---------
+    seconds: int
+        The number of seconds to convert.
+    Returns
+    -------
+        str: The time in hh:mm:ss format
+    """
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
