@@ -531,6 +531,26 @@ def cli_create_snippet_table(**kwargs):
     help="Path to the OrcAI parameter file.",
 )
 @click.option(
+    "--create_unfiltered_test_snippets",
+    "-uts",
+    is_flag=True,
+    help="If set, creates an additional test snippet table with unfiltered snippets",
+)
+@click.option(
+    "--n_unfiltered_test_snippets",
+    "-n_uts",
+    type=int,
+    default=None,
+    show_default="None",
+    help="Number of unfiltered test snippets. If None, an unfiltered sample of the same size as the training snippet table is created.",
+)
+@click.option(
+    "--overwrite",
+    "-ow",
+    is_flag=True,
+    help="Overwrite existing snippet tables.",
+)
+@click.option(
     "--verbosity",
     "-v",
     type=click.IntRange(0, 3),
@@ -659,28 +679,18 @@ def cli_train(**kwargs):
 @click.argument("model_dir", type=ClickDirPathR)
 @click.argument("data_dir", type=ClickDirPathR)
 @click.option(
+    "--test_unfiltered",
+    "-tu",
+    is_flag=True,
+    help="If set, the model is also tested on the unfiltered test dataset.",
+)
+@click.option(
     "--output_dir",
     "-o",
     type=ClickDirPathWcreate,
     default=None,
     show_default="None",
     help="Path to the output directory. None to save in the same directory as the model.",
-)
-@click.option(
-    "--recording_data_dir",
-    "-rdd",
-    type=ClickDirPathR,
-    default=None,
-    show_default="None",
-    help="Path to the recording data directory for additional test samples.",
-)
-@click.option(
-    "--n_batches_additional",
-    "-nba",
-    type=int,
-    default=3200,
-    show_default=3200,
-    help="Number of additional batches of unfiltered samples to use for testing. Only valid if recording_data_dir is given.",
 )
 @click.option(
     "--data_compression",

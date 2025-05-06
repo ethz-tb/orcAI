@@ -11,12 +11,11 @@ from tqdm import tqdm
 
 from orcAI.auxiliary import (
     MASK_VALUE,
-    SEED_ID_CREATE_DATALOADER,
     SEED_ID_LOAD_TEST_DATA,
-    SEED_ID_UNFILTERED_TEST_DATA,
+    SEED_ID_LOAD_UNFILTERED_TEST_DATA,
     Messenger,
 )
-from orcAI.io import DataLoader, load_dataset, load_orcai_model
+from orcAI.io import load_dataset, load_orcai_model
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -319,8 +318,7 @@ def _save_test_results(
 def test_model(
     model_dir: Path | str,
     data_dir: Path | str,
-    recording_data_dir: Path | str | None = None,
-    n_batches_additional: int = 3200,
+    test_unfiltered: bool = True,
     output_dir: None | Path | str = None,
     data_compression: str | None = "GZIP",
     verbosity: int = 2,
@@ -335,10 +333,8 @@ def test_model(
     data_dir : Path | str
         Path to the model data directory containing the training, valdidation
         and testing data.
-    recording_data_dir : (Path | str)
-        Path to the recording data directory
-    test_data_sample_size : int
-        Number of test snippets to sample from the complete test data for testing. Default is 100000.
+    test_unfiltered : bool
+        If True, test the model on the unfiltered test data.
     output_dir : None | Path | str
         Directory to save the test results. Default is saving to `model_dir`/test.
     data_compression: str | None
@@ -396,68 +392,27 @@ def test_model(
     _save_test_results(results_test_dataset, output_dir, msgr)
     msgr.info(f"Saved test results to {output_dir}")
 
-    if recording_data_dir is not None:
-        msgr.part("Testing model on new, unfiltered sample of test snippets")
-        all_snippets = pd.read_csv(data_dir.joinpath("all_snippets.csv.gz"))
-        all_test_snippets = all_snippets[all_snippets["data_type"] == "test"]
-        test_data_sample_size = n_batches_additional * model_parameter["batch_size"]
-        rng = np.random.default_rng(
-            seed=[SEED_ID_UNFILTERED_TEST_DATA, orcai_parameter["seed"]]
+    if test_unfiltered:
+        test_unfiltered_dataset = load_dataset(
+            data_dir.joinpath("test_unfiltered_dataset"),
+            model_parameter["batch_size"],
+            compression=data_compression,
+            seed=[
+                SEED_ID_LOAD_UNFILTERED_TEST_DATA,
+                orcai_parameter["seed"],
+            ]
+            if orcai_parameter["seed"] is not None
+            else None,
         )
-        if len(all_test_snippets) < test_data_sample_size:
-            msgr.warning(
-                f"Test data sample size ({test_data_sample_size}) is larger than the number of test snippets ({len(all_test_snippets)})."
-            )
-            msgr.warning("Using all test snippets for testing.")
-            test_data_sample_size = len(all_test_snippets)
 
-        sampled_test_snippets = all_test_snippets.sample(
-            test_data_sample_size, replace=False, random_state=rng
-        ).reset_index()
-        sampled_test_snippets_loader = DataLoader(
-            sampled_test_snippets,
-            n_filters=len(model_parameter["filters"]),
-            shuffle=True,
-            rng=np.random.default_rng(
-                seed=[
-                    SEED_ID_CREATE_DATALOADER["unfiltered_test"],
-                    orcai_parameter["seed"],
-                ]
-                if orcai_parameter["seed"] is not None
-                else None,
-            ),
-        )
-        spectrogram_sample, label_sample = sampled_test_snippets_loader[0]
-        test_sampled_dataset = tf.data.Dataset.from_generator(
-            sampled_test_snippets_loader.__iter__,
-            output_signature=(
-                tf.TensorSpec(
-                    shape=spectrogram_sample.shape,
-                    dtype=tf.float32,
-                ),  # Single spectrogram shape
-                tf.TensorSpec(
-                    shape=label_sample.shape,
-                    dtype=tf.float32,
-                ),  # Single label shape
-            ),
-        )
-        test_sampled_dataset = test_sampled_dataset.batch(
-            model_parameter["batch_size"], drop_remainder=True
-        ).prefetch(buffer_size=tf.data.AUTOTUNE)
-        total_batches = (
-            len(sampled_test_snippets_loader) // model_parameter["batch_size"]
-        )
-        test_sampled_dataset = test_sampled_dataset.apply(
-            tf.data.experimental.assert_cardinality(total_batches)
-        )
-        results_test_dataset = _test_model_on_dataset(
+        results_unfiltered_test_dataset = _test_model_on_dataset(
             model,
-            test_sampled_dataset,
+            test_unfiltered_dataset,
             trained_calls,
-            "test_sampled_data",
+            "test_unfiltered_dataset",
             msgr,
         )
-        _save_test_results(results_test_dataset, output_dir, msgr)
+        _save_test_results(results_unfiltered_test_dataset, output_dir, msgr)
         msgr.info(f"Saved test results to {output_dir}")
 
     msgr.success("Model testing completed.")

@@ -11,6 +11,7 @@ from orcAI.auxiliary import (
     SEED_ID_CREATE_DATALOADER,
     SEED_ID_FILTER_SNIPPET_TABLE,
     SEED_ID_MAKE_SNIPPET_TABLE,
+    SEED_ID_UNFILTERED_TEST_DATA,
     Messenger,
     resolve_recording_data_dir,
     seconds_to_hms,
@@ -391,6 +392,9 @@ def create_tvt_snippet_tables(
     orcai_parameter: Path | str = files("orcAI.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
+    create_unfiltered_test_snippets: bool = False,
+    n_unfiltered_test_snippets: int | None = None,
+    overwrite: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -404,6 +408,12 @@ def create_tvt_snippet_tables(
         Path to the snippet table csv or the snippet table itself. None if the snippet table should be read from output_dir/all_snippets.csv.gz
     orcai_parameter : dict | (Path | str)
         Dict containing OrcAi parameter or path to json containing the same, by default files("orcAI.defaults").joinpath("default_orcai_parameter.json")
+    unfiltered_test_snippets : bool
+        If True, creates an additional test snippet table with unfiltered snippets
+    n_unfiltered_test_snippets : int | None
+        Number of unfiltered test snippets. If None, an unfiltered sample of the same size as the training snippet table is created.
+    overwrite : bool
+        Overwrite existing snippet tables
     verbosity : int
         Verbosity level [0, 1, 2]
     msgr : Messenger
@@ -413,6 +423,11 @@ def create_tvt_snippet_tables(
     Returns
     -------
     None. Writes train, val and test snippet tables to disk
+
+    Raises
+    ------
+    ValueError
+        If the number of snippets for a type is larger than the available snippets for that type.
     """
     if msgr is None:
         msgr = Messenger(
@@ -449,7 +464,7 @@ def create_tvt_snippet_tables(
     rng = np.random.default_rng(
         seed=[SEED_ID_FILTER_SNIPPET_TABLE, orcai_parameter["seed"]]
     )
-    snippet_table_filtered = _filter_snippet_table(
+    filtered_snippet_table = _filter_snippet_table(
         snippet_table,
         orcai_parameter=orcai_parameter,
         rng=rng,
@@ -459,29 +474,33 @@ def create_tvt_snippet_tables(
     snippets = []
     for i, itype in enumerate(DATA_TYPES):
         n_snippets = (
-            (orcai_parameter["model"][f"n_batch_{itype}"])
+            orcai_parameter["model"][f"n_batch_{itype}"]
             * orcai_parameter["model"]["batch_size"]
         )
         msgr.info(
             f"Extracting {orcai_parameter['model'][f'n_batch_{itype}']} batches of {orcai_parameter['model']['batch_size']} random {itype} snippets ({n_snippets} snippets)"
         )
-        snippet_table_i = snippet_table_filtered[
-            snippet_table_filtered["data_type"] == itype
+        snippet_table_i = filtered_snippet_table[
+            filtered_snippet_table["data_type"] == itype
         ]
         if len(snippet_table_i) < n_snippets:
-            msgr.error(
+            raise ValueError(
                 f"Number of {itype} snippets ({n_snippets}) larger than available snippets ({len(snippet_table_i)})."
             )
-            msgr.error("Skipping.")
-            continue
-
         snippets.append(
             snippet_table_i.sample(n=n_snippets, replace=False, random_state=rng)
         )
 
+        snippets_path_i = output_dir.joinpath(f"{itype}.csv.gz")
+        if snippets_path_i.exists() and not overwrite:
+            msgr.warning(
+                f"File {snippets_path_i} already exists. Skipping. Set overwrite=True to overwrite."
+            )
+            continue
         snippets[i][["recording_data_dir", "row_start", "row_stop"]].to_csv(
-            output_dir.joinpath(f"{itype}.csv.gz"), compression="gzip", index=False
+            snippets_path_i, compression="gzip", index=False
         )
+        msgr.info(f"saved {itype} snippets to disk")
 
     selected_snippet_stats = _compute_snippet_stats(
         pd.concat(snippets, ignore_index=True), for_calls=orcai_parameter["calls"]
@@ -495,7 +514,42 @@ def create_tvt_snippet_tables(
         output_dir.joinpath("selected_snippet_stats_duration.csv"), index=True
     )
 
-    msgr.success("Train, val and test snippet tables created and saved to disk")
+    # create unfiltered test snippets
+    if create_unfiltered_test_snippets:
+        if n_unfiltered_test_snippets is None:
+            n_unfiltered_test_snippets = (
+                orcai_parameter["model"]["n_batch_train"]
+                * orcai_parameter["model"]["batch_size"]
+            )
+        msgr.info(f"Extracting {n_unfiltered_test_snippets} unfiltered test snippets")
+        all_test_snippets = snippet_table[snippet_table["data_type"] == "test"]
+        if len(all_test_snippets) < n_unfiltered_test_snippets:
+            msgr.warning(
+                f"Number of unfiltered test snippets ({n_unfiltered_test_snippets}) larger than available snippets ({len(all_test_snippets)})."
+            )
+            msgr.warning("Using all test snippets.")
+            n_unfiltered_test_snippets = len(all_test_snippets)
+
+        rng = np.random.default_rng(
+            seed=[SEED_ID_UNFILTERED_TEST_DATA, orcai_parameter["seed"]]
+        )
+        unfiltered_test_snippets = all_test_snippets.sample(
+            n=n_unfiltered_test_snippets, replace=False, random_state=rng
+        )
+        snippets_path_unfiltered = output_dir.joinpath("test_unfiltered.csv.gz")
+        if snippets_path_unfiltered.exists() and not overwrite:
+            msgr.warning(
+                f"File {snippets_path_unfiltered} already exists. Skipping. Set overwrite=True to overwrite."
+            )
+        else:
+            unfiltered_test_snippets.to_csv(
+                output_dir.joinpath("test_unfiltered.csv.gz"),
+                compression="gzip",
+                index=False,
+            )
+            msgr.info("saved unfiltered test snippets to disk")
+
+    msgr.success("All snippet tables created and saved to disk")
 
     return
 
@@ -591,14 +645,21 @@ def create_tvt_data(
             title="Creating train, validation and test datasets",
         )
 
+    unfiltered_snippets_csv_path = Path(tvt_dir, "test_unfiltered.csv.gz")
+    if unfiltered_snippets_csv_path.exists():
+        data_types = DATA_TYPES
+        data_types.append("test_unfiltered")
+    else:
+        data_types = DATA_TYPES
+
     msgr.part("Reading in snippet tables and generating loaders")
 
-    dataset_paths = {itype: Path(tvt_dir, f"{itype}_dataset") for itype in DATA_TYPES}
+    dataset_paths = {itype: Path(tvt_dir, f"{itype}_dataset") for itype in data_types}
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
 
-    csv_paths = {itype: Path(tvt_dir, f"{itype}.csv.gz") for itype in DATA_TYPES}
+    csv_paths = {itype: Path(tvt_dir, f"{itype}.csv.gz") for itype in data_types}
 
     loader = {
         key: DataLoader.from_csv(
@@ -609,17 +670,22 @@ def create_tvt_data(
                 seed=[SEED_ID_CREATE_DATALOADER.get(key, 0), orcai_parameter["seed"]]
             ),
         )
-        for key, path in csv_paths.items()
+        for key, path in tqdm(
+            csv_paths.items(),
+            unit="file",
+            desc="Creating loaders",
+            bar_format="{desc}: {n_fmt}/{total_fmt}",
+        )
     }
 
-    spectrogram_sample, label_sample = loader[DATA_TYPES[0]][0]
+    spectrogram_sample, label_sample = loader[data_types[0]][0]
     msgr.info("Data shape:", indent=1)
     msgr.info(f"Input spectrogram batch shape: {spectrogram_sample.shape}")
     msgr.info(f"Input label batch shape: {label_sample.shape}", indent=-1)
 
     msgr.part("Creating test, validation and training datasets")
     dataset = {}
-    for itype in DATA_TYPES:
+    for itype in data_types:
         dataset[itype] = tf.data.Dataset.from_generator(
             loader[itype].__iter__,
             output_signature=(
@@ -652,7 +718,7 @@ def create_tvt_data(
         msgr.info(call_weights)
 
     msgr.part("Saving datasets to disk")
-    for itype in DATA_TYPES:
+    for itype in data_types:
         try:
             save_dataset(
                 dataset[itype],
