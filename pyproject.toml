@@ -27,7 +27,6 @@ dependencies = [
     "tensorflow[and-cuda]>=2, <3; platform_system!='Darwin'",
     "tensorrt>=10, <11; platform_system!='Darwin'",
     "tensorflow>=2, <3; platform_system=='Darwin'",
-    "tensorflow-metal>=1, <2; platform_system=='Darwin'",
     "keras_tuner>=1, <2",
     "keras>=3, <4",
     "librosa<1",
