@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.24.0] - 2025-05-05
+
+### Changes
+
+- update trained orcai-v1 model
+- create unfiltered test set when creating tvt data
+- __Breaking__: update test.py to use new unfiltered test set
+
 ## [0.23.3] - 2025-05-05
 
 ### Changes
