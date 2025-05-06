@@ -29,7 +29,7 @@ cd orcai
 🐳 Initializing project
 orcAI 0.19.0 [started @ 2025-04-24 09:32:01]
 🐳 Creating project directory: /Volumes/4TB/orcai_project/orcai [0:00:28]
-    Creating orcai_orcai_parameter.json
+    Creating orcai_orcai_parameter_v1.json
     Creating orcai_hps_parameter.json
     Creating orcai_call_duration_limits.json
     Generating random seed
@@ -40,14 +40,14 @@ orcAI 0.19.0 [started @ 2025-04-24 09:32:01]
 
 create recording table from directory with recordings.
 update original_recording_table (containing possibilities of calls entered by Chérine).
-Calls to label are in orcai-v1_orcai_parameter.json.
-Files to exclude are in orcai-v1_files_exclude.json.
+Calls to label are in orcai_parameter_v1.json.
+Files to exclude are in files_exclude.json.
 
 ```bash
 orcai create-recording-table ../orca_recordings/Acoustics \
 -o ../orca_recordings/recording_table.csv \
 -ut ../orca_recordings/original_recording_table.csv \
--p orcai_parameter.json \
+-p orcai_parameter_v1.json \
 -ep files_exclude.json \
 -up
 ```
@@ -88,14 +88,14 @@ orcAI 0.19.0 [started @ 2025-04-24 10:03:23]
 ## Make spectrograms
 
 Create all spectrograms in recording_table and save to recording_data.
-Use orcai-v1_orcai_parameter.json for spectrogram parameters.
+Use orcai_parameter_v1.json for spectrogram parameters.
 Only for spectrograms with annotations (-en) and spectrograms with possible
 annotations (-enp).
 
 ```bash
 orcai create-spectrograms ../orca_recordings/recording_table.csv \
 ../orca_recordings/recording_data \
--p orcai_parameter.json
+-p orcai_parameter_v1.json
 
 ```
 
@@ -126,13 +126,13 @@ Making spectrograms: 100%|██████████████████
 
 Create all label arrasy for recordings in recording_table and save to
 recording_data.
-Use orcai_parameter.json parameters.
+Use orcai_parameter_v1.json parameters.
 Unify call labels according call_equivalences.json.
 
 ```bash
 orcai create-label-arrays ../orca_recordings/recording_table.csv \
 ../orca_recordings/recording_data \
--p orcai_parameter.json \
+-p orcai_parameter_v1.json \
 -ce call_equivalences.json
 ```
 
@@ -162,7 +162,7 @@ Making label arrays: 100%|█████████████| 387/387 [00:5
 ```bash
 orcai create-snippet-table ../orca_recordings/recording_table.csv \
 ../orca_recordings/recording_data \
--p orcai_parameter.json
+-p orcai_parameter_v1.json
 ```
 
 ```console
@@ -188,7 +188,7 @@ Making snippet tables: 100%|███████████| 342/342 [21:55<00
 
 ```bash
 orcai create-tvt-snippet-tables ../orca_recordings/tvt_data \
--p orcai_parameter.json
+-p orcai_parameter_v1.json -uts
 ```
 
 ```console
@@ -231,7 +231,7 @@ orcAI 0.19.0 [started @ 2025-04-28 13:58:31]
 ## create tvt data
 
 ```bash
-orcai orcai create-tvt-data ../orca_recordings/tvt_data -p orcai_parameter.json
+orcai create-tvt-data ../orca_recordings/tvt_data -p orcai_parameter_v1.json
 ```
 
 ```console
@@ -302,7 +302,7 @@ eval $unzip_cmd
 
 data_dir="$TMPDIR"
 output_dir="/cluster/home/angstd/orcAI/20250428_orcai"
-parameter_file="$output_dir/orcai_parameter.json"
+parameter_file="$output_dir/orcai_parameter_v1.json"
 hps_parameter_file="$output_dir/hps_parameter.json"
 
 hp_search_cmd="orcai hpsearch $data_dir $output_dir -p $parameter_file -hp $hps_parameter_file -pl"
