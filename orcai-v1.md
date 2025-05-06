@@ -408,12 +408,81 @@ orcai_train_cmd="orcai train $data_dir $output_dir -p $parameter_file"
 echo -e "\nrunning $orcai_train_cmd\n"
 orcai --version
 eval $orcai_train_cmd
+```
 
-model_dir="$output_dir/orcai-v1"
+```console
+🐳 Training model
+orcAI 0.23.0 [started @ 2025-05-05 08:32:27]
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1746426748.478035  628398 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1746426748.484835  628398 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1746426748.506009  628398 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1746426748.506051  628398 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1746426748.506055  628398 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1746426748.506059  628398 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+    Platform: Linux-5.15.0-131-generic-x86_64-with-glibc2.35
+    Python version: 3.11.6 (main, Jun 20 2024, 16:12:48) [GCC 12.2.0]
+    Tensorflow version: 2.19.0
+    Keras version: 3.9.2
+    CUDA version: 12.5.1
+    cuDNN version: 9
+    Available TensorFlow devices: /GPU:0: Quadro RTX 6000
+🐳 Loading parameter [0:00:27]
+    Output directory: /cluster/home/angstd/orcAI
+    Data directory: /scratch/tmp.30907263.angstd
+🐳 Loading training and validation datasets from /scratch/tmp.30907263.angstd [0:00:27, 𝚫 0:00:00]
+    Loading dataset shapes from JSON file
+I0000 00:00:1746426774.337002  628398 gpu_device.cc:2019] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 22807 MB memory:  -> device: 0, name: Quadro RTX 6000, pci bus id: 0000:81:00.0, compute capability: 7.5
+    Batch size 64
+🐳 Building model [0:00:31, 𝚫 0:00:05]
+🐳 Building model architecture [0:00:33, 𝚫 0:00:02]
+    model name:          orcai-v1
+    model architecture:  ResNetLSTM
+    model input shape:   (None, 736, 171, 1)
+    model output shape:  (None, 46, 7)
+    actual input_shape:  (736, 171, 1)
+    actual output_shape: (46, 7)
+    n_filters:           4
+    num_labels:          7
+🐳 Compiling model: orcai-v1 [0:00:33, 𝚫 0:00:00]
+    Model size:
+        Total parameters: 996039
+        Trainable parameters: 994959
+        Non-trainable parameters: 1080
+        memory usage: 1.67 GB
+🐳 Fitting model: orcai-v1 [0:00:33, 𝚫 0:00:00]
+    Monitoring val_MBA
 
-orcai_test_cmd="orcai test $model_dir $data_dir"
-echo -e "\nrunning $orcai_test_cmd\n"
-eval $orcai_test_cmd
+0epoch [00:00, ?epoch/s]
+  0%|          | 0/30 [00:00<?, ?epoch/s]I0000 00:00:1746426793.368161  628472 cuda_dnn.cc:529] Loaded cuDNN version 90300
+
+  3%|▎         | 1/30 [32:50<15:52:29, 1970.66s/epoch, MBA=0.922, loss=0.644, val_MBA=0.95, val_loss=0.249, learning_rate=0.0001]
+  7%|▋         | 2/30 [1:06:00<15:24:58, 1982.10s/epoch, MBA=0.951, loss=0.202, val_MBA=0.954, val_loss=0.162, learning_rate=0.0001]
+ 10%|█         | 3/30 [1:39:52<15:02:06, 2004.68s/epoch, MBA=0.956, loss=0.143, val_MBA=0.955, val_loss=0.134, learning_rate=0.0001]
+ 13%|█▎        | 4/30 [2:12:45<14:23:19, 1992.29s/epoch, MBA=0.959, loss=0.121, val_MBA=0.958, val_loss=0.121, learning_rate=0.0001]
+ 17%|█▋        | 5/30 [2:46:06<13:51:23, 1995.34s/epoch, MBA=0.962, loss=0.109, val_MBA=0.958, val_loss=0.119, learning_rate=5e-5]  
+ 20%|██        | 6/30 [3:19:29<13:19:11, 1997.97s/epoch, MBA=0.963, loss=0.105, val_MBA=0.959, val_loss=0.119, learning_rate=5e-5]
+ 23%|██▎       | 7/30 [3:52:53<12:46:36, 1999.84s/epoch, MBA=0.964, loss=0.102, val_MBA=0.958, val_loss=0.12, learning_rate=5e-5] 
+ 27%|██▋       | 8/30 [4:25:23<12:07:29, 1984.08s/epoch, MBA=0.966, loss=0.0962, val_MBA=0.959, val_loss=0.118, learning_rate=2.5e-5]
+ 30%|███       | 9/30 [4:57:54<11:30:50, 1973.83s/epoch, MBA=0.966, loss=0.0941, val_MBA=0.959, val_loss=0.119, learning_rate=2.5e-5]
+ 33%|███▎      | 10/30 [5:31:13<11:00:30, 1981.51s/epoch, MBA=0.967, loss=0.0923, val_MBA=0.959, val_loss=0.119, learning_rate=2.5e-5]
+ 37%|███▋      | 11/30 [6:04:37<10:29:40, 1988.43s/epoch, MBA=0.968, loss=0.0894, val_MBA=0.959, val_loss=0.121, learning_rate=1.25e-5]
+ 40%|████      | 12/30 [6:37:58<9:57:40, 1992.25s/epoch, MBA=0.968, loss=0.0882, val_MBA=0.959, val_loss=0.121, learning_rate=1.25e-5] 
+ 43%|████▎     | 13/30 [7:10:28<9:20:50, 1979.44s/epoch, MBA=0.969, loss=0.0873, val_MBA=0.959, val_loss=0.123, learning_rate=1.25e-5]
+ 47%|████▋     | 14/30 [7:43:49<8:49:34, 1985.88s/epoch, MBA=0.969, loss=0.0858, val_MBA=0.959, val_loss=0.123, learning_rate=6.25e-6]
+ 50%|█████     | 15/30 [8:17:11<8:17:43, 1990.89s/epoch, MBA=0.97, loss=0.0851, val_MBA=0.959, val_loss=0.124, learning_rate=6.25e-6] 
+ 53%|█████▎    | 16/30 [8:49:41<7:41:40, 1978.59s/epoch, MBA=0.97, loss=0.0848, val_MBA=0.959, val_loss=0.123, learning_rate=6.25e-6]
+ 57%|█████▋    | 17/30 [9:22:11<7:06:48, 1969.90s/epoch, MBA=0.97, loss=0.0838, val_MBA=0.959, val_loss=0.125, learning_rate=3.12e-6]
+ 60%|██████    | 18/30 [9:55:33<6:35:55, 1979.63s/epoch, MBA=0.97, loss=0.0836, val_MBA=0.959, val_loss=0.125, learning_rate=3.12e-6]
+ 63%|██████▎   | 19/30 [10:28:58<6:04:19, 1987.20s/epoch, MBA=0.97, loss=0.0833, val_MBA=0.959, val_loss=0.125, learning_rate=3.12e-6]
+ 67%|██████▋   | 20/30 [11:02:20<5:31:56, 1991.60s/epoch, MBA=0.97, loss=0.0829, val_MBA=0.959, val_loss=0.125, learning_rate=1.56e-6]
+ 70%|███████   | 21/30 [11:34:51<4:56:55, 1979.45s/epoch, MBA=0.97, loss=0.0827, val_MBA=0.959, val_loss=0.125, learning_rate=1.56e-6]
+ 73%|███████▎  | 22/30 [12:07:51<4:23:55, 1979.47s/epoch, MBA=0.97, loss=0.0826, val_MBA=0.959, val_loss=0.126, learning_rate=1.56e-6]
+ 77%|███████▋  | 23/30 [12:40:43<3:50:40, 1977.21s/epoch, MBA=0.971, loss=0.0823, val_MBA=0.959, val_loss=0.126, learning_rate=7.81e-7]
+ 80%|████████  | 24/30 [13:13:10<3:16:50, 1968.34s/epoch, MBA=0.971, loss=0.0824, val_MBA=0.959, val_loss=0.126, learning_rate=7.81e-7]
+ 80%|████████  | 24/30 [13:13:10<3:18:17, 1982.95s/epoch, MBA=0.971, loss=0.0824, val_MBA=0.959, val_loss=0.126, learning_rate=7.81e-7]
+🐳 Saving Model [13:14:38, 𝚫 13:14:05]
+🐳 Training model finished. Model saved to orcai-v1.keras [13:14:39, 𝚫 0:00:00]
 ```
 
 ## test model
