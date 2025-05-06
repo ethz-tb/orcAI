@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.25.0] - 2025-05-06
+
+### Changes
+
+- remove tensorflow-metal from dependencies. With the metal plugin the model
+  training & prediction is much worse than on Euler with CUDA. Reason unknown.
+  - __ATTENTION__: Please refresh your environment or uninstall tensorflow-metal
+- update orcai-v1 pipeline with tests
+
+
 ## [0.24.0] - 2025-05-05
 
 ### Changes
