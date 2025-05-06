@@ -1,4 +1,3 @@
-import time
 from importlib.resources import files
 from pathlib import Path
 
