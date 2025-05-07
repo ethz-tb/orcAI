@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0] - 2025-05-07
+
+### Changes
+
+- v1.0.0
+- move orcai-v1.md to seperate repository (https://github.com/ethz-tb/orcai-ms-code)
+
 ## [0.25.0] - 2025-05-06
 
 ### Changes
