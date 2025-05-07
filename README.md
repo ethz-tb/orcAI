@@ -95,4 +95,4 @@ See `orcai filter-predictions --help` for more options.
 ## Usage for data preperation and training
 
 All commands are documented, use `orcai command --help`.
-Please see [the example pipeline](orcai-v1.md) for a complete example of how to use orcAI to prepare data and train a model.
+For a full example of the usage please see the code accompanying the manuscript: Please see [orcai-ms-code](https://github.com/ethz-tb/orcai-ms-code).
