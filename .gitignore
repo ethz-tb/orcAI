@@ -16,6 +16,7 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+.justfile
 
 # macOS
 .DS_Store
