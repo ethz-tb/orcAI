@@ -209,9 +209,9 @@ def compute_confusion_table(
         tot = tn + fp + fn + tp
         cm = {
             "TP": float(tp / tot),
+            "FN": float(fn / tot),
             "FP": float(fp / tot),
             "TN": float(tn / tot),
-            "FN": float(fn / tot),
             "PR": float(tp / (tp + fp)) if tp + fp > 0 else np.nan,
             "RE": float(tp / (tp + fn)) if tp + fn > 0 else np.nan,
             "F1": float(2 * tp / (2 * tp + fp + fn)) if tp + fp + fn > 0 else np.nan,
