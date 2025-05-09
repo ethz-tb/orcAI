@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.1] - 2025-05-07
+## [1.0.1] - 2025-05-09
 
 ### Changes
 
@@ -467,3 +467,7 @@
 [0.23.1]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.1
 [0.23.2]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.2
 [0.23.3]:https://github.com/ethz-tb/orcAI/releases/tag/v0.23.3
+[0.24.0]:https://github.com/ethz-tb/orcAI/releases/tag/v0.24.0
+[0.25.0]:https://github.com/ethz-tb/orcAI/releases/tag/v0.25.0
+[1.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.0
+[1.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.1
