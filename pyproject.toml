@@ -18,8 +18,9 @@ keywords = [
     "classification",
 ]
 readme = "README.md"
-requires-python = "~=3.11"
-license = { text = "CC-BY-SA-4.0" }
+requires-python = "==3.11.*"
+license = "CC-BY-SA-4.0"
+license-files = ["LICENSE"]
 dependencies = [
     "zarr>=3, <4",
     "numpy>=2, <3",
@@ -38,9 +39,6 @@ dependencies = [
 [tool.setuptools.dynamic]
 version = {attr = "orcAI.__version__"}
 
-[project.optional-dependencies]
-dev = ["ipython", "ruff"]
-
 [project.urls]
 Repository = "https://github.com/ethz-tb/orcAI"
 
@@ -50,3 +48,13 @@ orcai = "orcAI.cli:cli"
 [tool.setuptools.package-data]
 "orcAI.defaults" = ["*.json"]
 "orcAI.models" = ["*.*", "*/*.*"]
+
+[dependency-groups]
+dev = [
+    "ipython>=9.2.0",
+]
+
+[tool.uv]
+dependency-metadata = [
+    { name = "tensorrt", version = "v10.10.0.31"},
+]
