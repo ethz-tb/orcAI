@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1] - 2025-05-07
+
+### Changes
+
+- change column order of confusion table
+- switch development backend to uv (https://docs.astral.sh/uv/)
+
 ## [1.0.0] - 2025-05-07
 
 ### Changes
