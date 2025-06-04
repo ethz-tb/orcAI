@@ -56,5 +56,5 @@ dev = [
 
 [tool.uv]
 dependency-metadata = [
-    { name = "tensorrt", version = "v10.10.0.31"},
+    { name = "tensorrt"},
 ]
