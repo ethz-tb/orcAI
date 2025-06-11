@@ -26,7 +26,7 @@ dependencies = [
     "numpy>=2, <3",
     "pandas>=2, <3",
     "tensorflow[and-cuda]>=2, <3; sys_platform!='darwin'",
-    "tensorrt>=10, <11; sys_platform=='linux'",
+    "tensorrt>=10, <11; sys_platform!='darwin'",
     "tensorflow>=2, <3; sys_platform=='darwin'",
     "keras_tuner>=1, <2",
     "keras>=3, <4",
