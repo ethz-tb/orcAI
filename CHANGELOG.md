@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2] - 2025-06-11
+
+### Changes
+
+- refactor for GUI project (https://github.com/ethz-tb/orcai-gui)
+
+
 ## [1.0.1] - 2025-05-09
 
 ### Changes
