@@ -12,6 +12,81 @@ from orcAI.auxiliary import (
 from orcAI.io import read_json, save_as_zarr, write_vector_to_json
 
 
+def calculate_spectrogram(
+    wav_file_path: Path,
+    channel: int,
+    spectrogram_parameter: dict,
+    msgr: Messenger = Messenger(verbosity=0),
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Calculates power spectrogram from .wav file according to spectrogram_parameter"""
+
+    wav_file, _ = load(
+        wav_file_path,
+        sr=spectrogram_parameter["sampling_rate"],
+        mono=False,
+    )
+
+    if wav_file.ndim > 1:
+        msgr.warning(f"Multiple channels found, using channel {channel}")
+        wav_file = wav_file[channel - 1]
+
+    # create spectrogram
+    spectrogram = stft(
+        wav_file,
+        n_fft=spectrogram_parameter["nfft"],
+        hop_length=spectrogram_parameter["n_overlap"],
+        window="hann",
+    )
+
+    frequencies = fft_frequencies(
+        sr=spectrogram_parameter["sampling_rate"], n_fft=spectrogram_parameter["nfft"]
+    )
+
+    times = frames_to_time(
+        range(spectrogram.shape[1]),
+        sr=spectrogram_parameter["sampling_rate"],
+        hop_length=spectrogram_parameter["n_overlap"],
+    )
+
+    spectrogram = amplitude_to_db(
+        np.abs(spectrogram), ref=np.max
+    )  # Convert to power spectrogram (magnitude squared)
+
+    return spectrogram, frequencies, times
+
+
+def preprocess_spectrogram(
+    spectrogram: np.ndarray, frequencies: np.ndarray, spectrogram_parameter: dict
+) -> np.ndarray:
+    # extract frequency range, clip according to quantiles, and normalise
+    freq_min_i = np.argwhere(frequencies <= spectrogram_parameter["freq_range"][0])[0][
+        0
+    ]
+    freq_max_i = np.argwhere(frequencies >= spectrogram_parameter["freq_range"][1])[0][
+        0
+    ]
+    spectrogram = spectrogram[freq_min_i:freq_max_i, :]
+
+    lower_percentile = np.percentile(
+        spectrogram, 100 * spectrogram_parameter["quantiles"][0], method="nearest"
+    )
+    upper_percentile = np.percentile(
+        spectrogram, 100 * spectrogram_parameter["quantiles"][1], method="nearest"
+    )
+
+    # Clip the spectrogram to the computed percentiles
+    spectrogram = np.clip(spectrogram, lower_percentile, upper_percentile)
+
+    # Normalize the spectrogram to range [0, 1]
+    min_val = np.min(spectrogram)
+    max_val = np.max(spectrogram)
+    spectrogram = (spectrogram - min_val) / (max_val - min_val)
+
+    # transpose spectogram
+    spectrogram = spectrogram.T
+    return spectrogram
+
+
 def make_spectrogram(
     wav_file_path: Path | str,
     channel: int = 1,
@@ -52,75 +127,22 @@ def make_spectrogram(
         orcai_parameter = read_json(orcai_parameter)
     spectrogram_parameter = orcai_parameter["spectrogram"]
 
-    msgr.part("Making spectrogram")
+    msgr.part("Calculating power spectrogram by stft")
     msgr.info(
         f"Loading & resampling (to {spectrogram_parameter['sampling_rate'] / 1000:.2f} kHz) wav file: {wav_file_path.stem}"
     )
-
-    wav_file, _ = load(
+    spectrogram, frequencies, times = calculate_spectrogram(
         wav_file_path,
-        sr=spectrogram_parameter["sampling_rate"],
-        mono=False,
-    )
-    if wav_file.ndim > 1:
-        msgr.warning(f"Multiple channels found, using channel {channel}")
-        wav_file = wav_file[channel - 1]
-
-    msgr.info("Calculating power spectrogram by STFT")
-
-    # create spectrogram
-    spectrogram = stft(
-        wav_file,
-        n_fft=spectrogram_parameter["nfft"],
-        hop_length=spectrogram_parameter["n_overlap"],
-        window="hann",
+        channel,
+        spectrogram_parameter,
+        msgr=msgr,
     )
 
-    frequencies = fft_frequencies(
-        sr=spectrogram_parameter["sampling_rate"], n_fft=spectrogram_parameter["nfft"]
-    )
-
-    times = frames_to_time(
-        range(spectrogram.shape[1]),
-        sr=spectrogram_parameter["sampling_rate"],
-        hop_length=spectrogram_parameter["n_overlap"],
-    )
     msgr.info(f"Duration of wav file: {times[-1]:.2f} seconds")
-
-    spectrogram = amplitude_to_db(
-        np.abs(spectrogram), ref=np.max
-    )  # Convert to power spectrogram (magnitude squared)
-
     msgr.info("Extracting frequency range and clipping spectrogram")
-
-    # extract frequency range, clip according to quantiles, and normalise
-    freq_min_i = np.argwhere(frequencies <= spectrogram_parameter["freq_range"][0])[0][
-        0
-    ]
-    freq_max_i = np.argwhere(frequencies >= spectrogram_parameter["freq_range"][1])[0][
-        0
-    ]
-    spectrogram = spectrogram[freq_min_i:freq_max_i, :]
-
-    lower_percentile = np.percentile(
-        spectrogram, 100 * spectrogram_parameter["quantiles"][0], method="nearest"
+    spectrogram = preprocess_spectrogram(
+        spectrogram, frequencies, spectrogram_parameter
     )
-    upper_percentile = np.percentile(
-        spectrogram, 100 * spectrogram_parameter["quantiles"][1], method="nearest"
-    )
-
-    # Clip the spectrogram to the computed percentiles
-    spectrogram = np.clip(spectrogram, lower_percentile, upper_percentile)
-
-    msgr.info("Normalizing spectrogram")
-
-    # Normalize the spectrogram to range [0, 1]
-    min_val = np.min(spectrogram)
-    max_val = np.max(spectrogram)
-    spectrogram = (spectrogram - min_val) / (max_val - min_val)
-
-    # transpose spectogram
-    spectrogram = spectrogram.T
 
     return spectrogram, frequencies, times
 

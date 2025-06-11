@@ -179,6 +179,115 @@ def filter_predictions(
     return predicted_labels_duration_ok
 
 
+def compute_aggregated_predictions(
+    recording_path: Path,
+    spectrogram: np.ndarray,
+    model: keras.Model,
+    orcai_parameter: dict,
+    shape: dict,
+    msgr: Messenger = Messenger(verbosity=0),
+    progressbar: tqdm = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
+
+    shift = snippet_length // 2  # Shift time steps for overlapping windows
+    time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
+    prediction_length = (
+        snippet_length // time_steps_per_output_step
+    )  # Output time steps per prediction
+
+    # Step 1: Create overlapping spectrogram snippets
+    num_snippets = (spectrogram.shape[0] - snippet_length) // shift + 1
+    msgr.info(f"slicing into {num_snippets} snippets for prediction")
+
+    snippets = np.array(
+        [
+            spectrogram[i * shift : i * shift + snippet_length]
+            for i in range(num_snippets)
+        ]
+    )  # Shape: (num_snippets, 736, 171)
+
+    # Step 2: Model predictions for all snippets
+    msgr.info("Prediction of snippets")
+    snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
+    predictions = model.predict(
+        snippets, verbose=0 if msgr.verbosity < 2 else 1
+    )  # Shape: (num_snippets, 46, 7)
+
+    # Step 3: Initialize arrays for aggregating predictions
+    msgr.info("Aggregating predictions")
+    if progressbar:
+        progressbar.set_description(f"{recording_path.stem} - Aggregating predictions")
+        progressbar.refresh()
+
+    total_time_steps = spectrogram.shape[0] // time_steps_per_output_step
+    aggregated_predictions = np.zeros((total_time_steps, shape["num_labels"]))
+    overlap_count = np.zeros(
+        total_time_steps
+    )  # To track the number of overlaps per time step
+
+    # Step 4: Overlay predictions
+    for i, prediction in enumerate(predictions):
+        start = i * (
+            shift // time_steps_per_output_step
+        )  # Start index in aggregated predictions
+        end = start + prediction_length  # End index
+        aggregated_predictions[start:end] += prediction  # Add predictions
+        overlap_count[start:end] += 1  # Track overlaps
+
+    # Step 5: Average the overlapping predictions
+    valid_mask = overlap_count > 0  # removes zeros at end
+    aggregated_predictions[valid_mask] /= overlap_count[valid_mask, np.newaxis]
+
+    return aggregated_predictions, overlap_count
+
+
+def compute_binary_predictions(
+    aggregated_predictions: np.ndarray,
+    overlap_count: np.ndarray,
+    calls: list[str],
+    threshold: float = 0.5,
+) -> tuple[list[int], list[int], list[str]]:
+    adjusted_threshold = threshold / np.max(
+        overlap_count
+    )  # larger than threshold in at least one snippet
+    binary_prediction = (aggregated_predictions > adjusted_threshold).astype(int)
+    row_starts = []
+    row_stops = []
+    label_names = []
+    for i, label_name in enumerate(calls):
+        if sum(binary_prediction[:, i]) > 0:
+            row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
+            row_starts += list(row_start)
+            row_stops += list(row_stop)
+            label_names += [label_name] * len(row_start)
+    return row_starts, row_stops, label_names
+
+
+def compute_labels(
+    row_starts: list[int],
+    row_stops: list[int],
+    label_names: list[str],
+    time_steps_per_output_step: int,
+    delta_t: float,
+    label_suffix: str | None,
+) -> pd.DataFrame:
+    if (label_suffix is not None) & (label_suffix != ""):
+        label_names = [label + label_suffix for label in label_names]
+    predicted_labels = (
+        pd.DataFrame(
+            {
+                "start": np.asarray(row_starts) * delta_t * time_steps_per_output_step,
+                "stop": np.asarray(row_stops) * delta_t * time_steps_per_output_step,
+                "label": label_names,
+            }
+        )
+        .sort_values(by=["start", "stop", "label"])
+        .reset_index(drop=True)
+    )
+    return predicted_labels
+
+
 def _predict_wav(
     recording_path: Path | str,
     channel: int,
@@ -266,82 +375,35 @@ def _predict_wav(
         progressbar.set_description(f"{recording_path.stem} - Predicting annotations")
         progressbar.refresh()
 
-    # Parameter
-    snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
-    shift = snippet_length // 2  # Shift time steps for overlapping windows
-    time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
-    prediction_length = (
-        snippet_length // time_steps_per_output_step
-    )  # Output time steps per prediction
+    aggregated_predictions, overlap_count = compute_aggregated_predictions(
+        recording_path=recording_path,
+        spectrogram=spectrogram,
+        model=model,
+        orcai_parameter=orcai_parameter,
+        shape=shape,
+        msgr=msgr,
+        progressbar=progressbar,
+    )
 
-    # Step 1: Create overlapping spectrogram snippets
-    num_snippets = (spectrogram.shape[0] - snippet_length) // shift + 1
-    msgr.info(f"slicing into {num_snippets} snippets for prediction")
+    row_starts, row_stops, label_names = compute_binary_predictions(
+        aggregated_predictions=aggregated_predictions,
+        overlap_count=overlap_count,
+        calls=orcai_parameter["calls"],
+        threshold=0.5,
+    )
 
-    snippets = np.array(
-        [
-            spectrogram[i * shift : i * shift + snippet_length]
-            for i in range(num_snippets)
-        ]
-    )  # Shape: (num_snippets, 736, 171)
-
-    # Step 2: Model predictions for all snippets
-    msgr.info("Prediction of snippets")
-    snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
-    predictions = model.predict(
-        snippets, verbose=0 if msgr.verbosity < 2 else 1
-    )  # Shape: (num_snippets, 46, 7)
-
-    # Step 3: Initialize arrays for aggregating predictions
-    msgr.info("Aggregating predictions")
-    if progressbar:
-        progressbar.set_description(f"{recording_path.stem} - Aggregating predictions")
-        progressbar.refresh()
-
-    total_time_steps = spectrogram.shape[0] // time_steps_per_output_step
-    aggregated_predictions = np.zeros((total_time_steps, shape["num_labels"]))
-    overlap_count = np.zeros(
-        total_time_steps
-    )  # To track the number of overlaps per time step
-
-    # Step 4: Overlay predictions
-    for i, prediction in enumerate(predictions):
-        start = i * (
-            shift // time_steps_per_output_step
-        )  # Start index in aggregated predictions
-        end = start + prediction_length  # End index
-        aggregated_predictions[start:end] += prediction  # Add predictions
-        overlap_count[start:end] += 1  # Track overlaps
-
-    # Step 5: Average the overlapping predictions (or apply another pooling function)
-    msgr.info("Computing binary predictions")
-    valid_mask = overlap_count > 0  # removes zeros at end
-    aggregated_predictions[valid_mask] /= overlap_count[valid_mask, np.newaxis]
-    threshold = 0.5 / np.max(overlap_count)  # larger than 0.5 in at least one snippet
-    binary_prediction = np.zeros((total_time_steps, shape["num_labels"])).astype(int)
-    binary_prediction[aggregated_predictions > threshold] = 1
-
-    # Step 6: compute for each label in binary_prediction start and end of consecutive entries of ones
     msgr.info("converting binary predictions into start and stop times")
+    time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
     delta_t = times[1] - times[0]
-    row_starts = []
-    row_stops = []
-    label_names = []
-    for i, label_name in enumerate(orcai_parameter["calls"]):
-        if sum(binary_prediction[:, i]) > 0:
-            row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
-            row_starts += list(row_start)
-            row_stops += list(row_stop)
-            label_names += [label_name] * len(row_start)
-    if (label_suffix is not None) & (label_suffix != ""):
-        label_names = [label + label_suffix for label in label_names]
-    predicted_labels = pd.DataFrame(
-        {
-            "start": np.asarray(row_starts) * delta_t * time_steps_per_output_step,
-            "stop": np.asarray(row_stops) * delta_t * time_steps_per_output_step,
-            "label": label_names,
-        }
-    ).sort_values(by=["start", "stop", "label"])
+    predicted_labels = compute_labels(
+        row_starts,
+        row_stops,
+        label_names,
+        time_steps_per_output_step=time_steps_per_output_step,
+        delta_t=delta_t,
+        label_suffix=label_suffix,
+    )
+    # Step 6: compute for each label in binary_prediction start and end of consecutive entries of ones
     msgr.info(f"found {len(predicted_labels)} acoustic signals")
 
     if call_duration_limits is not None:
@@ -360,8 +422,6 @@ def _predict_wav(
             predictions_path = output_path.with_name(
                 f"{output_path.stem}_probabilities.csv.gz"
             )
-
-            delta_t * time_steps_per_output_step * range(len(aggregated_predictions))
 
             pd.DataFrame(
                 aggregated_predictions,
