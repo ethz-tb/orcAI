@@ -137,7 +137,7 @@ def cli():
     help="Overwrite existing predictions.",
 )
 @click.option(
-    "--save_prediction_probabilities",
+    "--save_probabilities",
     "-sp",
     is_flag=True,
     help="If True the prediction probabilities are saved to a file.",
@@ -208,10 +208,16 @@ def cli_predict(**kwargs):
     help="Path to the output file or 'default' to save in the same directory as the prediction file.",
 )
 @click.option(
+    "--overwrite",
+    "-ow",
+    is_flag=True,
+    help="Overwrite existing predictions.",
+)
+@click.option(
     "--label_suffix",
     "-ls",
-    default="orcai-V1",
-    show_default="orcai-V1",
+    default="*",
+    show_default="*",
     help="Suffix to add to the label names.",
 )
 @click.option(
@@ -226,9 +232,9 @@ def cli_filter_predictions(**kwargs):
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Filtering predictions"
     )
-    from orcAI.predict import filter_predictions
+    from orcAI.predict import filter_predictions_file
 
-    filter_predictions(**kwargs)
+    filter_predictions_file(**kwargs)
 
 
 @cli.command(

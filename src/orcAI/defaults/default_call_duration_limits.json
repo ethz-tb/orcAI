@@ -1,34 +1,34 @@
 {
     "default": [
-        0.1,
+        0,
         null
     ],
     "BR": [
-        0.1,
+        0,
         null
     ],
     "BUZZ": [
-        0.1,
+        0,
         null
     ],
     "HERDING": [
-        0.1,
+        0,
         null
     ],
     "PHS": [
-        0.1,
+        0,
         null
     ],
     "SS": [
-        0.1,
+        0,
         null
     ],
     "TAILSLAP": [
-        0.1,
+        0,
         null
     ],
     "WHISTLE": [
-        0.1,
+        0,
         null
     ]
 }
