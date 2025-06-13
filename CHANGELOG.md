@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2025-06-13
+
+- more refactoring for GUI project
+- fix for filtering of predictions (unfortunately in same commit.)
+
+
 ## [1.0.2] - 2025-06-11
 
 ### Changes
@@ -478,3 +484,5 @@
 [0.25.0]:https://github.com/ethz-tb/orcAI/releases/tag/v0.25.0
 [1.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.0
 [1.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.1
+[1.0.2]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.2
+[1.0.3]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.3
