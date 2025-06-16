@@ -59,7 +59,9 @@ def _convert_annotation(
     msgr.part("Converting annotation to label array")
     # read annotation file
     recording = annotation_file_path.stem
-    annotations = read_annotation_file(annotation_file_path)
+    annotations = read_annotation_file(
+        annotation_file_path, col_names=["start", "stop", "origlabel"]
+    )
 
     if call_equivalences is not None:
         msgr.info("Applying call equivalences")

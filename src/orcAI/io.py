@@ -332,7 +332,9 @@ def save_as_zarr(
     return
 
 
-def read_annotation_file(annotation_file_path) -> pd.DataFrame:
+def read_annotation_file(
+    annotation_file_path: Path, col_names: list[str] = ["start", "stop", "origlabel"]
+) -> pd.DataFrame:
     """read annotation file and return with recording as additional column
     Parameter
     ----------
@@ -349,10 +351,10 @@ def read_annotation_file(annotation_file_path) -> pd.DataFrame:
         sep="\t",
         encoding="utf-8",
         header=None,
-        names=["start", "stop", "origlabel"],
+        names=col_names,
     )
     annotation_file["recording"] = Path(annotation_file_path).stem
-    return annotation_file[["recording", "start", "stop", "origlabel"]]
+    return annotation_file[["recording", *col_names]]
 
 
 def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
