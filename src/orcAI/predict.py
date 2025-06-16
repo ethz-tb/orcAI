@@ -10,8 +10,8 @@ from orcAI.auxiliary import Messenger, find_consecutive_ones
 from orcAI.io import (
     load_orcai_model,
     read_json,
-    save_predictions,
     save_prediction_probabilities,
+    save_predictions,
 )
 from orcAI.spectrogram import make_spectrogram
 
