@@ -7,6 +7,7 @@ import pandas as pd
 import tensorflow as tf
 import zarr
 
+from orcAI.auxiliary import Messenger
 from orcAI.json_encoder import JsonEncoderExt
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
@@ -408,3 +409,87 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
         )
 
     return model, orcai_parameter, shape
+
+
+def _convert_times_to_seconds(
+    predicted_labels: pd.DataFrame,
+    delta_t: float,
+) -> pd.DataFrame:
+    """
+    Converts the start and stop times of predicted labels from time steps to seconds.
+    Parameters
+    ----------
+    predicted_labels : pd.DataFrame
+        DataFrame with predicted labels containing 'start' and 'stop' columns in time steps.
+    delta_t : float
+        Time step duration in seconds.
+    time_steps_per_output_step : int
+        Number of time steps per output step.
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with 'start' and 'stop' columns converted to seconds.
+    """
+    predicted_labels.loc[:, "start"] = predicted_labels.loc[:, "start"] * delta_t
+    predicted_labels.loc[:, "stop"] = predicted_labels.loc[:, "stop"] * delta_t
+    return predicted_labels
+
+
+def save_predictions(
+    predicted_labels: pd.DataFrame,
+    output_path: Path | str,
+    delta_t: float,
+    msgr: Messenger = Messenger(verbosity=0),
+) -> None:
+    """
+    Saves the predicted labels to a file.
+
+    Parameters
+    ----------
+    predicted_labels : pd.DataFrame
+        DataFrame with predicted labels containing 'start', 'stop', and 'label' columns.
+    output_path : Path | str
+        Path to the output file.
+    delta_t : float
+        Time step duration in seconds.
+    msgr : Messenger
+        Messenger object for logging.
+    """
+    predicted_labels = _convert_times_to_seconds(predicted_labels, delta_t)
+    predicted_labels[["start", "stop", "label"]].round(4).to_csv(
+        output_path, sep="\t", index=False
+    )
+    msgr.info(f"Predictions saved to {output_path}")
+    return
+
+
+def save_prediction_probabilities(
+    aggregated_predictions: np.ndarray,
+    orcai_parameter: dict,
+    delta_t: float,
+    output_path: Path | str,
+    msgr: Messenger = Messenger(verbosity=0),
+) -> None:
+    """
+    Saves the prediction probabilities to a file.
+    Parameters
+    ----------
+    aggregated_predictions : np.ndarray
+        Array with aggregated predictions.
+    orcai_parameter : dict
+        orcAI parameter dictionary.
+    delta_t : float
+        Time step duration in seconds.
+    output_path : Path | str
+        Path to the output file.
+    msgr : Messenger
+        Messenger object for logging.
+    """
+    predictions_path = output_path.with_name(f"{output_path.stem}_probabilities.csv.gz")
+    pd.DataFrame(
+        aggregated_predictions,
+        columns=orcai_parameter["calls"],
+        index=delta_t * range(len(aggregated_predictions)),
+    ).to_csv(predictions_path, index_label="time", compression="gzip")
+    msgr.info(f"Prediction probabilities saved to {predictions_path}")
+    return
