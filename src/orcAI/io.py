@@ -462,7 +462,6 @@ def save_predictions(
         Messenger object for logging.
     """
     # predicted_labels = _convert_times_to_seconds(predicted_labels, delta_t)
-    print(predicted_labels.dtypes)
     predicted_labels[["start", "stop", "label"]].round(4).to_csv(
         output_path, sep="\t", index=False, header=False
     )
