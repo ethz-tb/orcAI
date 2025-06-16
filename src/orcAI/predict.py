@@ -531,6 +531,15 @@ def save_prediction_probabilities(
     return
 
 
+def _get_output_path(
+    recording_path: Path,
+    channel: int,
+    model_name: str,
+):
+    filename = f"{recording_path.stem}_c{channel}_{model_name}_predicted.txt"
+    return recording_path.with_name(filename)
+
+
 def _predict_and_save(
     recording_path: Path | str,
     channel: int,
@@ -582,18 +591,20 @@ def _predict_and_save(
     FileExistsError
         If the output_path already exists.
     """
-    if output_path is not None:
-        if output_path == "default":
-            filename = f"{recording_path.stem}_c{channel}_{orcai_parameter['name']}_predicted.txt"
-            output_path = recording_path.with_name(filename)
+    if output_path == "default":
+        output_path = _get_output_path(
+            recording_path=Path(recording_path),
+            channel=channel,
+            model_name=orcai_parameter["name"],
+        )
+    else:
+        output_path = Path(output_path)
+    msgr.info(f"Output file: {output_path}")
+    if output_path.exists():
+        if overwrite:
+            msgr.warning(f"Output file {output_path} already exists. Overwriting.")
         else:
-            output_path = Path(output_path)
-        msgr.info(f"Output file: {output_path}")
-        if output_path.exists():
-            if overwrite:
-                msgr.warning(f"Output file {output_path} already exists. Overwriting.")
-            else:
-                raise FileExistsError(f"Annotation file already exists: {output_path}")
+            raise FileExistsError(f"Annotation file already exists: {output_path}")
 
     predicted_labels, aggregated_predictions, delta_t = predict_wav(
         recording_path=recording_path,
