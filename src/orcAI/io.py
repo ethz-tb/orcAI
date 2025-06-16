@@ -457,7 +457,7 @@ def save_predictions(
     """
     predicted_labels = _convert_times_to_seconds(predicted_labels, delta_t)
     predicted_labels[["start", "stop", "label"]].round(4).to_csv(
-        output_path, sep="\t", index=False
+        output_path, sep="\t", index=False, header=False
     )
     msgr.info(f"Predictions saved to {output_path}")
     return
