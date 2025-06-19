@@ -432,12 +432,9 @@ def _convert_times_to_seconds(
     pd.DataFrame
         DataFrame with 'start' and 'stop' columns converted to seconds.
     """
-    predicted_labels.loc[:, "start"] = (
-        predicted_labels.loc[:, "start"].astype(float) * delta_t
-    )
-    predicted_labels.loc[:, "stop"] = (
-        predicted_labels.loc[:, "stop"].astype(float) * delta_t
-    )
+    predicted_labels = predicted_labels.astype({"start": "float64", "stop": "float64"})
+    predicted_labels.loc[:, "start"] = predicted_labels.loc[:, "start"] * delta_t
+    predicted_labels.loc[:, "stop"] = predicted_labels.loc[:, "stop"] * delta_t
     return predicted_labels
 
 
@@ -445,6 +442,7 @@ def save_predictions(
     predicted_labels: pd.DataFrame,
     output_path: Path | str,
     delta_t: float,
+    columns: list[str] = ["start", "stop", "label"],
     msgr: Messenger = Messenger(verbosity=0),
 ) -> None:
     """
@@ -453,16 +451,18 @@ def save_predictions(
     Parameters
     ----------
     predicted_labels : pd.DataFrame
-        DataFrame with predicted labels containing 'start', 'stop', and 'label' columns.
+        DataFrame with predicted labels containing columns.
     output_path : Path | str
         Path to the output file.
     delta_t : float
         Time step duration in seconds.
+    columns : list[str]
+        List of columns to save in the output file.
     msgr : Messenger
         Messenger object for logging.
     """
-    # predicted_labels = _convert_times_to_seconds(predicted_labels, delta_t)
-    predicted_labels[["start", "stop", "label"]].round(4).to_csv(
+    predicted_labels = _convert_times_to_seconds(predicted_labels, delta_t)
+    predicted_labels[columns].round(4).to_csv(
         output_path, sep="\t", index=False, header=False
     )
     msgr.info(f"Predictions saved to {output_path}")
