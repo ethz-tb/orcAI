@@ -18,16 +18,13 @@ keywords = [
     "classification",
 ]
 readme = "README.md"
-requires-python = "==3.11.*"
+requires-python = "==3.12.*"
 license = "CC-BY-SA-4.0"
 license-files = ["LICENSE"]
 dependencies = [
     "zarr>=3, <4",
     "numpy>=2, <3",
     "pandas>=2, <3",
-    "tensorflow[and-cuda]>=2, <3; sys_platform!='darwin'",
-    "tensorrt>=10, <11; sys_platform!='darwin'",
-    "tensorflow>=2, <3; sys_platform=='darwin'",
     "keras_tuner>=1, <2",
     "keras>=3, <4",
     "librosa<1",
@@ -45,6 +42,15 @@ Repository = "https://github.com/ethz-tb/orcAI"
 [project.scripts]
 orcai = "orcAI.cli:cli"
 
+[project.optional-dependencies]
+cuda = [
+    "tensorflow[and-cuda]>=2,<3 ; sys_platform != 'darwin'",
+    "tensorrt>=10.12.0.36 ; sys_platform != 'darwin'",
+]
+rocm = [
+    "tensorflow-rocm==2.18.1 ; sys_platform != 'darwin'",
+]
+
 [tool.setuptools.package-data]
 "orcAI.defaults" = ["*.json"]
 "orcAI.models" = ["*.*", "*/*.*"]
@@ -58,3 +64,6 @@ dev = [
 dependency-metadata = [
     { name = "tensorrt"},
 ]
+
+[[tool.uv.index]]
+url = "https://repo.radeon.com/rocm/manylinux/rocm-rel-6.4.1"
