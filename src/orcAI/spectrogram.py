@@ -13,18 +13,19 @@ from orcAI.io import read_json, save_as_zarr, write_vector_to_json
 
 
 def calculate_spectrogram(
-    wav_file_path: Path,
+    wav_file: np.ndarray | Path | str,
     channel: int,
     spectrogram_parameter: dict,
     msgr: Messenger = Messenger(verbosity=0),
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Calculates power spectrogram from .wav file according to spectrogram_parameter"""
 
-    wav_file, _ = load(
-        wav_file_path,
-        sr=spectrogram_parameter["sampling_rate"],
-        mono=False,
-    )
+    if isinstance(wav_file, (Path, str)):
+        wav_file, _ = load(
+            wav_file,
+            sr=spectrogram_parameter["sampling_rate"],
+            mono=False,
+        )
 
     if wav_file.ndim > 1:
         msgr.warning(f"Multiple channels found, using channel {channel}")
