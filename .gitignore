@@ -2,7 +2,6 @@
 .vscode
 
 # Development
-.python-version
 venv/
 orcai-dev/
 dev/
