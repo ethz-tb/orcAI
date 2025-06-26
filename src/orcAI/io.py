@@ -413,20 +413,20 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
     return model, orcai_parameter, shape
 
 
-def _convert_times_to_seconds(
+def _convert_steps_to_seconds(
     predicted_labels: pd.DataFrame,
     delta_t: float,
 ) -> pd.DataFrame:
     """
     Converts the start and stop times of predicted labels from time steps to seconds.
-    Parameters
+
+    Parameter
     ----------
     predicted_labels : pd.DataFrame
         DataFrame with predicted labels containing 'start' and 'stop' columns in time steps.
     delta_t : float
         Time step duration in seconds.
-    time_steps_per_output_step : int
-        Number of time steps per output step.
+
     Returns
     -------
     pd.DataFrame
@@ -461,7 +461,7 @@ def save_predictions(
     msgr : Messenger
         Messenger object for logging.
     """
-    predicted_labels = _convert_times_to_seconds(predicted_labels, delta_t)
+    predicted_labels = _convert_steps_to_seconds(predicted_labels, delta_t)
     predicted_labels[columns].round(4).to_csv(
         output_path, sep="\t", index=False, header=False
     )
