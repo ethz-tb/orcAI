@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.4] - 2025-06-26
+
+- even more refactoring for GUI
+
+
 ## [1.0.3] - 2025-06-13
 
 - more refactoring for GUI project
