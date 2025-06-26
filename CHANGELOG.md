@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.5dev]
+
+- Readme grammar
+
 ## [1.0.4] - 2025-06-26
 
 - even more refactoring for GUI

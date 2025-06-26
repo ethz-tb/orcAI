@@ -71,7 +71,7 @@ orcai predict path/to/recording_table.csv -o path/to/output_dir
 
 This will use the included model `orcai-V1` to predict annotations in the recordings listed in the recording table `path/to/recording_table.csv`. The output will be saved in the directory `path/to/output_dir` with the same name as the input file but with the extension `_orcai-V1_predicted.txt` and is compatible with Audacity.
 
-A appropriate recording table can be created using the `orcai create-recording-table` command.
+An appropriate recording table can be created using the `orcai create-recording-table` command.
 
 See `orcai predict --help` for more options.
 
