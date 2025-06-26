@@ -6,11 +6,6 @@ resolution-markers = [
     "sys_platform == 'darwin'",
 ]
 
-[manifest]
-
-[[manifest.dependency-metadata]]
-name = "tensorrt"
-
 [[package]]
 name = "absl-py"
 version = "2.3.0"
@@ -761,7 +756,6 @@ dependencies = [
     { name = "rich-click" },
     { name = "tensorflow" },
     { name = "tensorflow", extra = ["and-cuda"], marker = "sys_platform != 'darwin'" },
-    { name = "tensorrt", marker = "sys_platform != 'darwin'" },
     { name = "tqdm" },
     { name = "zarr" },
 ]
@@ -783,7 +777,6 @@ requires-dist = [
     { name = "rich-click", specifier = ">=1,<2" },
     { name = "tensorflow", marker = "sys_platform == 'darwin'", specifier = ">=2,<3" },
     { name = "tensorflow", extras = ["and-cuda"], marker = "sys_platform != 'darwin'", specifier = ">=2,<3" },
-    { name = "tensorrt", marker = "sys_platform != 'darwin'", specifier = ">=10,<11" },
     { name = "tqdm", specifier = ">=4.42.0,<5" },
     { name = "zarr", specifier = ">=3,<4" },
 ]
@@ -1224,12 +1217,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/de/bf/ba597d3884c77d05a78050f3c178933d69e3f80200a261df6eaa920656cd/tensorflow_io_gcs_filesystem-0.37.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6e1f2796b57e799a8ca1b75bf47c2aaa437c968408cc1a402a9862929e104cda", size = 4842079, upload-time = "2024-07-01T23:44:26.825Z" },
     { url = "https://files.pythonhosted.org/packages/66/7f/e36ae148c2f03d61ca1bff24bc13a0fef6d6825c966abef73fc6f880a23b/tensorflow_io_gcs_filesystem-0.37.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ee7c8ee5fe2fd8cb6392669ef16e71841133041fee8a330eff519ad9b36e4556", size = 5085736, upload-time = "2024-07-01T23:44:28.618Z" },
 ]
-
-[[package]]
-name = "tensorrt"
-version = "10.12.0.36"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2c/ad/c7cc31ec45eb2d28444f99a30f8477d6bb16ec230107a6e8bec16125890d/tensorrt-10.12.0.36.tar.gz", hash = "sha256:b246a830c26713e097b73151917e101cfb81aa0e7274c3c3b4c1f9f8b886be2e", size = 40702, upload-time = "2025-06-12T21:54:27.855Z" }
 
 [[package]]
 name = "termcolor"
