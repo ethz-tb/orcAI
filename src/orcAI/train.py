@@ -11,8 +11,6 @@ from orcAI.architectures import (
     MaskedBinaryCrossentropy,
     build_model,
 )
-
-# import local
 from orcAI.auxiliary import SEED_ID_LOAD_TRAIN_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
 from orcAI.io import load_dataset, load_orcai_model, read_json, write_json
 
