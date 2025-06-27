@@ -445,6 +445,7 @@ def predict_wav(
         time_steps_per_output_step=time_steps_per_output_step,
         label_suffix=label_suffix,
     )
+    predicted_labels["label_source"] = orcai_parameter["name"]
     msgr.info(f"found {len(predicted_labels)} acoustic signals")
 
     msgr.success("Prediction finished.")
