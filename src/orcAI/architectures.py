@@ -7,6 +7,7 @@ tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse onl
 
 
 # CNN model with residual connection
+@keras.saving.register_keras_serializable(name="ReduceFrequencyMean")
 class ReduceFrequencyMean(keras.layers.Layer):
     """Custom Keras layer to reduce the frequency dimension of a 4D tensor
     by taking the mean across the frequency axis (axis=2)"""
