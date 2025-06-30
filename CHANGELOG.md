@@ -6,12 +6,17 @@
 - save label source in prediction (e.g. auto:orcai-v1)
 - Readme grammar
 
+
 ## [1.0.4] - 2025-06-26
+
+### Changes
 
 - even more refactoring for GUI
 
 
 ## [1.0.3] - 2025-06-13
+
+### Changes
 
 - more refactoring for GUI project
 - fix for filtering of predictions (unfortunately in same commit.)
@@ -23,7 +28,6 @@
 
 - refactor for GUI project (https://github.com/ethz-tb/orcai-gui)
 
-
 ## [1.0.1] - 2025-05-09
 
 ### Changes
@@ -31,12 +35,14 @@
 - change column order of confusion table
 - switch development backend to uv (https://docs.astral.sh/uv/)
 
+
 ## [1.0.0] - 2025-05-07
 
 ### Changes
 
 - v1.0.0
 - move orcai-v1.md to seperate repository (https://github.com/ethz-tb/orcai-ms-code)
+
 
 ## [0.25.0] - 2025-05-06
 
@@ -56,6 +62,7 @@
 - create unfiltered test set when creating tvt data
 - __Breaking__: update test.py to use new unfiltered test set
 
+
 ## [0.23.3] - 2025-05-05
 
 ### Changes
@@ -63,11 +70,13 @@
 - add overwrite flag to predict
 - better logging.
 
+
 ## [0.23.2] - 2025-05-05
 
 ### Changes
 
 - general polish
+
 
 ## [0.23.1] - 2025-05-05
 
@@ -77,6 +86,7 @@
 - update default parameters for hyperparameter search
 - move remote to github.
 
+
 ## [0.23.0] - 2025-05-02
 
 ### Changes
@@ -84,11 +94,13 @@
 - subclass layer for frequency reduction in 1DConv model for serialization. Fixes serialization of 1D Conv models.
 - save data of all trials as csv in hpsearch
 
+
 ## [0.22.1] - 2025-05-01
 
 ### Changes
 
 - Buffer size back to 1000. OOM errors on euler with 20000.
+
 
 ## [0.22.0] - 2025-04-30
 
@@ -106,11 +118,13 @@
   - parameter orcai_parameter["monitor"] can only be "val_MBA"
 - minor refactoring
 
+
 ## [0.21.1] - 2025-04-29
 
 ### Changes
 
 - fix ResNet1DConv for keras 3
+
 
 ## [0.21.0] - 2025-04-29
 
@@ -118,11 +132,13 @@
 
 - __Breaking__: switch back to keras 3. keras_tuner is not compatible with tf_keras.
 
+
 ## [0.20.1] - 2025-04-28
 
 ### Changes
 
 - fix path passed to to callbacks
+
 
 ## [0.20.0] - 2025-04-28
 
@@ -131,6 +147,7 @@
 - __Breaking__: remove `--save_best_model` flag from `hpsearch` command
 - update pipeline.
 - minor prettifications.
+
 
 ## [0.19.0] - 2025-04-28
 
@@ -164,6 +181,7 @@
 - __Breaking__: new parameter in orcai_parameter: "EarlyStopping_patience": 10, "ReduceLROnPlateau_patience": 3, "ReduceLROnPlateau_factor": 0.5
   - add to orcai_parameters.json to unbreak.
 
+
 ## [0.16.0] - 2025-04-22
 
 ### Changes
@@ -187,11 +205,13 @@
 - define metrics in architectures.py
 - new arg parameter to overwrite default orcai parameter on project init
 
+
 ## [0.15.1] - 2025-04-15
 
 ### Changes
 
 - make ReduceLROnPlateau callback patience == model_parameters['patience'] // 2
+
 
 ## [0.15.0] - 2025-04-14
 
@@ -200,6 +220,7 @@
 - save best hyperparameters
 - flag to save model when running hp_search
 
+
 ## [0.14.0] - 2025-04-11
 
 ### Changes
@@ -207,6 +228,7 @@
 - __Breaking__ save all_snippets.csv.gz in tvt_data not recording data
 - enable changing of initial learning rate with orcai_parameters.json
 - switch formatter and format imports
+
 
 ## [0.13.2] - 2025-04-11
 
@@ -237,6 +259,7 @@
 
 - fix for zarr 2.8.15: fix numcodecs to < 0.16 (until zarr is updated or we switch to zarr 3.0)
 
+
 ## [0.12.1] - 2025-04-08
 
 ### Changes
@@ -244,6 +267,7 @@
 - fix dataset compression option in cli
 - fallback dataset_shape
 - fix keras imports
+
 
 ## [0.12.0] - 2025-04-07
 
@@ -253,11 +277,13 @@
 - save test results to subdir by default
 - improve saved tables in test
 
+
 ## [0.11.1] - 2025-04-03
 
 ### Added
 
 - report system information in train
+
 
 ## [0.11.0] - 2025-04-03
 
@@ -284,12 +310,14 @@
 
 - add LICENCE file (in addition to specifying it in pyproject.toml)
 
+
 ## [0.9.1] - 2025-03-27
 
 ### Changes
 
 - fix default for predict
 - update readme
+
 
 ## [0.9.0] - 2025-03-27
 
@@ -304,11 +332,13 @@
 - docstrings for predict functions
 - add type hints to save functions
 
+
 ## [0.8.1] - 2025-03-25
 
 ### Changes
 
 - fix passing dataset size to load_dataset
+
 
 ## [0.8.0] - 2025-03-25
 
@@ -322,6 +352,7 @@
 - update predict cli
   - option to choose from included models (now includes orcai-v1 and orcai-v1-6400 trained on 6400 batches)
 
+
 ## [0.7.0] - 2025-03-25
 
 ### Changes
@@ -334,17 +365,20 @@
 - added hyperparameter search cli
 - report and save duration of selected snippets
 
+
 ## [0.6.1] - 2025-03-24
 
 ### Changes
 
 - extract one additional batch to try to avoid the warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.`
 
+
 ## [0.6.0] - 2025-03-24
 
 ### Changes
 
 - __Breaking__ revert to using TFRecordWriter for saving datasets. The warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` probably is not relevant?
+
 
 ## [0.5.0] - 2025-03-24
 
@@ -355,7 +389,6 @@
 ### Added
 
 - addded test cli
-
 
 
 ## [0.4.2] - 2025-03-21
@@ -388,7 +421,6 @@
 - __Breaking__: moved io function from `auxiliary` to `io`
 - Channel added to the prediction output filename
 
-
 ### Added
 
 - added function to initialize a project, copying the default parameter files
@@ -404,6 +436,7 @@
 ### Known Issues
 
 - module `test` untested.
+
 
 ## [0.3.0] - 2025-03-14
 
@@ -426,11 +459,13 @@
 - unused transformer models (`57794fed`)
 - plot fn
 
+
 ## [0.2.1] - 2025-03-07
 
 ### Changed
 
 - defer loading of cli commands to increase performance if only calling help. This massively speeds up the cli if only calling `--help` or `--version` (`f37fea01`)
+
 
 ## [0.2.0] - 2025-03-05
 
@@ -445,6 +480,7 @@
 - changed predict cli to accept a recording table
 - `predict` now accepts a `call_duration_limits` file. If one is given predictions are filtered using `filter_predictions`
 - cli now uses rich_click, mainly for grouping & sorting subcommands
+
 
 ## [0.1.0] - 2025-03-04
 
