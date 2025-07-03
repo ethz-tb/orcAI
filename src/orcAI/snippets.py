@@ -458,7 +458,7 @@ def create_tvt_snippet_tables(
     msgr.info("Snippet stats [HMS]:", indent=1)
     msgr.info(all_snippet_stats_duration, indent=-1)
     all_snippet_stats_duration.to_csv(
-        output_dir.joinpath("all_snippet_stats_duration.csv"), index=True
+        output_dir.joinpath("all_snippet_duration.csv"), index=True
     )
 
     rng = np.random.default_rng(
@@ -502,16 +502,16 @@ def create_tvt_snippet_tables(
         )
         msgr.info(f"saved {itype} snippets to disk")
 
-    selected_snippet_stats = _compute_snippet_stats(
+    filtered_snippets_stats = _compute_snippet_stats(
         pd.concat(snippets, ignore_index=True), for_calls=orcai_parameter["calls"]
     )
-    selected_snippet_stats_duration = selected_snippet_stats.filter(
+    filtered_snippet_stats_duration = filtered_snippets_stats.filter(
         regex=".*(?<!_ef)$", axis=1
     ).map(seconds_to_hms)
     msgr.info("Snippet stats for train, val and test datasets [HMS]:", indent=1)
-    msgr.info(selected_snippet_stats_duration, indent=-1)
-    selected_snippet_stats_duration.to_csv(
-        output_dir.joinpath("selected_snippet_stats_duration.csv"), index=True
+    msgr.info(filtered_snippet_stats_duration, indent=-1)
+    filtered_snippet_stats_duration.to_csv(
+        output_dir.joinpath("filtered_snippets_duration.csv"), index=True
     )
 
     # create unfiltered test snippets
