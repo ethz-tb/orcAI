@@ -1,6 +1,15 @@
 # Changelog
 
+## [1.0.6]
+
+### Changes
+
+- update model from new run (ms revisions)
+- minor formatting
+
 ## [1.0.5] - 2025-06-30
+
+### Changes
 
 - fix saving & loading of custom layer for resNet1Dconv
 - save label source in prediction (e.g. auto:orcai-v1)
@@ -535,5 +544,6 @@
 [1.0.3]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.3
 [1.0.4]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.4
 [1.0.5]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.5
+[1.0.6]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.6
 
 
