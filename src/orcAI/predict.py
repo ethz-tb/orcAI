@@ -322,6 +322,9 @@ def _calulate_mean_probabilities(
     """
     mean_probabilities = []
     for start, stop in zip(row_start, row_stop):
+        if start == stop:
+            mean_probabilities.append(probabilities[start])
+            continue
         mean_probabilities.append(probabilities[start:stop].mean(axis=0).tolist())
     return mean_probabilities
 
@@ -359,7 +362,6 @@ def compute_binary_predictions(
     row_stops = []
     label_names = []
     for i, label_name in enumerate(calls):
-        print(i, label_name)
         if sum(binary_prediction[:, i]) > 0:
             row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
             row_starts += list(row_start)
