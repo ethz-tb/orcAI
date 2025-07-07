@@ -442,7 +442,7 @@ def save_predictions(
     predicted_labels: pd.DataFrame,
     output_path: Path | str,
     delta_t: float,
-    columns: list[str] = ["start", "stop", "label"],
+    columns: list[str] = ["start", "stop", "label", "mean_p", "label_source"],
     msgr: Messenger = Messenger(verbosity=0),
 ) -> None:
     """
