@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1]
+
+### Changes
+
+- fix probabilities for calls in a single timestep
+
 ## [1.1.0]
 
 ### Changes
