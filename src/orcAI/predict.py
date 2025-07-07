@@ -269,7 +269,9 @@ def compute_aggregated_predictions(
     msgr.info("Prediction of snippets")
     snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
     predictions = model.predict(
-        snippets, verbose=0 if msgr.verbosity < 2 else 1
+        snippets,
+        batch_size=orcai_parameter["model"]["batch_size"],
+        verbose=0 if msgr.verbosity < 2 else 1,
     )  # Shape: (num_snippets, 46, 7)
 
     # Step 3: Initialize arrays for aggregating predictions
