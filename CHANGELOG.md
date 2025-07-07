@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0]
+
+### Changes
+
+- fix prediction. Signals are now predicted if the mean probability of overlapping predicted snippets is larger than threshold (default 0.5)
+- mean predicted probability is output for each label
+- threshold is now a parameter to predict function
+
 ## [1.0.6]
 
 ### Changes
@@ -545,5 +553,7 @@
 [1.0.4]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.4
 [1.0.5]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.5
 [1.0.6]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.6
+[1.1.0]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.0
+
 
 
