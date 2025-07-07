@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2]
+
+### Changes
+
+- fix assignment of probabilities
+- specify batch size for predictions (== batch size of training)
+- save additional columns (mean prediction probability and label source) to label file
+
 ## [1.1.1]
 
 ### Changes
