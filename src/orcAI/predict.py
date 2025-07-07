@@ -325,7 +325,7 @@ def _calulate_mean_probabilities(
         if start == stop:
             mean_probabilities.append(probabilities[start])
             continue
-        mean_probabilities.append(probabilities[start:stop].mean(axis=0).tolist())
+        mean_probabilities.append(probabilities[start:stop].mean(axis=0))
     return mean_probabilities
 
 
@@ -361,13 +361,14 @@ def compute_binary_predictions(
     row_starts = []
     row_stops = []
     label_names = []
+    mean_probabilities = []
     for i, label_name in enumerate(calls):
         if sum(binary_prediction[:, i]) > 0:
             row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
             row_starts += list(row_start)
             row_stops += list(row_stop)
             label_names += [label_name] * len(row_start)
-            mean_probabilities = _calulate_mean_probabilities(
+            mean_probabilities += _calulate_mean_probabilities(
                 probabilities=aggregated_predictions[:, i],
                 row_start=row_start,
                 row_stop=row_stop,
@@ -392,7 +393,7 @@ def _generate_label_dataframe(
                 "start": np.asarray(row_starts) * time_steps_per_output_step,
                 "stop": np.asarray(row_stops) * time_steps_per_output_step,
                 "label": label_names,
-                "probability": mean_probabilities,
+                "mean_p": mean_probabilities,
             }
         )
         .sort_values(by=["start", "stop", "label"])
