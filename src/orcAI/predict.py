@@ -246,9 +246,9 @@ def compute_aggregated_predictions(
     msgr: Messenger = Messenger(verbosity=0),
     progressbar: tqdm = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    snippet_length = shape["input_shape"][0]  # Time steps in a single snippet
+    snippet_length = shape["input_shape"][0]  # Time steps in a single snippet, ~4s
 
-    shift = snippet_length // 2  # Shift time steps for overlapping windows
+    shift = snippet_length // 2  # Shift time steps for overlapping windows ~2s
     time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
     prediction_length = (
         snippet_length // time_steps_per_output_step
@@ -280,9 +280,7 @@ def compute_aggregated_predictions(
 
     total_time_steps = spectrogram.shape[0] // time_steps_per_output_step
     aggregated_predictions = np.zeros((total_time_steps, shape["num_labels"]))
-    overlap_count = np.zeros(
-        total_time_steps
-    )  # To track the number of overlaps per time step
+    overlap_count = np.zeros(total_time_steps)  # n overlaps per time step
 
     # Step 4: Overlay predictions
     for i, prediction in enumerate(predictions):
@@ -300,32 +298,87 @@ def compute_aggregated_predictions(
     return aggregated_predictions, overlap_count
 
 
+def _calulate_mean_probabilities(
+    probabilities: np.ndarray,
+    row_start: list[int],
+    row_stop: list[int],
+) -> list[float]:
+    """
+    Calculate the mean probabilities for each predicted call.
+
+    Parameter
+    ----------
+    probabilities : np.ndarray
+        Array with prediction probabilites (i.e. aggregated probabilities for one call).
+    row_start : list[int]
+        List of start indices for each predicted call.
+    row_stop : list[int]
+        List of stop indices for each predicted call.
+
+    Returns
+    -------
+    mean_probabilities : list[float]
+        List of mean probabilities for each predicted call.
+    """
+    mean_probabilities = []
+    for start, stop in zip(row_start, row_stop):
+        mean_probabilities.append(probabilities[start:stop].mean(axis=0).tolist())
+    return mean_probabilities
+
+
 def compute_binary_predictions(
     aggregated_predictions: np.ndarray,
-    overlap_count: np.ndarray,
     calls: list[str],
     threshold: float = 0.5,
-) -> tuple[list[int], list[int], list[str]]:
-    adjusted_threshold = threshold / np.max(
-        overlap_count
-    )  # larger than threshold in at least one snippet
-    binary_prediction = (aggregated_predictions > adjusted_threshold).astype(int)
+) -> tuple[list[int], list[int], list[str], list[float]]:
+    """
+    Computes binary predictions from aggregated predictions.
+
+    Parameter
+    ----------
+    aggregated_predictions : np.ndarray
+        Array with aggregated predictions for each label.
+    calls : list[str]
+        List of label names.
+    threshold : float
+        Threshold for binary classification. Default is 0.5.
+
+    Returns
+    -------
+    row_starts : list[int]
+        List of start indices for each predicted call.
+    row_stops : list[int]
+        List of stop indices for each predicted call.
+    label_names : list[str]
+        List of label names for each predicted call.
+    mean_probabilities : list[float]
+        List of mean probabilities for each predicted call.
+    """
+    binary_prediction = (aggregated_predictions > threshold).astype(int)
     row_starts = []
     row_stops = []
     label_names = []
     for i, label_name in enumerate(calls):
+        print(i, label_name)
         if sum(binary_prediction[:, i]) > 0:
             row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
             row_starts += list(row_start)
             row_stops += list(row_stop)
             label_names += [label_name] * len(row_start)
-    return row_starts, row_stops, label_names
+            mean_probabilities = _calulate_mean_probabilities(
+                probabilities=aggregated_predictions[:, i],
+                row_start=row_start,
+                row_stop=row_stop,
+            )
+            aggregated_predictions[:, i][binary_prediction[:, i] == 1].mean()
+    return row_starts, row_stops, label_names, mean_probabilities
 
 
-def compute_labels(
+def _generate_label_dataframe(
     row_starts: list[int],
     row_stops: list[int],
     label_names: list[str],
+    mean_probabilities: list[float],
     time_steps_per_output_step: int,
     label_suffix: str | None,
 ) -> pd.DataFrame:
@@ -337,6 +390,7 @@ def compute_labels(
                 "start": np.asarray(row_starts) * time_steps_per_output_step,
                 "stop": np.asarray(row_stops) * time_steps_per_output_step,
                 "label": label_names,
+                "probability": mean_probabilities,
             }
         )
         .sort_values(by=["start", "stop", "label"])
@@ -351,6 +405,7 @@ def predict_wav(
     model: keras.Model,
     orcai_parameter: dict,
     shape: dict,
+    threshold: float = 0.5,
     label_suffix: str = "*",
     msgr: Messenger = Messenger(verbosity=0),
     progressbar: tqdm = None,
@@ -419,7 +474,7 @@ def predict_wav(
         progressbar.set_description(f"{recording_path.stem} - Predicting annotations")
         progressbar.refresh()
 
-    aggregated_predictions, overlap_count = compute_aggregated_predictions(
+    aggregated_predictions, _ = compute_aggregated_predictions(
         recording_path=recording_path,
         spectrogram=spectrogram,
         model=model,
@@ -429,19 +484,19 @@ def predict_wav(
         progressbar=progressbar,
     )
 
-    row_starts, row_stops, label_names = compute_binary_predictions(
+    row_starts, row_stops, label_names, mean_probabilities = compute_binary_predictions(
         aggregated_predictions=aggregated_predictions,
-        overlap_count=overlap_count,
         calls=orcai_parameter["calls"],
-        threshold=0.5,
+        threshold=threshold,
     )
 
     msgr.info("converting binary predictions into start and stop frames")
     time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
-    predicted_labels = compute_labels(
+    predicted_labels = _generate_label_dataframe(
         row_starts,
         row_stops,
         label_names,
+        mean_probabilities,
         time_steps_per_output_step=time_steps_per_output_step,
         label_suffix=label_suffix,
     )
@@ -468,6 +523,7 @@ def _predict_and_save(
     model: keras.Model,
     orcai_parameter: dict,
     shape: dict,
+    threshold: float = 0.5,
     output_path: Path | str = "default",
     overwrite: bool = False,
     save_probabilities: bool = False,
@@ -534,6 +590,7 @@ def _predict_and_save(
         model=model,
         orcai_parameter=orcai_parameter,
         shape=shape,
+        threshold=threshold,
         label_suffix=label_suffix,
         msgr=msgr,
         progressbar=progressbar,
@@ -568,6 +625,7 @@ def _predict_and_save(
 def predict(
     recording_path: str | Path,
     channel: int = 1,
+    threshold: float = 0.5,
     model_dir: str | Path = files("orcAI.models").joinpath("orcai-v1"),
     output_path: str | Path = "default",
     overwrite: bool = False,
@@ -636,6 +694,7 @@ def predict(
             model=model,
             orcai_parameter=orcai_parameter,
             shape=shape,
+            threshold=threshold,
             output_path=output_path,
             overwrite=overwrite,
             save_probabilities=save_probabilities,
@@ -674,6 +733,7 @@ def predict(
                 model=model,
                 orcai_parameter=orcai_parameter,
                 shape=shape,
+                threshold=threshold,
                 output_path=recording_table.loc[i, "output_path"],
                 overwrite=overwrite,
                 save_probabilities=save_probabilities,
