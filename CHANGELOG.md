@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3]
+
+### Changes
+
+- handle empty predictions when filtering
+
 ## [1.1.2]
 
 ### Changes
