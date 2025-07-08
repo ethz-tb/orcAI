@@ -106,10 +106,15 @@ def filter_predictions(
         on duration.
 
     """
-
     if msgr is None:
         msgr = Messenger(verbosity=verbosity, title="Filtering predictions")
+
+    if predicted_labels.empty:
+        msgr.warning("No predictions to filter")
+        return predicted_labels
     msgr.part("Filtering predictions")
+
+    columns = predicted_labels.columns
 
     predicted_labels["duration"] = predicted_labels["stop"] - predicted_labels["start"]
 
@@ -161,7 +166,7 @@ def filter_predictions(
 
     msgr.success("Filtering predictions finished.")
 
-    return predicted_labels_duration_ok
+    return predicted_labels_duration_ok[columns]
 
 
 def filter_predictions_file(
@@ -172,6 +177,7 @@ def filter_predictions_file(
         "default_call_duration_limits.json"
     ),
     label_suffix: str = "*",
+    columns: list[str] = ["start", "stop", "label", "mean_p", "label_source"],
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ):
@@ -217,7 +223,9 @@ def filter_predictions_file(
     if output_file.exists() and not overwrite:
         raise FileExistsError(f"Annotation file already exists: {output_file}")
 
-    predicted_labels = pd.read_csv(predicted_labels, sep="\t", encoding="utf-8")
+    predicted_labels = pd.read_csv(
+        predicted_labels, sep="\t", encoding="utf-8", names=columns
+    )
 
     predicted_labels_duration_ok = filter_predictions(
         predicted_labels=predicted_labels,
