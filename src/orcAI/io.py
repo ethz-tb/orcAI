@@ -473,6 +473,7 @@ def save_predictions(
 def save_prediction_probabilities(
     aggregated_predictions: np.ndarray,
     orcai_parameter: dict,
+    time_steps_per_output_step: int,
     delta_t: float,
     output_path: Path | str,
     msgr: Messenger = Messenger(verbosity=0),
@@ -496,7 +497,7 @@ def save_prediction_probabilities(
     pd.DataFrame(
         aggregated_predictions,
         columns=orcai_parameter["calls"],
-        index=delta_t * range(len(aggregated_predictions)),
+        index=delta_t * time_steps_per_output_step * range(len(aggregated_predictions)),
     ).to_csv(predictions_path, index_label="time", compression="gzip")
     msgr.info(f"Prediction probabilities saved to {predictions_path}")
     return
