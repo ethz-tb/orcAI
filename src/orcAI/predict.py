@@ -630,7 +630,6 @@ def _predict_and_save(
             aggregated_predictions=aggregated_predictions,
             orcai_parameter=orcai_parameter,
             delta_t=delta_t,
-            time_steps_per_output_step=2 ** len(orcai_parameter["model"]["filters"]),
             output_path=output_path,
             msgr=msgr,
         )
