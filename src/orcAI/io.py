@@ -380,6 +380,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
     from orcAI.architectures import (
         MaskedBinaryAccuracy,
         MaskedBinaryCrossentropy,
+        ReduceFrequencyMean,
         res_net_LSTM_arch,
     )
 
@@ -389,7 +390,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
     if model_dir.joinpath(orcai_parameter["name"] + ".keras").exists():
         model = keras.saving.load_model(
             model_dir.joinpath(orcai_parameter["name"] + ".keras"),
-            custom_objects=None,
+            custom_objects={"ReduceFrequencyMean": ReduceFrequencyMean},
             compile=True,
             safe_mode=True,
         )
