@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4]
+
+### Changes
+
+- fix for loading models with ReduceFrequencyMean saved before that was properly registered
+
 ## [1.1.3]
 
 ### Changes
@@ -574,6 +580,14 @@
 [1.0.5]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.5
 [1.0.6]:https://github.com/ethz-tb/orcAI/releases/tag/v1.0.6
 [1.1.0]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.0
+[1.1.1]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.1
+[1.1.2]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.2
+[1.1.3]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.3
+[1.1.4]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.4
+
+
+
+
 
 
 

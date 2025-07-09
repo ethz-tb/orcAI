@@ -1,6 +1,6 @@
 import os
 
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
