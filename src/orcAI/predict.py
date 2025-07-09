@@ -383,7 +383,6 @@ def compute_binary_predictions(
                 row_start=row_start,
                 row_stop=row_stop,
             )
-            aggregated_predictions[:, i][binary_prediction[:, i] == 1].mean()
     return row_starts, row_stops, label_names, mean_probabilities
 
 
