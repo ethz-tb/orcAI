@@ -473,7 +473,6 @@ def save_predictions(
 def save_prediction_probabilities(
     aggregated_predictions: np.ndarray,
     orcai_parameter: dict,
-    time_steps_per_output_step: int,
     delta_t: float,
     output_path: Path | str,
     msgr: Messenger = Messenger(verbosity=0),
