@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.6]
+
+### Changes
+
+- return proper frequencies when preprocessing spectrogram (had no influence on results)
+- update lock file
+
+
 ## [1.1.5]
 
 ### Changes
@@ -591,11 +599,4 @@
 [1.1.3]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.3
 [1.1.4]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.4
 [1.1.5]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.5
-
-
-
-
-
-
-
-
+[1.1.6]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.5
