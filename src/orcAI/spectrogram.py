@@ -58,7 +58,7 @@ def calculate_spectrogram(
 
 def preprocess_spectrogram(
     spectrogram: np.ndarray, frequencies: np.ndarray, spectrogram_parameter: dict
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     # extract frequency range, clip according to quantiles, and normalise
     freq_min_i = np.argwhere(frequencies <= spectrogram_parameter["freq_range"][0])[0][
         0
@@ -67,6 +67,7 @@ def preprocess_spectrogram(
         0
     ]
     spectrogram = spectrogram[freq_min_i:freq_max_i, :]
+    frequencies = frequencies[freq_min_i:freq_max_i]
 
     lower_percentile = np.percentile(
         spectrogram, 100 * spectrogram_parameter["quantiles"][0], method="nearest"
@@ -85,7 +86,7 @@ def preprocess_spectrogram(
 
     # transpose spectogram
     spectrogram = spectrogram.T
-    return spectrogram
+    return spectrogram, frequencies
 
 
 def make_spectrogram(
@@ -141,7 +142,7 @@ def make_spectrogram(
 
     msgr.info(f"Duration of wav file: {times[-1]:.2f} seconds")
     msgr.info("Extracting frequency range and clipping spectrogram")
-    spectrogram = preprocess_spectrogram(
+    spectrogram, frequencies = preprocess_spectrogram(
         spectrogram, frequencies, spectrogram_parameter
     )
 
