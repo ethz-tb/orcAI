@@ -224,6 +224,7 @@ def create_recording_table(
         additional_columns = previous_recordings.columns.difference(
             recording_table.columns
         )
+        recording_table[["channel"]] = None
         if not update_paths:
             recording_table[
                 [
@@ -234,6 +235,10 @@ def create_recording_table(
                 ]
             ] = None
         recording_table = recording_table.combine_first(previous_recordings)
+        recording_table[["channel"]] = recording_table[["channel"]].astype("Int64")
+        recording_table[["channel"]] = recording_table[["channel"]].fillna(
+            default_channel
+        )
 
     recording_table = recording_table[
         [
@@ -247,7 +252,6 @@ def create_recording_table(
             *call_possible.keys(),
         ]
     ]
-
     msgr.part(f"Saving recording table to {output_path}")
     recording_table.to_csv(output_path)
     msgr.info(
