@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.7]
+
+### Changes
+
+- fix dropping channels from original recording table
+
+
 ## [1.1.6]
 
 ### Changes
