@@ -198,7 +198,7 @@ def hyperparameter_search(
                 objective=kt.Objective(
                     orcai_parameter["model"]["monitor"], direction="max"
                 ),
-                max_epochs=10,
+                max_epochs=hps_parameter["tuner"]["max_epochs"],
                 directory=hps_logs_dir,
                 project_name=model_name,
                 executions_per_trial=1,
@@ -215,13 +215,13 @@ def hyperparameter_search(
             objective=kt.Objective(
                 orcai_parameter["model"]["monitor"], direction="max"
             ),
-            max_epochs=10,
+            max_epochs=hps_parameter["tuner"]["max_epochs"],
             directory=hps_logs_dir,
             project_name=model_name,
         )
     early_stopping = keras.callbacks.EarlyStopping(
         monitor=orcai_parameter["model"]["monitor"],
-        patience=5,
+        patience=hps_parameter["tuner"]["early_stopping_patience"],
         mode="max",
         restore_best_weights=True,
         verbose=0 if verbosity < 3 else 1,
@@ -236,7 +236,7 @@ def hyperparameter_search(
     tuner.search(
         train_dataset,
         validation_data=val_dataset,
-        epochs=5,
+        epochs=hps_parameter["tuner"]["max_epochs"],
         callbacks=[early_stopping, model_checkpoint],
         verbose=0 if verbosity < 3 else 1,
     )

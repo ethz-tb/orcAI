@@ -36,5 +36,8 @@
     "batch_size": [
         64
     ],
-    "multi_gpu": true
+    "tuner": {
+        "max_epochs": 15,
+        "early_stopping_patience": 10
+    }
 }
