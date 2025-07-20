@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.9]
+
+### Changes
+
+- update default model from new run with fixex training data
+
 ## [1.1.8]
 
 ### Changes
@@ -616,3 +622,4 @@
 [1.1.6]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.6
 [1.1.7]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.7
 [1.1.8]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.8
+[1.1.9]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.9
