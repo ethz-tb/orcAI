@@ -665,6 +665,14 @@ def cli_create_tvt_data(**kwargs):
     help="Load model from previous training.",
 )
 @click.option(
+    "--load_model_from",
+    "-lmf",
+    type=ClickDirPathR,
+    default=None,
+    show_default="None",
+    help="Path to the directory containing the model to load to continue training. If None, the model will be loaded from the output directory.",
+)
+@click.option(
     "--verbosity",
     "-v",
     type=click.IntRange(0, 3),

@@ -1,5 +1,12 @@
 # Changelog
 
+## dev
+
+### Added
+
+- add `load_model_from` argument to `train` to specify directory to load
+  previous orcai model from
+
 ## [1.1.9]
 
 ### Changes

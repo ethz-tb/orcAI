@@ -42,6 +42,7 @@ def train(
     ),
     data_compression: str | None = "GZIP",
     load_model: bool = False,
+    load_model_from: Path | str | None = None,
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -59,6 +60,9 @@ def train(
         Compression of data files. Accepts "GZIP" or "NONE".
     load_model : bool
         Load model from previous training.
+    load_model_from : Path | str | None
+        Path to the directory containing the model to load to continue training.
+        If None, the model will be loaded from the output directory.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
 
@@ -137,8 +141,12 @@ def train(
     model_dir = output_dir.joinpath(model_name)
 
     if load_model:
-        msgr.part("Loading model")
-        model, _, _ = load_orcai_model(model_dir)
+        if load_model_from is not None:
+            load_model_dir = Path(load_model_from)
+        else:
+            load_model_dir = model_dir
+        msgr.part(f"Loading model {load_model_dir.stem}")
+        model, _, _ = load_orcai_model(load_model_dir)
     else:
         msgr.part("Building model")
         model = build_model(
