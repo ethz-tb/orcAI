@@ -297,11 +297,6 @@ def write_json(dictionary, filename) -> None:
 def save_as_zarr(
     obj: any,
     filename: Path,
-    compressors: dict[str, list] = {
-        "bytes": [{"configuration": {}, "name": "gzip"}],
-        "numeric": [{"configuration": {}, "name": "gzip"}],
-        "string": [{"configuration": {}, "name": "gzip"}],
-    },
 ) -> None:
     """write object to zarr file
     Parameter
@@ -317,8 +312,6 @@ def save_as_zarr(
     -------
     None
     """
-
-    zarr.config.set({"array.v3_default_compressors": compressors})
 
     zarr_file = zarr.open(
         filename,
