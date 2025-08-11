@@ -1,6 +1,6 @@
 # Changelog
 
-## dev
+## [1.1.10]
 
 ### Added
 
@@ -631,3 +631,4 @@
 [1.1.7]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.7
 [1.1.8]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.8
 [1.1.9]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.9
+[1.1.10]:https://github.com/ethz-tb/orcAI/releases/tag/1.1.10
