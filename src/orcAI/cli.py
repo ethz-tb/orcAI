@@ -495,7 +495,7 @@ def cli_create_label_arrays(**kwargs):
     type=ClickDirPathWcreate,
     default=None,
     show_default="None",
-    help="Path to the output directory. None to save in the same directory as the recording data table.",
+    help="Path to the output directory. If None the output_dir is set to 'tvt_data' next to the recording_table_path.",
 )
 @click.option(
     "--orcai_parameter",

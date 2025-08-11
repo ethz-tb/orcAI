@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.11dev]
+
+### Changes
+
+- fix parameter help for create-snippet-table
+
 ## [1.1.10]
 
 ### Added
