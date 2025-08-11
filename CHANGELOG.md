@@ -6,6 +6,7 @@
 
 - add `load_model_from` argument to `train` to specify directory to load
   previous orcai model from
+- remove deprecated & unused compressor argument from save_as_zarr
 
 ## [1.1.9]
 
