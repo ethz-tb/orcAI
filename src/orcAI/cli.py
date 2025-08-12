@@ -4,7 +4,7 @@ from pathlib import Path
 
 import rich_click as click
 
-from orcAI.auxiliary import Messenger
+from orcai.auxiliary import Messenger
 
 click.rich_click.STYLE_OPTIONS_PANEL_BOX = "SIMPLE"
 click.rich_click.STYLE_COMMANDS_PANEL_BOX = "SIMPLE"
@@ -56,7 +56,7 @@ ClickFilePathW = click.Path(
 )
 
 INCLUDED_MODELS = [
-    file.stem for file in files("orcAI.models").iterdir() if file.stem != ".DS_Store"
+    file.stem for file in files("orcai.models").iterdir() if file.stem != ".DS_Store"
 ]
 
 
@@ -74,7 +74,7 @@ INCLUDED_MODELS = [
     + "  spectrograms generated from audio recordings.\n"
     + "     ░░██░░░░      "
     + "Version: "
-    + version("orcAI")
+    + version("orcai")
     + "\n"
     + "      ███ ██       "
     + "Reference: "
@@ -183,10 +183,10 @@ def cli():
 )
 def cli_predict(**kwargs):
     kwargs["msgr"] = Messenger(verbosity=kwargs["verbosity"], title="Predicting calls")
-    from orcAI.predict import predict
+    from orcai.predict import predict
 
     if kwargs["model_dir"] is None:
-        kwargs["model_dir"] = files("orcAI.models").joinpath(kwargs["model"])
+        kwargs["model_dir"] = files("orcai.models").joinpath(kwargs["model"])
     del kwargs["model"]
 
     predict(**kwargs)
@@ -204,7 +204,7 @@ def cli_predict(**kwargs):
     "--call_duration_limits",
     "-cdl",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_call_duration_limits.json"),
+    default=files("orcai.defaults").joinpath("default_call_duration_limits.json"),
     show_default="default_call_duration_limits.json",
     help="Path to a JSON file containing call duration limits.",
 )
@@ -240,7 +240,7 @@ def cli_filter_predictions(**kwargs):
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Filtering predictions"
     )
-    from orcAI.predict import filter_predictions_file
+    from orcai.predict import filter_predictions_file
 
     filter_predictions_file(**kwargs)
 
@@ -274,7 +274,7 @@ def cli_init_project(**kwargs):
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Initializing project"
     )
-    from orcAI.helpers import init_project
+    from orcai.helpers import init_project
 
     init_project(**kwargs)
 
@@ -359,7 +359,7 @@ def cli_create_recordings_table(**kwargs):
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Creating recording table"
     )
-    from orcAI.helpers import create_recording_table
+    from orcai.helpers import create_recording_table
 
     create_recording_table(**kwargs)
 
@@ -385,7 +385,7 @@ def cli_create_recordings_table(**kwargs):
     "--orcai_parameter",
     "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    default=files("orcai.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
     help="Path to the OrcAI parameter file.",
 )
@@ -419,7 +419,7 @@ def cli_create_spectrograms(**kwargs):
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Creating spectrograms"
     )
-    from orcAI.spectrogram import create_spectrograms
+    from orcai.spectrogram import create_spectrograms
 
     create_spectrograms(**kwargs)
 
@@ -445,7 +445,7 @@ def cli_create_spectrograms(**kwargs):
     "--orcai_parameter",
     "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    default=files("orcai.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
     help="Path to the OrcAI parameter file.",
 )
@@ -475,7 +475,7 @@ def cli_create_label_arrays(**kwargs):
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Creating label arrays"
     )
-    from orcAI.labels import create_label_arrays
+    from orcai.labels import create_label_arrays
 
     create_label_arrays(**kwargs)
 
@@ -501,7 +501,7 @@ def cli_create_label_arrays(**kwargs):
     "--orcai_parameter",
     "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    default=files("orcai.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
     help="Path to the OrcAI parameter file.",
 )
@@ -517,7 +517,7 @@ def cli_create_snippet_table(**kwargs):
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Creating snippet table"
     )
-    from orcAI.snippets import create_snippet_table
+    from orcai.snippets import create_snippet_table
 
     create_snippet_table(**kwargs)
 
@@ -542,7 +542,7 @@ def cli_create_snippet_table(**kwargs):
     "--orcai_parameter",
     "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    default=files("orcai.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
     help="Path to the OrcAI parameter file.",
 )
@@ -579,7 +579,7 @@ def cli_create_tvt_snippet_tables(**kwargs):
         verbosity=kwargs["verbosity"],
         title="Creating train, validation and test snippet tables",
     )
-    from orcAI.snippets import create_tvt_snippet_tables
+    from orcai.snippets import create_tvt_snippet_tables
 
     create_tvt_snippet_tables(**kwargs)
 
@@ -596,7 +596,7 @@ def cli_create_tvt_snippet_tables(**kwargs):
     "--orcai_parameter",
     "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    default=files("orcai.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
     help="Path to the OrcAI parameter file.",
 )
@@ -630,7 +630,7 @@ def cli_create_tvt_data(**kwargs):
     if kwargs["data_compression"] == "None":
         kwargs["data_compression"] = None
 
-    from orcAI.snippets import create_tvt_data
+    from orcai.snippets import create_tvt_data
 
     create_tvt_data(**kwargs)
 
@@ -688,7 +688,7 @@ def cli_train(**kwargs):
     if kwargs["data_compression"] == "None":
         kwargs["data_compression"] = None
 
-    from orcAI.train import train
+    from orcai.train import train
 
     train(**kwargs)
 
@@ -740,7 +740,7 @@ def cli_test(**kwargs):
     if kwargs["data_compression"] == "None":
         kwargs["data_compression"] = None
 
-    from orcAI.test import test_model
+    from orcai.test import test_model
 
     test_model(**kwargs)
 
@@ -758,7 +758,7 @@ def cli_test(**kwargs):
     "--orcai_parameter",
     "-p",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_orcai_parameter.json"),
+    default=files("orcai.defaults").joinpath("default_orcai_parameter.json"),
     show_default="default_orcai_parameter.json",
     help="Path to the OrcAI parameter file.",
 )
@@ -766,7 +766,7 @@ def cli_test(**kwargs):
     "--hps_parameter",
     "-hp",
     type=ClickFilePathR,
-    default=files("orcAI.defaults").joinpath("default_hps_parameter.json"),
+    default=files("orcai.defaults").joinpath("default_hps_parameter.json"),
     show_default="default_hps_parameter.json",
     help="Path to the hyperparameter search parameter file.",
 )
@@ -799,6 +799,6 @@ def cli_hpsearch(**kwargs):
     )
     if kwargs["data_compression"] == "None":
         kwargs["data_compression"] = None
-    from orcAI.hpsearch import hyperparameter_search
+    from orcai.hpsearch import hyperparameter_search
 
     hyperparameter_search(**kwargs)

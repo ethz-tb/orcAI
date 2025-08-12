@@ -7,8 +7,8 @@ import pandas as pd
 import tensorflow as tf
 import zarr
 
-from orcAI.auxiliary import Messenger
-from orcAI.json_encoder import JsonEncoderExt
+from orcai.auxiliary import Messenger
+from orcai.json_encoder import JsonEncoderExt
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 SHUFFLE_BUFFER_SIZE = 1000
@@ -351,7 +351,7 @@ def read_annotation_file(
 
 
 def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
-    """Load a trained orcAI model from a directory.
+    """Load a trained orcai model from a directory.
 
     Parameter
     ----------
@@ -361,7 +361,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
     Returns
     -------
     tuple[keras.Model, dict, dict]
-        A tuple containing the loaded model, orcAI parameter, and model shape.
+        A tuple containing the loaded model, orcai parameter, and model shape.
 
     Raises
     ------
@@ -370,7 +370,7 @@ def load_orcai_model(model_dir: Path) -> tuple[keras.Model, dict, dict]:
     """
     import keras
 
-    from orcAI.architectures import (
+    from orcai.architectures import (
         MaskedBinaryAccuracy,
         MaskedBinaryCrossentropy,
         ReduceFrequencyMean,
@@ -477,7 +477,7 @@ def save_prediction_probabilities(
     aggregated_predictions : np.ndarray
         Array with aggregated predictions.
     orcai_parameter : dict
-        orcAI parameter dictionary.
+        orcai parameter dictionary.
     delta_t : float
         Time step duration in seconds.
     output_path : Path | str

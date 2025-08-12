@@ -7,7 +7,7 @@ import tensorflow as tf
 import zarr
 from tqdm import tqdm
 
-from orcAI.auxiliary import (
+from orcai.auxiliary import (
     SEED_ID_CREATE_DATALOADER,
     SEED_ID_FILTER_SNIPPET_TABLE,
     SEED_ID_MAKE_SNIPPET_TABLE,
@@ -16,7 +16,7 @@ from orcAI.auxiliary import (
     resolve_recording_data_dir,
     seconds_to_hms,
 )
-from orcAI.io import DataLoader, read_json, save_dataset, write_json
+from orcai.io import DataLoader, read_json, save_dataset, write_json
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -196,7 +196,7 @@ def create_snippet_table(
     recording_table_path: Path | str,
     recording_data_dir: Path | str,
     output_dir: Path | str = None,
-    orcai_parameter: dict | (Path | str) = files("orcAI.defaults").joinpath(
+    orcai_parameter: dict | (Path | str) = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     verbosity: int = 2,
@@ -213,7 +213,7 @@ def create_snippet_table(
     output_dir : (Path | str)
         Path to the output directory. If None the output_dir is set to "tvt_data" next to the recording_table_path
     orcai_parameter : dict | (Path | str)
-        Dict containing OrcAI parameter or path to json containing the same, by default files("orcAI.defaults").joinpath("default_orcai_parameter.json")
+        Dict containing OrcAI parameter or path to json containing the same, by default files("orcai.defaults").joinpath("default_orcai_parameter.json")
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     msgr : Messenger
@@ -389,7 +389,7 @@ def _filter_snippet_table(
 def create_tvt_snippet_tables(
     output_dir: Path | str,
     snippet_table: (Path | str) | pd.DataFrame | None = None,
-    orcai_parameter: Path | str = files("orcAI.defaults").joinpath(
+    orcai_parameter: Path | str = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     create_unfiltered_test_snippets: bool = False,
@@ -407,7 +407,7 @@ def create_tvt_snippet_tables(
     snippet_table : (Path | str) | pd.DataFrame | None
         Path to the snippet table csv or the snippet table itself. None if the snippet table should be read from output_dir/all_snippets.csv.gz
     orcai_parameter : dict | (Path | str)
-        Dict containing OrcAi parameter or path to json containing the same, by default files("orcAI.defaults").joinpath("default_orcai_parameter.json")
+        Dict containing OrcAi parameter or path to json containing the same, by default files("orcai.defaults").joinpath("default_orcai_parameter.json")
     unfiltered_test_snippets : bool
         If True, creates an additional test snippet table with unfiltered snippets
     n_unfiltered_test_snippets : int | None
@@ -607,7 +607,7 @@ def _get_call_weights(
 
 def create_tvt_data(
     tvt_dir: Path | str,
-    orcai_parameter: dict | (Path | str) = files("orcAI.defaults").joinpath(
+    orcai_parameter: dict | (Path | str) = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     overwrite: bool = False,
@@ -622,7 +622,7 @@ def create_tvt_data(
     tvt_dir : (Path | str)
         Path to the directory containing the training, validation and test snippet tables
     orcai_parameter : dict | (Path | str)
-        Dict containing model specifications or path to json containing the same, by default files("orcAI.defaults").joinpath("default_orcai_parameter.json")
+        Dict containing model specifications or path to json containing the same, by default files("orcai.defaults").joinpath("default_orcai_parameter.json")
     overwrite : bool
         Overwrite existing datasets
     data_compression: str | None

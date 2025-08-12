@@ -9,13 +9,13 @@ import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
 
-from orcAI.auxiliary import (
+from orcai.auxiliary import (
     MASK_VALUE,
     SEED_ID_LOAD_TEST_DATA,
     SEED_ID_LOAD_UNFILTERED_TEST_DATA,
     Messenger,
 )
-from orcAI.io import load_dataset, load_orcai_model
+from orcai.io import load_dataset, load_orcai_model
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 

@@ -6,13 +6,13 @@ import numpy as np
 import tensorflow as tf
 from tqdm.keras import TqdmCallback
 
-from orcAI.architectures import (
+from orcai.architectures import (
     MaskedBinaryAccuracy,
     MaskedBinaryCrossentropy,
     build_model,
 )
-from orcAI.auxiliary import SEED_ID_LOAD_TRAIN_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
-from orcAI.io import load_dataset, load_orcai_model, read_json, write_json
+from orcai.auxiliary import SEED_ID_LOAD_TRAIN_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
+from orcai.io import load_dataset, load_orcai_model, read_json, write_json
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -37,7 +37,7 @@ def _count_params(trainable_weights: list) -> int:
 def train(
     data_dir: Path | str,
     output_dir: Path | str,
-    orcai_parameter: (Path | str) | dict = files("orcAI.defaults").joinpath(
+    orcai_parameter: (Path | str) | dict = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     data_compression: str | None = "GZIP",
@@ -46,7 +46,7 @@ def train(
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
-    """Trains an orcAI model
+    """Trains an orcai model
 
     Parameter
     ----------
@@ -74,7 +74,7 @@ def train(
     Raises
     ------
     ValueError
-        If the call weights do not match the label calls in the orcAI parameter file.
+        If the call weights do not match the label calls in the orcai parameter file.
     """
     if msgr is None:
         msgr = Messenger(
@@ -131,7 +131,7 @@ def train(
         msgr.info(f"Call weights: {call_weights}")
         if list(call_weights.keys()) != label_calls:
             raise ValueError(
-                "Call weights do not match label calls. Please check the call weights file. Order of calls must be the same as in the orcAI parameter file."
+                "Call weights do not match label calls. Please check the call weights file. Order of calls must be the same as in the orcai parameter file."
             )
         call_weights_int = {n: call_weights[key] for n, key in enumerate(call_weights)}
     else:

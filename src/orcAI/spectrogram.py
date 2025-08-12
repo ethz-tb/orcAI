@@ -6,10 +6,10 @@ import pandas as pd
 from librosa import amplitude_to_db, fft_frequencies, frames_to_time, load, stft
 from tqdm import tqdm
 
-from orcAI.auxiliary import (
+from orcai.auxiliary import (
     Messenger,
 )
-from orcAI.io import read_json, save_as_zarr, write_vector_to_json
+from orcai.io import read_json, save_as_zarr, write_vector_to_json
 
 
 def calculate_spectrogram(
@@ -92,7 +92,7 @@ def preprocess_spectrogram(
 def make_spectrogram(
     wav_file_path: Path | str,
     channel: int = 1,
-    orcai_parameter: (Path | str) | dict = files("orcAI.defaults").joinpath(
+    orcai_parameter: (Path | str) | dict = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     verbosity: int = 2,
@@ -229,7 +229,7 @@ def create_spectrograms(
     recording_table_path: Path | str,
     output_dir: Path | str,
     base_dir_recording: Path | str | None = None,
-    orcai_parameter: Path | str | None = files("orcAI.defaults").joinpath(
+    orcai_parameter: Path | str | None = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     include_not_annotated: bool = False,

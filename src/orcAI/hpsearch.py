@@ -7,13 +7,13 @@ import keras_tuner as kt
 import pandas as pd
 import tensorflow as tf
 
-from orcAI.architectures import (
+from orcai.architectures import (
     MaskedBinaryAccuracy,
     MaskedBinaryCrossentropy,
     build_model,
 )
-from orcAI.auxiliary import SEED_ID_LOAD_TEST_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
-from orcAI.io import load_dataset, read_json, write_json
+from orcai.auxiliary import SEED_ID_LOAD_TEST_DATA, SEED_ID_LOAD_VAL_DATA, Messenger
+from orcai.io import load_dataset, read_json, write_json
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
@@ -110,10 +110,10 @@ def _save_trial_data(
 def hyperparameter_search(
     data_dir: Path | str,
     output_dir: Path | str,
-    orcai_parameter: Path | str = files("orcAI.defaults").joinpath(
+    orcai_parameter: Path | str = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
-    hps_parameter: Path | str = files("orcAI.defaults").joinpath(
+    hps_parameter: Path | str = files("orcai.defaults").joinpath(
         "default_hps_parameter.json"
     ),
     parallel: bool = False,
