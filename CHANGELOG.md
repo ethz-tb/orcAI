@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.11]
+
+### Added
+
+- add numba to dependencies to fix installation issue
+
+
 ## [1.1.10]
 
 ### Added
