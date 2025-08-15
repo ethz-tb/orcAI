@@ -1,10 +1,16 @@
 # Changelog
 
-## [1.1.11dev]
+## [dev]
 
 ### Changes
 
 - fix parameter help for create-snippet-table
+
+## [1.1.11]
+
+### Added
+
+- add numba to dependencies to fix installation issue
 
 ## [1.1.10]
 
