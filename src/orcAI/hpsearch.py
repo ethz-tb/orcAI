@@ -117,7 +117,7 @@ def hyperparameter_search(
         "default_hps_parameter.json"
     ),
     parallel: bool = False,
-    data_compression: str | None = "GZIP",
+    compression_type: str | None = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -136,7 +136,7 @@ def hyperparameter_search(
         Run hyperparameter search on multiple GPUs
     save_best_model : bool
         Save the best model to the output directory
-    data_compression: str | None
+    compression_type: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
@@ -170,13 +170,13 @@ def hyperparameter_search(
     train_dataset = load_dataset(
         data_dir.joinpath("train_dataset"),
         orcai_parameter["model"]["batch_size"],
-        compression=data_compression,
+        compression_type=compression_type,
         seed=[SEED_ID_LOAD_TEST_DATA, orcai_parameter["seed"]],
     )
     val_dataset = load_dataset(
         data_dir.joinpath("val_dataset"),
         orcai_parameter["model"]["batch_size"],
-        compression=data_compression,
+        compression_type=compression_type,
         seed=[SEED_ID_LOAD_VAL_DATA, orcai_parameter["seed"]],
     )
 

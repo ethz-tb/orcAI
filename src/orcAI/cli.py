@@ -607,8 +607,8 @@ def cli_create_tvt_snippet_tables(**kwargs):
     help="Recreate existing data.",
 )
 @click.option(
-    "--data_compression",
-    "-dc",
+    "--compression_type",
+    "-ct",
     type=click.Choice(["GZIP", "None"], case_sensitive=False),
     default="GZIP",
     show_default=True,
@@ -627,8 +627,8 @@ def cli_create_tvt_data(**kwargs):
         verbosity=kwargs["verbosity"],
         title="Creating train, validation and test datasets",
     )
-    if kwargs["data_compression"] == "None":
-        kwargs["data_compression"] = None
+    if kwargs["compression_type"] == "None":
+        kwargs["compression_type"] = None
 
     from orcai.snippets import create_tvt_data
 
@@ -651,8 +651,8 @@ def cli_create_tvt_data(**kwargs):
     help="Path to the OrcAI parameter file.",
 )
 @click.option(
-    "--data_compression",
-    "-dc",
+    "--compression_type",
+    "-ct",
     type=click.Choice(["GZIP", "None"], case_sensitive=False),
     default="GZIP",
     show_default=True,
@@ -685,8 +685,8 @@ def cli_train(**kwargs):
         verbosity=kwargs["verbosity"],
         title="Training model",
     )
-    if kwargs["data_compression"] == "None":
-        kwargs["data_compression"] = None
+    if kwargs["compression_type"] == "None":
+        kwargs["compression_type"] = None
 
     from orcai.train import train
 
@@ -717,8 +717,8 @@ def cli_train(**kwargs):
     help="Path to the output directory. None to save in the same directory as the model.",
 )
 @click.option(
-    "--data_compression",
-    "-dc",
+    "--compression_type",
+    "-ct",
     type=click.Choice(["GZIP", "None"], case_sensitive=False),
     default="GZIP",
     show_default=True,
@@ -737,8 +737,8 @@ def cli_test(**kwargs):
         verbosity=kwargs["verbosity"],
         title=f"Testing model {kwargs['model_dir'].name}",
     )
-    if kwargs["data_compression"] == "None":
-        kwargs["data_compression"] = None
+    if kwargs["compression_type"] == "None":
+        kwargs["compression_type"] = None
 
     from orcai.test import test_model
 
@@ -777,8 +777,8 @@ def cli_test(**kwargs):
     help="Run hyperparameter search on multiple GPUs in parallel.",
 )
 @click.option(
-    "--data_compression",
-    "-dc",
+    "--compression_type",
+    "-ct",
     type=click.Choice(["GZIP", "None"], case_sensitive=False),
     default="GZIP",
     show_default=True,
@@ -797,8 +797,8 @@ def cli_hpsearch(**kwargs):
         verbosity=kwargs["verbosity"],
         title="Hyperparameter search",
     )
-    if kwargs["data_compression"] == "None":
-        kwargs["data_compression"] = None
+    if kwargs["compression_type"] == "None":
+        kwargs["compression_type"] = None
     from orcai.hpsearch import hyperparameter_search
 
     hyperparameter_search(**kwargs)

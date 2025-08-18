@@ -320,7 +320,7 @@ def test_model(
     data_dir: Path | str,
     test_unfiltered: bool = True,
     output_dir: None | Path | str = None,
-    data_compression: str | None = "GZIP",
+    compression_type: str | None = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -337,7 +337,7 @@ def test_model(
         If True, test the model on the unfiltered test data.
     output_dir : None | Path | str
         Directory to save the test results. Default is saving to `model_dir`/test.
-    data_compression: str | None
+    compression_type: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
@@ -373,7 +373,7 @@ def test_model(
     test_dataset = load_dataset(
         data_dir.joinpath("test_dataset"),
         model_parameter["batch_size"],
-        compression=data_compression,
+        compression_type=compression_type,
         seed=[
             SEED_ID_LOAD_TEST_DATA,
             orcai_parameter["seed"],
@@ -396,7 +396,7 @@ def test_model(
         test_unfiltered_dataset = load_dataset(
             data_dir.joinpath("test_unfiltered_dataset"),
             model_parameter["batch_size"],
-            compression=data_compression,
+            compression=compression_type,
             seed=[
                 SEED_ID_LOAD_UNFILTERED_TEST_DATA,
                 orcai_parameter["seed"],
