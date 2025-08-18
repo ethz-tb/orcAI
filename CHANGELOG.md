@@ -1,9 +1,11 @@
 # Changelog
 
-## [dev]
+## [2.0.0.dev1]
 
 ### Changes
 
+- **Breaking** save data as TFRecords for better memory usage.
+- **Breaking** rename orcAI to orcai for sanity.
 - fix parameter help for create-snippet-table
 
 ## [1.1.11]
@@ -147,7 +149,7 @@
 
 - remove tensorflow-metal from dependencies. With the metal plugin the model
   training & prediction is much worse than on Euler with CUDA. Reason unknown.
-  - __ATTENTION__: Please refresh your environment or uninstall tensorflow-metal
+  - **ATTENTION**: Please refresh your environment or uninstall tensorflow-metal
 - update orcai-v1 pipeline with tests
 
 
@@ -157,7 +159,7 @@
 
 - update trained orcai-v1 model
 - create unfiltered test set when creating tvt data
-- __Breaking__: update test.py to use new unfiltered test set
+- **Breaking**: update test.py to use new unfiltered test set
 
 
 ## [0.23.3] - 2025-05-05
@@ -203,7 +205,7 @@
 
 ### Changes
 
-- __Breaking__: rename module hp_search to hpsearch
+- **Breaking**: rename module hp_search to hpsearch
 - Potential fix for training routine that lead to incomplete epochs because not enough batches could be extracted.
 - increase Shuffle buffer size to 20000
 - add initializers as parameters to model architectures.
@@ -211,7 +213,7 @@
     - "conv_initializer": default "glorot_uniform" (the keras default), "he_normal" might be better suited for layers with ReLU activations
     - "lstm_initializer": default "glorot_uniform" (the keras default), which should be fine for LSTMs. Included for completeness.
     - if values are not in orcai_parameters.json, the default values are used.
-- __Breaking__: removed maskedAUC reporting. Class is still available but unused.
+- **Breaking**: removed maskedAUC reporting. Class is still available but unused.
   - parameter orcai_parameter["monitor"] can only be "val_MBA"
 - minor refactoring
 
@@ -227,7 +229,7 @@
 
 ### Changes
 
-- __Breaking__: switch back to keras 3. keras_tuner is not compatible with tf_keras.
+- **Breaking**: switch back to keras 3. keras_tuner is not compatible with tf_keras.
 
 
 ## [0.20.1] - 2025-04-28
@@ -241,7 +243,7 @@
 
 ### Changes
 
-- __Breaking__: remove `--save_best_model` flag from `hpsearch` command
+- **Breaking**: remove `--save_best_model` flag from `hpsearch` command
 - update pipeline.
 - minor prettifications.
 
@@ -250,7 +252,7 @@
 
 ### Changes
 
-- __Breaking__: filter duplicate snippets. These duplicates stem from randomly sampling.
+- **Breaking**: filter duplicate snippets. These duplicates stem from randomly sampling.
 - Minor reformatting of code and help
 
 
@@ -258,9 +260,9 @@
 
 ### Changes
 
-- __Breaking__: downgrade keras to keras 2 (tf-keras)
-- __Breaking__: move JSONEncoderExt to seperate module to optimize loading
-- __Breaking__: new parameter in orcai_parameter: "ReduceLROnPlateau_min_learning_rate": 1e-06
+- **Breaking**: downgrade keras to keras 2 (tf-keras)
+- **Breaking**: move JSONEncoderExt to seperate module to optimize loading
+- **Breaking**: new parameter in orcai_parameter: "ReduceLROnPlateau_min_learning_rate": 1e-06
   - add to orcai_parameters.json to unbreak.
 
 ### Notes
@@ -275,7 +277,7 @@
 
 - cleanup imports
 - refactor error-prone sorting of annotations
-- __Breaking__: new parameter in orcai_parameter: "EarlyStopping_patience": 10, "ReduceLROnPlateau_patience": 3, "ReduceLROnPlateau_factor": 0.5
+- **Breaking**: new parameter in orcai_parameter: "EarlyStopping_patience": 10, "ReduceLROnPlateau_patience": 3, "ReduceLROnPlateau_factor": 0.5
   - add to orcai_parameters.json to unbreak.
 
 
@@ -283,10 +285,10 @@
 
 ### Changes
 
-- __Breaking__: in train, load model instead of weights when restarting
+- **Breaking**: in train, load model instead of weights when restarting
   - the argument `load_weights` is now `load_model`
   - the flag option in the cli `--load_weights` is now `--load_model`
-- __Breaking__: implement class weights.
+- **Breaking**: implement class weights.
   - orcai_parameters.json now has a model.call_weights key.
     - to unbreak add `"call_weights": null` to the model section of orcai_parameters.json
   - Implemented "three" methods for calculating call weights:
@@ -294,11 +296,11 @@
     - `"max"` is 1/count \* total,
     - `"uniform"` is all ones and equal to None.
     - Use `null` (in Json, `None` in python) to disable class weights.
-- __Breaking__: switch to class based metrics
-- __Breaking__: implement AUC ROC metric
-- __Breaking__: making the choice of metric to monitor for callbacks an option in orcai_parameters.json
+- **Breaking**: switch to class based metrics
+- **Breaking**: implement AUC ROC metric
+- **Breaking**: making the choice of metric to monitor for callbacks an option in orcai_parameters.json
   - to unbreak add `"monitor": "val_MBA"` to the model section of orcai_parameters.json
-- make ReduceLROnPlateau callback patience == model_parameters['patience'] // __3__
+- make ReduceLROnPlateau callback patience == model_parameters['patience'] // **3**
 - define metrics in architectures.py
 - new arg parameter to overwrite default orcai parameter on project init
 
@@ -322,7 +324,7 @@
 
 ### Changes
 
-- __Breaking__ save all_snippets.csv.gz in tvt_data not recording data
+- **Breaking** save all_snippets.csv.gz in tvt_data not recording data
 - enable changing of initial learning rate with orcai_parameters.json
 - switch formatter and format imports
 
@@ -386,7 +388,7 @@
 
 ### Changes
 
-- __Breaking__ save dataset using tf.data.Dataset.save instead of TFRecordWriter
+- **Breaking** save dataset using tf.data.Dataset.save instead of TFRecordWriter
 - move loading model to fn in orcAI.io
 - move saving model to fn in orcAI.io
 
@@ -395,7 +397,7 @@
 
 ### Changes
 
-- __Breaking__ unify seed generation (will break reproducibility). The seeds
+- **Breaking** unify seed generation (will break reproducibility). The seeds
   used take care of the random number generation for sampling and shuffling.
   However, there are certain non-deterministic behaviours in python and the CUDA runtime
   anyway so reproducibility is not guaranteed in any case.
@@ -420,7 +422,7 @@
 
 ### Changes
 
-- __Breaking__ move hp_search to seperate module
+- **Breaking** move hp_search to seperate module
 - fix predict function stopping if a single prediction fails
 - fix saving project name in `init` command
 
@@ -474,14 +476,14 @@
 
 ### Changes
 
-- __Breaking__ revert to using TFRecordWriter for saving datasets. The warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` probably is not relevant?
+- **Breaking** revert to using TFRecordWriter for saving datasets. The warning `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` probably is not relevant?
 
 
 ## [0.5.0] - 2025-03-24
 
 ### Changes
 
-- __Breaking__ save datasets using tf.data.Datset.save instead of TFRecordWriter in an effort to get rid of `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` warning.
+- **Breaking** save datasets using tf.data.Datset.save instead of TFRecordWriter in an effort to get rid of `/keras/src/trainers/epoch_iterator.py:151: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least 'steps_per_epoch * epochs' batches. You may need to use the '.repeat()' function when building your dataset.` warning.
 
 ### Added
 
@@ -510,12 +512,12 @@
 
 ### Changed
 
-- __Breaking__: Combined default_calls.json, default_model_parameter.json, default_spectrogram_parameter.json, default_snippet_parameter.json into a single default_orcai_parameter.json file.
-- __Breaking__: new DataLoader
-- __Breaking__: new save format for data: TFRecord
-- __Breaking__: renamed module `load` to `io`, rename 'reload_dataset' to 'load_dataset'
-- __Breaking__: renamed module `annotations` to `labels`
-- __Breaking__: moved io function from `auxiliary` to `io`
+- **Breaking**: Combined default_calls.json, default_model_parameter.json, default_spectrogram_parameter.json, default_snippet_parameter.json into a single default_orcai_parameter.json file.
+- **Breaking**: new DataLoader
+- **Breaking**: new save format for data: TFRecord
+- **Breaking**: renamed module `load` to `io`, rename 'reload_dataset' to 'load_dataset'
+- **Breaking**: renamed module `annotations` to `labels`
+- **Breaking**: moved io function from `auxiliary` to `io`
 - Channel added to the prediction output filename
 
 ### Added
@@ -539,8 +541,8 @@
 
 ### Changed
 
-- __Breaking__: rename model architectures to correspond to manuscript (`efd3472c`)
-- __Breaking__: remove multiprocessing from predict. It wasn't working and caused more problems than it solved. -np parameter is not available anymore.
+- **Breaking**: rename model architectures to correspond to manuscript (`efd3472c`)
+- **Breaking**: remove multiprocessing from predict. It wasn't working and caused more problems than it solved. -np parameter is not available anymore.
 - refactored predict_wav so that model is only loaded once in case of multiple predictions
 - changed confusion matrix to confusion table reporting TP, FN, FP, TN, precision, recall, F1 score and number of samples
 

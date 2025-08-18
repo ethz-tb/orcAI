@@ -1,10 +1,12 @@
 import json
+from glob import glob
 from pathlib import Path
 
 import keras
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import tqdm as tqdm
 import zarr
 
 from orcai.auxiliary import Messenger
@@ -148,13 +150,120 @@ class DataLoader:
         return (spectrogram_chunk, label_chunk)
 
 
+def _serialize_example(spectrogram, labels):
+    """Serialize a single example to TFRecord format."""
+
+    feature_dict = {
+        "spectrogram": tf.train.Feature(
+            float_list=tf.train.FloatList(value=spectrogram.numpy().flatten())
+        ),
+        "labels": tf.train.Feature(
+            float_list=tf.train.FloatList(value=labels.numpy().flatten())
+        ),
+    }
+    example_proto = tf.train.Example(features=tf.train.Features(feature=feature_dict))
+    return example_proto.SerializeToString()
+
+
+def save_dataset(
+    dataset: tf.data.Dataset,
+    path: Path | str,
+    overwrite: bool = False,
+    compression_type: str = "GZIP",
+    examples_per_shard: int = 2000,
+    dataset_length: int | None = None,
+) -> None:
+    """
+    Save a tf.data.Dataset
+    Parameter
+    ----------
+    dataset : tf.data.Dataset
+        The dataset to save.
+    path : Path | str
+        Path to the directory where the dataset will be saved.
+    overwrite : bool
+        If True, overwrite the existing dataset. Default is False.
+    compression_type : str
+        Compression type for the dataset. Default is "GZIP".
+    examples_per_shard : int
+        Number of examples per shard. Default is 2000.
+    dataset_length : int | None
+        Length of the dataset for progress reporting.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    FileExistsError
+        If the dataset folder already exists and overwrite is False.
+    """
+    if Path(path).exists() and not overwrite:
+        raise FileExistsError(f"Folder {path} already exists.")
+    else:
+        Path(path).mkdir(parents=True, exist_ok=True)
+
+    write_json(
+        {
+            "spectrogram": dataset.element_spec[0].shape.as_list(),
+            "labels": dataset.element_spec[1].shape.as_list(),
+        },
+        Path(path, "dataset_shapes.json"),
+    )
+
+    tfwr_options = tf.io.TFRecordOptions(compression_type=compression_type)
+    shard_idx = 0
+    example_idx = 0
+    writer = tf.io.TFRecordWriter(
+        str(Path(path, f"data_{shard_idx:05d}.tfrecord")), options=tfwr_options
+    )
+
+    for features, labels in tqdm(
+        dataset,
+        desc=f"Saving dataset {Path(path).name}",
+        unit="example",
+        total=dataset_length,
+    ):
+        serialized = _serialize_example(features, labels)
+        writer.write(serialized)
+        example_idx += 1
+        if example_idx % examples_per_shard == 0:
+            writer.close()
+            shard_idx += 1
+            writer = tf.io.TFRecordWriter(
+                str(Path(path, f"data_{shard_idx:05d}.tfrecord")),
+                options=tfwr_options,
+            )
+    writer.close()
+    return
+
+
+def _parse_example(
+    proto,
+    dataset_shape: dict[tuple[int, int, int], tuple[int, int]],
+):
+    feature_description = {
+        "spectrogram": tf.io.FixedLenFeature(
+            np.prod(dataset_shape["spectrogram"]), tf.float32
+        ),
+        "labels": tf.io.FixedLenFeature(np.prod(dataset_shape["labels"]), tf.float32),
+    }
+    example = tf.io.parse_single_example(proto, feature_description)
+
+    spectrogram = tf.reshape(example["spectrogram"], dataset_shape["spectrogram"])
+    labels = tf.reshape(example["labels"], dataset_shape["labels"])
+
+    return spectrogram, labels
+
+
 def load_dataset(
     path: Path | str,
     batch_size: int,
-    compression: str = "GZIP",
+    compression_type: str = "GZIP",
     seed: int | list[int] = None,
 ) -> tf.data.Dataset:
-    """Load a tf.data.Dataset from a directory.
+    """Load sharded TFRecord files from a directory and return tf.data.Dataset.
 
     Parameter
     ----------
@@ -172,8 +281,14 @@ def load_dataset(
     dataset: tf.data.Dataset
         The loaded dataset.
     """
+    dataset_shape = read_json(Path(path).joinpath("dataset_shapes.json"))
+
+    tfrecord_files = glob(f"{path}/data_*.tfrecord")
+    raw_dataset = tf.data.TFRecordDataset(
+        tfrecord_files, compression_type=compression_type
+    )
     dataset = (
-        tf.data.Dataset.load(str(path), compression=compression)
+        raw_dataset.map(lambda proto: _parse_example(proto, dataset_shape))
         .shuffle(
             buffer_size=SHUFFLE_BUFFER_SIZE,
             seed=int(np.random.SeedSequence(seed).generate_state(1)[0]),
@@ -181,42 +296,7 @@ def load_dataset(
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
-
     return dataset
-
-
-def save_dataset(
-    dataset: tf.data.Dataset,
-    path: Path | str,
-    overwrite: bool = False,
-    compression: str = "GZIP",
-) -> None:
-    """
-    Save a tf.data.Dataset
-    Parameter
-    ----------
-    dataset : tf.data.Dataset
-        The dataset to save.
-    path : Path | str
-        Path to the directory where the dataset will be saved.
-    overwrite : bool
-        If True, overwrite the existing dataset. Default is False.
-    compression : str
-        Compression type for the dataset. Default is "GZIP".
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    FileExistsError
-        If the dataset already exists and overwrite is False.
-    """
-    if path.exists() and not overwrite:
-        raise FileExistsError(f"File {path} already exists.")
-    dataset.save(str(path), compression=compression)
-    return
 
 
 def write_vector_to_json(vector: list, filename: Path | str) -> None:
