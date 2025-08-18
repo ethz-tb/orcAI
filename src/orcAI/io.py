@@ -126,7 +126,7 @@ class DataLoader:
 
     def __getitem__(self, index: int):
         """
-        Retrieve a single batch, aggregating data from multiple Zarr files if needed.
+        Retrieve a single batch
         """
 
         spectrogram, label = self._load_zarr_files(self.zarr_files[index])
