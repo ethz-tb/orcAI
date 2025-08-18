@@ -6,8 +6,8 @@ import keras
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import tqdm as tqdm
 import zarr
+from tqdm import tqdm
 
 from orcai.auxiliary import Messenger
 from orcai.json_encoder import JsonEncoderExt
