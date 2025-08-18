@@ -724,7 +724,8 @@ def create_tvt_data(
                 dataset[itype],
                 path=dataset_paths[itype],
                 overwrite=overwrite,
-                compression=data_compression,
+                compression_type=data_compression,
+                dataset_length=len(loader[itype]),
             )
         except FileExistsError as _:
             msgr.warning(
