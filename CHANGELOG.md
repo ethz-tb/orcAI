@@ -5,7 +5,8 @@
 ### Changes
 
 - **Breaking** save data as TFRecords for better memory usage.
-- **Breaking** rename orcAI to orcai for sanity.
+- **Breaking** rename orcAI to orcai to conform with conventions.
+- don't preload zarr files in DataLoader
 - fix parameter help for create-snippet-table
 
 ## [1.1.11]

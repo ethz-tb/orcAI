@@ -53,11 +53,7 @@ class DataLoader:
         self.shuffle = shuffle
         self.rng = rng
 
-        # Preload Zarr files and JSON label names
-        self.zarr_files = [
-            self._load_zarr_files(path)
-            for path in self.snippet_table.recording_data_dir
-        ]
+        self.zarr_files = [path for path in self.snippet_table.recording_data_dir]
 
     @classmethod
     def from_csv(
@@ -133,7 +129,7 @@ class DataLoader:
         Retrieve a single batch, aggregating data from multiple Zarr files if needed.
         """
 
-        spectrogram, label = self.zarr_files[index]
+        spectrogram, label = self._load_zarr_files(self.zarr_files[index])
         start = self.snippet_table.iloc[index]["row_start"]
         stop = self.snippet_table.iloc[index]["row_stop"]
         spectrogram_chunk = spectrogram[start:stop, :]

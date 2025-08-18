@@ -34,7 +34,7 @@ dependencies = [
     "rich-click>=1, <2",
     "humanize>=4, <5",
     "tqdm>=4.42.0, <5",
-    "numba>=0.61.2",
+    "numba>=0.61.2, <1",
 ]
 
 [project.urls]
