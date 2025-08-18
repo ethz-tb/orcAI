@@ -527,8 +527,16 @@ def create_tvt_snippet_tables(
             msgr.warning(
                 f"Number of unfiltered test snippets ({n_unfiltered_test_snippets}) larger than available snippets ({len(all_test_snippets)})."
             )
-            msgr.warning("Using all test snippets.")
-            n_unfiltered_test_snippets = len(all_test_snippets)
+            n_batches_unfiltered_test_snippets = (
+                len(all_test_snippets) // orcai_parameter["model"]["batch_size"]
+            )
+            n_unfiltered_test_snippets = (
+                n_batches_unfiltered_test_snippets
+                * orcai_parameter["model"]["batch_size"]
+            )
+            msgr.warning(
+                f"Using max number ({n_batches_unfiltered_test_snippets}) of batches of test snippets ({n_unfiltered_test_snippets} snippets)."
+            )
 
         rng = np.random.default_rng(
             seed=[SEED_ID_UNFILTERED_TEST_DATA, orcai_parameter["seed"]]
