@@ -166,7 +166,7 @@ def save_dataset(
     path: Path | str,
     overwrite: bool = False,
     compression_type: str = "GZIP",
-    examples_per_shard: int = 2000,
+    examples_per_shard: int = 6400,
     dataset_length: int | None = None,
 ) -> None:
     """
