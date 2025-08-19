@@ -27,7 +27,7 @@
 
 ### Changes
 
-- update default model from new run with fixex training data
+- update default model from new run with fixed training data
 
 ## [1.1.8]
 
@@ -41,7 +41,6 @@
 ### Changes
 
 - fix dropping channels from original recording table
-
 
 ## [1.1.6]
 
