@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.0.dev1]
+
+- add preliminary version of NOR model
+- rename orcai-v1 to orcai-isl-v1
+
 ## [2.0.1]
 
 ### Changes
