@@ -1,5 +1,5 @@
 {
-    "name": "orcai-v1",
+    "name": "orcai-isl-v1",
     "architecture": "ResNetLSTM",
     "model": {
         "epochs": 30,
