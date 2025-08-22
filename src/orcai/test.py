@@ -396,7 +396,7 @@ def test_model(
         test_unfiltered_dataset = load_dataset(
             data_dir.joinpath("test_unfiltered_dataset"),
             model_parameter["batch_size"],
-            compression=compression_type,
+            compression_type=compression_type,
             seed=[
                 SEED_ID_LOAD_UNFILTERED_TEST_DATA,
                 orcai_parameter["seed"],
