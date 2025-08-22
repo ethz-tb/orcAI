@@ -58,6 +58,7 @@ ClickFilePathW = click.Path(
 INCLUDED_MODELS = [
     file.stem for file in files("orcai.models").iterdir() if file.stem != ".DS_Store"
 ]
+DEFAULT_MODEL = "orcai-isl-v1"
 
 
 @click.group(
@@ -110,7 +111,7 @@ def cli():
     "--model",
     "-m",
     type=click.Choice(INCLUDED_MODELS, case_sensitive=False),
-    default="orcai-v1",
+    default=DEFAULT_MODEL,
     show_default=True,
     help="Builtin model to use for prediction. Overriden if model_dir is given.",
 )
