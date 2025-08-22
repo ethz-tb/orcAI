@@ -1,10 +1,10 @@
 # Changelog
 
-## [2.0.0.dev1]
+## [2.0.0]
 
 ### Changes
 
-- **Breaking** save data as TFRecords for better memory usage.
+- **Breaking** save data as TFRecords for better memory usage. tf.dataset.save would fail for larger datasets because of memory usage.
 - **Breaking** rename orcAI to orcai to conform with conventions.
 - don't preload zarr files in DataLoader
 - fix parameter help for create-snippet-table
