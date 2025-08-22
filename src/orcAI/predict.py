@@ -6,14 +6,14 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from orcAI.auxiliary import Messenger, find_consecutive_ones
-from orcAI.io import (
+from orcai.auxiliary import Messenger, find_consecutive_ones
+from orcai.io import (
     load_orcai_model,
     read_json,
     save_prediction_probabilities,
     save_predictions,
 )
-from orcAI.spectrogram import make_spectrogram
+from orcai.spectrogram import make_spectrogram
 
 
 def _check_duration(
@@ -74,7 +74,7 @@ def _check_duration(
 def filter_predictions(
     predicted_labels: pd.DataFrame,
     delta_t: float,
-    call_duration_limits: (Path | str) | dict = files("orcAI.defaults").joinpath(
+    call_duration_limits: (Path | str) | dict = files("orcai.defaults").joinpath(
         "default_call_duration_limits.json"
     ),
     label_suffix: str = "*",
@@ -173,7 +173,7 @@ def filter_predictions_file(
     predicted_labels: Path | str,
     output_file: Path | str = "default",
     overwrite: bool = False,
-    call_duration_limits: (Path | str) | dict = files("orcAI.defaults").joinpath(
+    call_duration_limits: (Path | str) | dict = files("orcai.defaults").joinpath(
         "default_call_duration_limits.json"
     ),
     label_suffix: str = "*",
@@ -434,7 +434,7 @@ def predict_wav(
     model : keras.Model
         Model for prediction.
     orcai_parameter : dict
-        orcAI parameter dictionary.
+        orcai parameter dictionary.
     shape : dict
         Model shape dictionary.
     output_path : (Path | str) | "default"
@@ -556,7 +556,7 @@ def _predict_and_save(
     model : keras.Model
         Model for prediction.
     orcai_parameter : dict
-        orcAI parameter dictionary.
+        orcai parameter dictionary.
     shape : dict
         Model shape dictionary.
     output_path : (Path | str) | "default"
@@ -638,7 +638,7 @@ def predict(
     recording_path: str | Path,
     channel: int = 1,
     threshold: float = 0.5,
-    model_dir: str | Path = files("orcAI.models").joinpath("orcai-v1"),
+    model_dir: str | Path = files("orcai.models").joinpath("orcai-v1"),
     output_path: str | Path = "default",
     overwrite: bool = False,
     save_probabilities: bool = False,

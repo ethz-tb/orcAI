@@ -1,7 +1,7 @@
 import keras
 import tensorflow as tf
 
-from orcAI.auxiliary import MASK_VALUE, Messenger
+from orcai.auxiliary import MASK_VALUE, Messenger
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 

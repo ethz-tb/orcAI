@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.8.7,<0.9.0"]
+build-backend = "uv_build"
 
 [project]
-name = "orcAI"
-dynamic = ["version"]
+name = "orcai"
+version = "2.0.0"
 authors = [
     { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
     { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
@@ -34,22 +34,22 @@ dependencies = [
     "rich-click>=1, <2",
     "humanize>=4, <5",
     "tqdm>=4.42.0, <5",
-    "numba>=0.61.2",
+    "numba>=0.61.2, <1",
 ]
-[tool.setuptools.dynamic]
-version = {attr = "orcAI.__version__"}
 
 [project.urls]
 Repository = "https://github.com/ethz-tb/orcAI"
 
 [project.scripts]
-orcai = "orcAI.cli:cli"
+orcai = "orcai.cli:cli"
 
 [tool.setuptools.package-data]
-"orcAI.defaults" = ["*.json"]
-"orcAI.models" = ["*.*", "*/*.*"]
+"orcai.defaults" = ["*.json"]
+"orcai.models" = ["*.*", "*/*.*"]
 
 [dependency-groups]
 dev = [
     "ipython>=9.2.0",
+    "pytest>=8.4.1",
+    "ruff>=0.12.8",
 ]

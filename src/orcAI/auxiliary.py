@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from humanize import naturalsize
 
-from orcAI.json_encoder import JsonEncoderExt
+from orcai.json_encoder import JsonEncoderExt
 
 # Sees IDs for different parts of the pipeline
 SEED_ID_MAKE_SNIPPET_TABLE = 1
@@ -133,7 +133,7 @@ class Messenger:
         )
         if self.verbosity >= severity:
             self.print(
-                f"orcAI {version('orcAI')} [started @ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]",
+                f"orcai {version('orcai')} [started @ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]",
                 indent,
                 set_indent,
                 severity=severity,

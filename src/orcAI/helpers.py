@@ -6,8 +6,8 @@ from pathlib import Path
 import pandas as pd
 from numpy.random import SeedSequence
 
-from orcAI.auxiliary import Messenger, filter_filepaths
-from orcAI.io import read_json, write_json
+from orcai.auxiliary import Messenger, filter_filepaths
+from orcai.io import read_json, write_json
 
 
 def init_project(
@@ -17,7 +17,7 @@ def init_project(
     msgr: Messenger | None = None,
     parameter: Path | str | dict | None = None,
 ) -> None:
-    """Initialize a new orcAI project.
+    """Initialize a new orcai project.
 
     Parameter
     ----------
@@ -43,7 +43,7 @@ def init_project(
     project_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy the default configuration files
-    default_files = files("orcAI.defaults").iterdir()
+    default_files = files("orcai.defaults").iterdir()
     for file in default_files:
         new_file_path = project_dir.joinpath(file.name.replace("default", project_name))
         msgr.info(f"Creating {new_file_path.name}")
@@ -64,10 +64,10 @@ def init_project(
 
         for key in parameter.keys():
             if key not in orcai_parameter_new:
-                msgr.warning(f"{key} not found in default orcAI parameter. Ignoring.")
+                msgr.warning(f"{key} not found in default orcai parameter. Ignoring.")
             orcai_parameter_new[key].update(parameter[key])
             msgr.info(
-                f'Updating "{key}" in default orcAI parameter with',
+                f'Updating "{key}" in default orcai parameter with',
                 indent=1,
             )
             msgr.info(parameter[key], indent=-1)
@@ -103,7 +103,7 @@ def create_recording_table(
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> pd.DataFrame:
-    """Create a table of recordings for use with other orcAI functions.
+    """Create a table of recordings for use with other orcai functions.
 
     Parameter
     ----------

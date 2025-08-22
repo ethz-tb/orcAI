@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from orcAI.auxiliary import MASK_VALUE, Messenger
-from orcAI.io import (
+from orcai.auxiliary import MASK_VALUE, Messenger
+from orcai.io import (
     generate_times_from_spectrogram,
     read_annotation_file,
     read_json,
@@ -123,7 +123,7 @@ def create_label_arrays(
     recording_table_path: Path | str,
     output_dir: Path | str,
     base_dir_annotation: Path | str = None,
-    orcai_parameter: (Path | str) | dict = files("orcAI.defaults").joinpath(
+    orcai_parameter: (Path | str) | dict = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     call_equivalences: (Path | str) | dict = None,
@@ -144,7 +144,7 @@ def create_label_arrays(
     base_dir_annotation : Path
         Base directory for the annotation files. If None the base_dir_annotation is taken from the recording_table.
     orcai_parameter : (Path | str) | dict
-        Path to a JSON file containing orcAI parameter or a dictionary of the same.
+        Path to a JSON file containing orcai parameter or a dictionary of the same.
     call_equivalences : (Path | str) | dict
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
