@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.1]
+
+### Changes
+
+- fix argument name in test.py
+
 ## [2.0.0]
 
 ### Changes
