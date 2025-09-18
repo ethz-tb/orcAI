@@ -15,19 +15,19 @@ The package contains code to perform to distinct three sets of tasks:
 
 ## Installation
 
-orcAI can be installed using [pipx](https://pipx.pypa.io/stable/).
+orcAI can be installed using standard python tools such as `pip`. To install as tool for command line usage you can use e.g. [uv](https://docs.astral.sh/uv/).
 orcAI requires Python 3.11 and should work on all platforms supported by Python.
 
-To install the latest version of orcAI, run the following command:
+After installing uv, you can install the latest version of orcAI by running the following command:
 
 ```bash
-pipx install git+https://github.com/ethz-tb/orcAI.git --python python3.11
+uv tool install git+https://github.com/ethz-tb/orcAI.git
 ```
 
 To updgrade an existing installation, run the following command:
 
 ```bash
-pipx upgrade orcai
+uv tool upgrade orcai
 ```
 
 
