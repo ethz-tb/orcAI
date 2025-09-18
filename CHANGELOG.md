@@ -1,9 +1,13 @@
 # Changelog
 
-## [2.1.0.dev1]
+## [2.1.0]
+
+### Changes
 
 - add preliminary version of NOR model
+  - this is orcai-isl-v1 fine-tuned on NOR data for 30 epochs
 - rename orcai-v1 to orcai-isl-v1
+- recommend installing orcai with `uv tool` (quicker & nicer than pipx)
 
 ## [2.0.1]
 
@@ -657,3 +661,8 @@
 [1.1.8]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.8
 [1.1.9]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.9
 [1.1.10]:https://github.com/ethz-tb/orcAI/releases/tag/1.1.10
+[1.1.11]:https://github.com/ethz-tb/orcAI/releases/tag/1.1.11
+[2.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.0.0
+[2.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/2.0.1
+[2.1.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.1.0
+
