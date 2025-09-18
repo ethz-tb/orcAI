@@ -1,6 +1,11 @@
 {
     "name": "orcai-nor-v1",
     "architecture": "ResNetLSTM",
+    "training_data": "tvt-data-nor7",
+    "test_data": [
+        "tvt-data-nor7",
+        "tvt-data-isl"
+    ],
     "model": {
         "epochs": 30,
         "batch_size": 64,
@@ -15,9 +20,9 @@
         "dropout_rate": 0.3,
         "lstm_units": 128,
         "lstm_initializer": "glorot_uniform",
-        "n_batch_train": 10000,
-        "n_batch_val": 1000,
-        "n_batch_test": 1000,
+        "n_batch_train": 3750,
+        "n_batch_val": 375,
+        "n_batch_test": 375,
         "shuffle": true,
         "learning_rate": 0.0001,
         "EarlyStopping_patience": 10,
@@ -59,5 +64,5 @@
         "val": 0.1,
         "test": 0.1
     },
-    "seed": 116771686969660203104796664615513659124
+    "seed": 16753613966498760632827711138107575354
 }
