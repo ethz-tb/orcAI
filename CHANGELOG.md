@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0post1]
+
+### Changes
+
+- remove stray test folder
+
+
 ## [2.1.0]
 
 ### Changes
@@ -664,5 +671,5 @@
 [1.1.11]:https://github.com/ethz-tb/orcAI/releases/tag/1.1.11
 [2.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.0.0
 [2.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/2.0.1
-[2.1.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.1.0
+[2.1.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.1.0post1
 
