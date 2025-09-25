@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.1]
+
+### Fixes
+
+- fixes display of wrong version number when using `orcai --version`
+
 ## [2.1.0post1]
 
 ### Changes

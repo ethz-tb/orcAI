@@ -86,7 +86,7 @@ DEFAULT_MODEL = "orcai-isl-v1"
     + click.style("orcai predict --help", italic=True)
     + ") and/or visit: https://github.com/ethz-tb/orcAI",
 )
-@click.version_option()
+@click.version_option(package_name="orcai")
 def cli():
     pass
 
