@@ -5,6 +5,7 @@
 ### Fixes
 
 - fixes display of wrong version number when using `orcai --version`
+- fix/add documentation in predict.py
 
 ## [2.1.0post1]
 

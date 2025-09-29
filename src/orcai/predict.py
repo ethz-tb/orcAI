@@ -27,7 +27,7 @@ def _check_duration(
 
     Parameter
     ----------
-    x : pd.DataFrame
+    calls : pd.DataFrame
         DataFrame with calls of a single label.
     call_duration_limits : dict
         Dictionary with call duration limits for each label.
@@ -88,8 +88,6 @@ def filter_predictions(
     ----------
     predicted_labels : pd.DataFrame
         DataFrame with predicted labels or path to a file with predicted labels.
-    output_file : (Path | str) | "default" | None
-        Path to the output file or "default" to save in the same directory as the predicted labels file. None to not save predictions to disk.
     call_duration_limits : (Path | str) | dict
         Path to a JSON file containing a dictionary with call duration limits.
     label_suffix : str
@@ -196,6 +194,8 @@ def filter_predictions_file(
         Path to a JSON file containing a dictionary with call duration limits.
     label_suffix : str
         Suffix that was added to label names during prediction.
+    columns : list[str]
+        List of columns in the predicted labels file.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     msgr : Messenger
@@ -254,6 +254,35 @@ def compute_aggregated_predictions(
     msgr: Messenger = Messenger(verbosity=0),
     progressbar: tqdm = None,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Computes aggregated predictions for a spectrogram.
+
+    Parameter
+    ----------
+    recording_path : Path
+        Path to the wav file.
+    spectrogram : np.ndarray
+        Spectrogram of the wav file.
+    model : keras.Model
+        Model for prediction.
+    orcai_parameter : dict
+        orcai parameter dictionary.
+    shape : dict
+        Model shape dictionary.
+    msgr : Messenger
+        Messenger object for logging.
+    progressbar : tqdm
+        Progressbar object. If None, no progressbar is used.
+
+    Returns
+    -------
+    aggregated_predictions : np.ndarray
+        Array with aggregated predictions for each label.
+    overlap_count : np.ndarray
+        Array with the number of overlapping predictions for each time step.
+    """
+
+    msgr.info(f"Computing aggregated predictions for {recording_path.stem}")
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet, ~4s
 
     shift = snippet_length // 2  # Shift time steps for overlapping windows ~2s
@@ -372,6 +401,7 @@ def compute_binary_predictions(
     row_stops = []
     label_names = []
     mean_probabilities = []
+
     for i, label_name in enumerate(calls):
         if sum(binary_prediction[:, i]) > 0:
             row_start, row_stop = find_consecutive_ones(binary_prediction[:, i])
@@ -383,6 +413,7 @@ def compute_binary_predictions(
                 row_start=row_start,
                 row_stop=row_stop,
             )
+
     return row_starts, row_stops, label_names, mean_probabilities
 
 
@@ -394,6 +425,30 @@ def _generate_label_dataframe(
     time_steps_per_output_step: int,
     label_suffix: str | None,
 ) -> pd.DataFrame:
+    """
+    Generates a DataFrame with predicted labels.
+
+    Parameter
+    ----------
+    row_starts : list[int]
+        List of start indices for each predicted call.
+    row_stops : list[int]
+        List of stop indices for each predicted call.
+    label_names : list[str]
+        List of label names for each predicted call.
+    mean_probabilities : list[float]
+        List of mean probabilities for each predicted call.
+    time_steps_per_output_step : int
+        Number of time steps per output step.
+    label_suffix : str | None
+        Suffix to add to the predicted calls.
+
+    Returns
+    -------
+    predicted_labels : pd.DataFrame
+        DataFrame with predicted labels.
+    """
+
     if (label_suffix is not None) & (label_suffix != ""):
         label_names = [label + label_suffix for label in label_names]
     predicted_labels = (
@@ -421,7 +476,7 @@ def predict_wav(
     label_suffix: str = "*",
     msgr: Messenger = Messenger(verbosity=0),
     progressbar: tqdm = None,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, np.ndarray, float]:
     """
     Predicts calls in a single wav file.
 
@@ -437,14 +492,8 @@ def predict_wav(
         orcai parameter dictionary.
     shape : dict
         Model shape dictionary.
-    output_path : (Path | str) | "default"
-        Path to the output file or "default" to save in the same directory as the wav file.
-    overwrite : bool
-        Overwrite the output file if it exists.
-    save_prediction_probabilities : bool
-        Save prediction probabilities to output_path
-    call_duration_limits : (Path | str) | dict | None
-        Path to a JSON file containing a dictionary with call duration limits for filtering. None for no filtering.
+    threshold : float
+        Threshold for binary classification. Default is 0.5.
     label_suffix : str
         Suffix to add to the predicted calls.
     msgr : Messenger
@@ -471,10 +520,12 @@ def predict_wav(
     if progressbar:
         progressbar.set_description(f"{recording_path.stem}: Generating spectrogram")
         progressbar.refresh()
+
     spectrogram, _, times = make_spectrogram(
         recording_path, channel, orcai_parameter, msgr=msgr
     )
     delta_t = times[1] - times[0]
+
     if spectrogram.shape[1] != shape["input_shape"][1]:
         raise ValueError(
             f"Spectrogram shape ({spectrogram.shape[1]}) for {recording_path.stem} not equal to input shape ({shape['input_shape'][1]})"
@@ -525,6 +576,23 @@ def _get_output_path(
     channel: int,
     model_name: str,
 ):
+    """
+    Generates the output path for the predicted labels.
+
+    Parameter
+    ----------
+    recording_path : Path
+        Path to the wav file.
+    channel : int
+        Channel of the wav file.
+    model_name : str
+        Name of the model.
+
+    Returns
+    -------
+    output_path : Path
+        Path to the output file.
+    """
     filename = f"{recording_path.stem}_c{channel}_{model_name}_predicted.txt"
     return recording_path.with_name(filename)
 
@@ -559,6 +627,8 @@ def _predict_and_save(
         orcai parameter dictionary.
     shape : dict
         Model shape dictionary.
+    threshold : float
+        Threshold for binary classification. Default is 0.5.
     output_path : (Path | str) | "default"
         Path to the output file or "default" to save in the same directory as the wav file.
     overwrite : bool
@@ -573,6 +643,11 @@ def _predict_and_save(
         Messenger object for logging.
     progressbar : tqdm
         Progressbar object.
+
+    Returns
+    -------
+    None
+        Saves the predicted labels to a file.
 
     Raises
     ------
@@ -658,6 +733,8 @@ def predict(
     channel : int
         Channel of the wav file if single wav file. If a csv is given,
         this is the default channel used.
+    threshold : float
+        Threshold for binary classification. Default is 0.5.
     model_dir : str | Path
         Path to the directory containing the model.
     output_path : str | Path
