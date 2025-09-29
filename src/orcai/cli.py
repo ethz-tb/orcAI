@@ -105,7 +105,7 @@ def cli():
     type=int,
     default=1,
     show_default=1,
-    help="Channel to use for prediction if running predicitons for a single file.",
+    help="Channel to use for prediction if running predictions for a single file. If a csv is given, channel is taken from the csv.",
 )
 @click.option(
     "--model",
