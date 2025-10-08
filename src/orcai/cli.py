@@ -79,9 +79,11 @@ DEFAULT_MODEL = "orcai-isl-v1"
     + "\n"
     + "      ███ ██       "
     + "Reference: "
-    + click.style("in preparation", italic=True)
+    + click.style(
+        "https://doi.org/10.1111/mms.70083",
+        italic=True,
+    )
     + "\n",
-    # TODO: Add reference
     epilog="For further information see the help pages of the individual subcommands (e.g. "
     + click.style("orcai predict --help", italic=True)
     + ") and/or visit: https://github.com/ethz-tb/orcAI",

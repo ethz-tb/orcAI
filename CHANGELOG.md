@@ -1,11 +1,14 @@
 # Changelog
 
-## [2.2.1]
+## [2.1.1]
 
-### Fixes
+### Changes
 
 - fixes display of wrong version number when using `orcai --version`
 - fix/add documentation in predict.py
+- minor fixes in cli documentation
+- add cff citation file
+- add reference to help & readme
 
 ## [2.1.0post1]
 
