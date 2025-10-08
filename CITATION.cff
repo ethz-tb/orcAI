@@ -1,0 +1,107 @@
+cff-version: 1.2.0
+title: orcai
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Daniel C.
+    family-names: Angst
+    email: daniel.angst@env.ethz.ch
+    affiliation: 'Institute for Integrative Biology, ETH Zürich'
+    orcid: 'https://orcid.org/0000-0002-6512-4595'
+  - given-names: Nicolas
+    family-names: Ochsner
+    email: nicolas.ochsner@env.ethz.ch
+    affiliation: 'Institute for Integrative Biology, ETH Zürich'
+    orcid: 'https://orcid.org/0009-0009-0796-1502'
+  - given-names: Sebastian
+    family-names: Bonhoeffer
+    email: sebastian.bonhoeffer@env.ethz.ch
+    affiliation: 'Institute for Integrative Biology, ETH Zürich'
+    orcid: 'https://orcid.org/0000-0001-8052-3925'
+  - given-names: Chérine D.
+    family-names: Baumgartner
+    email: cherine.baumgartner@env.ethz.ch
+    affiliation: 'Institute for Integrative Biology, ETH Zürich'
+    orcid: 'https://orcid.org/0000-0001-9309-3581'
+identifiers:
+  - type: doi
+    value: 10.1111/mms.70083
+repository-code: 'https://github.com/ethz-tb/orcAI'
+abstract: >-
+  Acoustic monitoring is an essential tool for investigating
+  animal communication and behavior when visual contact is
+  limited, but the scalability of bioacoustic projects is
+  often limited by time-intensive manual auditing of focal
+  signals. To address this bottleneck, we introduce orcAI —
+  a novel deep learning framework for the automated
+  detection and classification of a broad acoustic
+  repertoire of killer whales (Orcinus orca), including
+  vocalizations (e.g., pulsed calls, whistles) and
+  incidental sounds (e.g., breathing, tail slaps). orcAI
+  combines a ResNet-based Convolutional Neural Network
+  (ResNet-CNN) with Long Short-Term Memory (LSTM) layers to
+  capture both spatial features and temporal context,
+  enabling the model to classify signals and to accurately
+  determine their temporal boundaries in spectrograms.
+  Trained on a comprehensive dataset from herring-feeding
+  killer whales off Iceland, the framework was designed to
+  be adaptable to other populations upon training with
+  equivalent data. Our final model achieves up to 98.2%
+  accuracy on test data and is delivered as an open-source
+  tool with an easy-to-use command-line interface. By
+  providing a ready-to-use model that processes raw audio
+  and outputs annotations, orcAI serves as a useful tool for
+  advancing the study of killer whale vocal behavior and,
+  more broadly, for understanding marine mammal
+  communication and ecology.
+keywords:
+  - Bioacoustics
+  - Classification
+  - Orca
+license: CC-BY-SA-4.0
+preferred-citation:
+  type: article
+  authors:
+    - given-names: Sebastian
+      family-names: Bonhoeffer
+      email: sebastian.bonhoeffer@env.ethz.ch
+      affiliation: 'Institute of Integrative Biology, ETH Zurich, Zurich, Switzerland'
+      orcid: 'https://orcid.org/0000-0001-8052-3925'
+    - given-names: Anna
+      family-names: Selbmann
+      affiliation: >-
+        Westman Islands Research Centre, University of Iceland, Vestmannaeyjar,
+        Iceland
+      orcid: 'https://orcid.org/0000-0001-8687-7265'
+    - given-names: Daniel C.
+      family-names: Angst
+      affiliation: 'Institute of Integrative Biology, ETH Zurich, Zurich, Switzerland'
+      orcid: 'https://orcid.org/0000-0002-6512-4595'
+    - given-names: Nicolas
+      family-names: Ochsner
+      affiliation: 'Institute of Integrative Biology, ETH Zurich, Zurich, Switzerland'
+      orcid: 'https://orcid.org/0009-0009-0796-1502'
+    - given-names: Patrick J. O.
+      family-names: Miller
+      affiliation: 'School of Biology, University of St Andrews, St Andrews, Scotland, UK'
+      orcid: 'https://orcid.org/0000-0001-8028-9673'
+    - given-names: Filipa I. P.
+      family-names: 'Samarra,'
+      affiliation: >-
+        Westman Islands Research Centre, University of Iceland, Vestmannaeyjar,
+        Iceland
+      orcid: 'https://orcid.org/0000-0002-9909-0565'
+    - given-names: Chérine D.
+      family-names: Baumgartner
+      email: cherine.baumgartner@env.ethz.ch
+      affiliation: 'Institute for Integrative Biology, ETH Zürich'
+      orcid: 'https://orcid.org/0000-0001-9309-3581'
+  doi: 10.1111/mms.70083
+  journal: Marine Mammal Science
+  pages: e70083
+  title: >-
+    orcAI: A Machine Learning Tool to Detect and Classify Acoustic Signals of
+    Killer Whales in Audio Recordings.
+  year: 2025
