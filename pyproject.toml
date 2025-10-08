@@ -11,9 +11,9 @@ authors = [
     { name = "Nicholas Ochsner", email = "nicolas.ochsner@env.ethz.ch" },
     { name = "Daniel Angst", email = "daniel.angst@env.ethz.ch" },
 ]
-description = "A software package to detect acoustic signals in spectrograms generated from audio recordings" #TODO: add ref to paper
+description = "A software package to detect acoustic signals in spectrograms generated from audio recordings. https://doi.org/10.1111/mms.70083 "
 keywords = [
-    "Bioaccoustics",
+    "Bioacoustics",
     "Orca",
     "classification",
 ]
