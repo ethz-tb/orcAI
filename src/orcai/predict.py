@@ -564,7 +564,12 @@ def predict_wav(
         label_suffix=label_suffix,
     )
     predicted_labels["label_source"] = orcai_parameter["name"]
+
     msgr.info(f"found {len(predicted_labels)} acoustic signals")
+    msgr.info(
+        f"threshold: {threshold}, median mean p: {np.quantile(predicted_labels['mean_p'], 0.5):.3f}"
+    )
+    print()
 
     msgr.success("Prediction finished.")
 
