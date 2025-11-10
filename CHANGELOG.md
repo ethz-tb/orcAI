@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2]
+
+### Changes
+
+- report median mean p and threshold in predict - commited from 70° 0' 44'' N / 21° 14' 55'' E
+- update uv build version
+
 ## [2.1.1]
 
 ### Changes
