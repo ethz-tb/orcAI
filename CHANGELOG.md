@@ -7,7 +7,7 @@
 - report median mean p and threshold in predict - commited from 70° 0' 44'' N / 21° 14' 55'' E
 - update uv build version
 
-## [2.1.1]
+## 2.1.1
 
 ### Changes
 
@@ -689,4 +689,4 @@
 [2.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.0.0
 [2.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/2.0.1
 [2.1.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.1.0post1
-
+[2.1.2]:https://github.com/ethz-tb/orcAI/releases/tag/2.1.2
