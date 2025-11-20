@@ -17,15 +17,15 @@ The package contains code to perform to distinct three sets of tasks:
 
 orcAI has been published in the Journal Marine Mammal Science as:
 
-Bonhoeffer, S. et al. 2025. “orcAI: A Machine Learning Tool to Detect and Classify Acoustic Signals of Killer Whales in Audio Recordings.” Marine Mammal Science e70083. https://doi.org/10.1111/mms.70083.
+Bonhoeffer, S. et al. 2025. “orcAI: A Machine Learning Tool to Detect and Classify Acoustic Signals of Killer Whales in Audio Recordings.” Marine Mammal Science 42 (1): e70083. https://doi.org/10.1111/mms.70083.
 
 ```bibtex
 @article{https://doi.org/10.1111/mms.70083,
   author = {Bonhoeffer, Sebastian and Selbmann, Anna and Angst, Daniel C. and Ochsner, Nicolas and Miller, Patrick J. O. and Samarra, Filipa I. P. and Baumgartner, Chérine D.},
   title = {orcAI: A Machine Learning Tool to Detect and Classify Acoustic Signals of Killer Whales in Audio Recordings},
   journal = {Marine Mammal Science},
-  volume = {n/a},
-  number = {n/a},
+  volume = {42},
+  number = {1},
   pages = {e70083},
   keywords = {bioacoustics, cetaceans, deep learning},
   doi = {https://doi.org/10.1111/mms.70083},

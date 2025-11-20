@@ -100,6 +100,8 @@ preferred-citation:
       orcid: 'https://orcid.org/0000-0001-9309-3581'
   doi: 10.1111/mms.70083
   journal: Marine Mammal Science
+  volume: 42
+  issue: 1
   pages: e70083
   title: >-
     orcAI: A Machine Learning Tool to Detect and Classify Acoustic Signals of
