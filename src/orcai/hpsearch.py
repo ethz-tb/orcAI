@@ -88,6 +88,22 @@ def _hp_model_builder(
 def _save_trial_data(
     tuner: kt.Tuner, path: Path, msgr: Messenger = Messenger(verbosity=0)
 ) -> None:
+    """Save trial data to CSV file
+
+    Parameter
+    ----------
+    tuner : kt.Tuner
+        Keras Tuner object
+    path : Path
+        Path to save the CSV file
+    msgr : Messenger
+        Messenger object for logging
+
+    Returns
+    -------
+    None
+    Saves a CSV file with trial data
+    """
     trials = tuner.oracle.trials.values()
     results = []
     for trial in trials:
@@ -122,6 +138,7 @@ def hyperparameter_search(
     msgr: Messenger | None = None,
 ) -> None:
     """Perform hyperparameter search
+
     Parameter
     ----------
     data_dir : Path | str
@@ -146,6 +163,8 @@ def hyperparameter_search(
     Returns
     -------
     None
+
+    Saves the best hyperparameters and a CSV file with trial data to the output directory.
     """
 
     if msgr is None:

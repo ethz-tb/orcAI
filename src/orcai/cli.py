@@ -38,7 +38,6 @@ click.rich_click.COMMAND_GROUPS = {
     ]
 }
 
-
 ClickDirPathR = click.Path(
     exists=True, file_okay=False, readable=True, resolve_path=True, path_type=Path
 )
@@ -185,6 +184,7 @@ def cli():
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_predict(**kwargs):
+    """Predict CLI function"""
     kwargs["msgr"] = Messenger(verbosity=kwargs["verbosity"], title="Predicting calls")
     from orcai.predict import predict
 
@@ -240,6 +240,7 @@ def cli_predict(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_filter_predictions(**kwargs):
+    """Filter predictions CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Filtering predictions"
     )
@@ -274,6 +275,7 @@ def cli_filter_predictions(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_init_project(**kwargs):
+    """Initialize project CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Initializing project"
     )
@@ -359,6 +361,7 @@ def cli_init_project(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_recordings_table(**kwargs):
+    """Create recordings table CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Creating recording table"
     )
@@ -419,6 +422,7 @@ def cli_create_recordings_table(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_spectrograms(**kwargs):
+    """Create spectrograms CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Creating spectrograms"
     )
@@ -475,6 +479,7 @@ def cli_create_spectrograms(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_label_arrays(**kwargs):
+    """Create label arrays CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Creating label arrays"
     )
@@ -517,6 +522,7 @@ def cli_create_label_arrays(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_snippet_table(**kwargs):
+    """Create snippet table CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"], title="Creating snippet table"
     )
@@ -578,6 +584,7 @@ def cli_create_snippet_table(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_create_tvt_snippet_tables(**kwargs):
+    """Create TVT snippet tables CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"],
         title="Creating train, validation and test snippet tables",
@@ -684,6 +691,7 @@ def cli_create_tvt_data(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_train(**kwargs):
+    """Train CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"],
         title="Training model",
@@ -736,6 +744,7 @@ def cli_train(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_test(**kwargs):
+    """Test CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"],
         title=f"Testing model {kwargs['model_dir'].name}",
@@ -796,6 +805,7 @@ def cli_test(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_hpsearch(**kwargs):
+    """Hyperparameter search CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"],
         title="Hyperparameter search",

@@ -64,7 +64,7 @@ class DataLoader:
         rng: np.random.Generator = np.random.default_rng(),
     ):
         """
-        Create a DataLoader from a snippet table saved at CSV file.
+        Create a DataLoader from a snippet table saved as CSV file.
         """
         import pandas as pd
 

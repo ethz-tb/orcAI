@@ -12,6 +12,7 @@ from humanize import naturalsize
 
 from orcai.json_encoder import JsonEncoderExt
 
+# CONSTANTS
 # Sees IDs for different parts of the pipeline
 SEED_ID_MAKE_SNIPPET_TABLE = 1
 SEED_ID_FILTER_SNIPPET_TABLE = 2

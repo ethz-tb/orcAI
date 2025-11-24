@@ -6,7 +6,6 @@ from orcai.auxiliary import MASK_VALUE, Messenger
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 
-# CNN model with residual connection
 @keras.saving.register_keras_serializable(name="ReduceFrequencyMean")
 class ReduceFrequencyMean(keras.layers.Layer):
     """Custom Keras layer to reduce the frequency dimension of a 4D tensor
@@ -313,13 +312,12 @@ ORCAI_ARCHITECTURES_FN = {
 ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
 
 
-# build model from a choice of models
 def build_model(
     input_shape: tuple[int, int, int],
     orcai_parameter: dict,
     msgr: Messenger = Messenger(),
 ) -> keras.Model:
-    """
+    """Builds a keras.Model based on the specified OrcAI architecture
 
     Parameter
     ----------
