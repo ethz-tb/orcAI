@@ -44,7 +44,7 @@ orcAI requires Python 3.11 and should work on all platforms supported by Python.
 After installing uv, you can install the latest version of orcAI by running the following command:
 
 ```bash
-uv tool install git+https://github.com/ethz-tb/orcAI.git
+uv tool install git+https://github.com/ethz-tb/orcAI.git --python 3.11
 ```
 
 To updgrade an existing installation, run the following command:
