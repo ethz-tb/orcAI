@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.3]
+
+### Changes
+
+- some more documentation
+- update citation
+- update installation instructions to specify python version
+
+
 ## [2.1.2]
 
 ### Changes
