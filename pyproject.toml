@@ -26,7 +26,7 @@ dependencies = [
     "numpy<3",
     "pandas<3",
     "tensorflow[and-cuda]<3; sys_platform!='darwin'",
-    "tensorflow<3; sys_platform=='darwin'",
+    "tensorflow-macos; sys_platform=='darwin'",
     "keras_tuner <2",
     "keras<4",
     "librosa<1",
