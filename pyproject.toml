@@ -22,6 +22,7 @@ requires-python = "==3.10.*"
 license = "CC-BY-SA-4.0"
 license-files = ["LICENSE"]
 dependencies = [
+    "zarr",
     "pandas>=2, <3",
     "tensorflow[and-cuda]>=2, <3; sys_platform!='darwin'",
     "tensorflow>=2, <3; sys_platform=='darwin'",
