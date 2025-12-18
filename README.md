@@ -39,7 +39,7 @@ Bonhoeffer, S. et al. 2025. “orcAI: A Machine Learning Tool to Detect and Clas
 ## Installation
 
 
-orcAI requires Python 3.11 and should work on all platforms supported by Python. It has been tested extensively on macOS on Apple Silicon and Ubuntu. Cursory testing (install & prediction) has been performed on Win10 (Build 17763.8146) and Win11 (Build 26100.7171).
+orcAI requires Python 3.11 and should work on all platforms supported by Python. It has been tested extensively on macOS (version 26.2) on Apple Silicon and Ubuntu (version 22.04.5 LTS). Cursory testing (install & prediction) has been performed on Win10 (Build 17763.8146) and Win11 (Build 26100.7171).
 
 orcAI can be installed using standard python tools such as `pip`. To install as tool for command line usage you can use e.g. [uv](https://docs.astral.sh/uv/).
 After installing uv, you can install the latest version of orcAI by running the following command:
