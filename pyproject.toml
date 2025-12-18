@@ -30,7 +30,7 @@ dependencies = [
     "tensorflow<3; sys_platform=='win32'",
     "keras_tuner <2",
     "keras<4",
-    "librosa<0.10",
+    "librosa<0.9",
     "psutil<8",
     "rich-click<2",
     "humanize<5",
