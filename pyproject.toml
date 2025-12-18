@@ -32,6 +32,7 @@ dependencies = [
     "rich-click>=1, <2",
     "humanize>=4, <5",
     "tqdm>=4.42.0, <5",
+    "llvmlite<0.45.1"
 ]
 
 [project.urls]
