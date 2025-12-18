@@ -35,6 +35,7 @@ dependencies = [
     "rich-click<2",
     "humanize<5",
     "tqdm<5",
+    "llvmlite<0.45.1",
 ]
 
 [project.urls]
