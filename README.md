@@ -38,8 +38,8 @@ Bonhoeffer, S. et al. 2025. “orcAI: A Machine Learning Tool to Detect and Clas
 
 ## Installation
 
-
-orcAI requires Python 3.11 and should work on all platforms supported by Python. It has been tested extensively on macOS (version 26.2) on Apple Silicon and Ubuntu (version 22.04.5 LTS). Cursory testing (install & prediction) has been performed on Win10 (Build 17763.8146) and Win11 (Build 26100.7171).
+orcAI requires Python 3.11. It has been tested extensively on macOS (version 26.2) on Apple Silicon and Ubuntu (version 22.04.5 LTS). Cursory testing (install & prediction of a test file) has been performed on Win10 (Build 17763.8146) and Win11 (Build 26100.7171).
+Unfortunately, due to dropped support in dependencies, orcAI does not work on macOS running on Intel processors. For a workaround see below.
 
 orcAI can be installed using standard python tools such as `pip`. To install as tool for command line usage you can use e.g. [uv](https://docs.astral.sh/uv/).
 After installing uv, you can install the latest version of orcAI by running the following command:
@@ -54,6 +54,15 @@ To updgrade an existing installation, run the following command:
 uv tool upgrade orcai
 ```
 
+### Installation on macOS running on Intel processors (prediction only; not recommended)
+
+If you want to use orcAI for prediction on macOS running on Intel processors you can try the `mac_intel` branch. Because of several dependencies dropping support for Intel CPUs it also uses python 3.10. It has only been cursorily tested (installation & prediction of a test file) on macOS 15.5 running on a MacBook Pro with an Intel Core i9 CPU.
+
+To install this branch use:
+
+```bash
+uv tool install git+https://github.com/ethz-tb/orcAI.git@mac_intel --python 3.10
+```
 
 ## Command Line Interface
 
