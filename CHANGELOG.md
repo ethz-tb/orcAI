@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.4]
+
+### Changes
+
+- update dependency listings to fix install on Win10 & Win11, cursory testing done on 2025/12/18
+
 ## [2.1.3]
 
 ### Changes
