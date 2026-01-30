@@ -565,11 +565,17 @@ def predict_wav(
     )
     predicted_labels["label_source"] = orcai_parameter["name"]
 
-    msgr.info(f"found {len(predicted_labels)} acoustic signals")
-    msgr.info(
-        f"threshold: {threshold}, median mean p: {np.quantile(predicted_labels['mean_p'], 0.5):.3f}"
-    )
-    print()
+    if predicted_labels.empty:
+        msgr.info("No acoustic signals found")
+    else:
+        msgr.info(f"found {len(predicted_labels)} acoustic signals")
+        msgr.info(
+            f"threshold: {threshold}, median mean p: {np.quantile(predicted_labels['mean_p'], 0.5):.3f}"
+        )
+
+    if progressbar:
+        progressbar.set_description(f"{recording_path.stem} - predictions done.")
+        progressbar.refresh()
 
     msgr.success("Prediction finished.")
 
