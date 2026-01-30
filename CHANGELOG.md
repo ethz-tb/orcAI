@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.5]
+
+### Changes
+
+- fix error when no predictions are found
+
 ## [2.1.4]
 
 ### Changes
