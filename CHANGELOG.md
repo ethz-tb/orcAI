@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.0]
+
+### Changes
+
+- type hints; passes `ty check` for ty ty 0.0.23 (be6e94a27 2026-03-13)
+
 ## [2.1.5]
 
 ### Changes
@@ -11,7 +17,7 @@
 ### Changes
 
 - update dependency listings to fix install on Win10 & Win11, cursory testing done on 2025/12/18
-- note & workaround for using orcAI on a macOS (*not recommended*) running on an Intel processor
+- note & workaround for using orcAI on macOS (*not recommended*) running on an Intel processor
 
 ## [2.1.3]
 
