@@ -19,7 +19,7 @@
 - update dependency listings to fix install on Win10 & Win11, cursory testing done on 2025/12/18
 - note & workaround for using orcAI on macOS (*not recommended*) running on an Intel processor
 
-## [2.1.3]
+## 2.1.3
 
 ### Changes
 
@@ -45,7 +45,7 @@
 - add cff citation file
 - add reference to help & readme
 
-## [2.1.0post1]
+## 2.1.0post1
 
 ### Changes
 
@@ -712,9 +712,12 @@
 [1.1.7]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.7
 [1.1.8]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.8
 [1.1.9]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.9
-[1.1.10]:https://github.com/ethz-tb/orcAI/releases/tag/1.1.10
-[1.1.11]:https://github.com/ethz-tb/orcAI/releases/tag/1.1.11
-[2.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.0.0
-[2.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/2.0.1
-[2.1.0]:https://github.com/ethz-tb/orcAI/releases/tag/2.1.0post1
-[2.1.2]:https://github.com/ethz-tb/orcAI/releases/tag/2.1.2
+[1.1.10]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.10
+[1.1.11]:https://github.com/ethz-tb/orcAI/releases/tag/v1.1.11
+[2.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.0.0
+[2.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/v2.0.1
+[2.1.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.1.0post1
+[2.1.2]:https://github.com/ethz-tb/orcAI/releases/tag/v2.1.2
+[2.1.4]:https://github.com/ethz-tb/orcAI/releases/tag/v2.1.4
+[2.1.5]:https://github.com/ethz-tb/orcAI/releases/tag/v2.1.5
+[2.2.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.2.0
