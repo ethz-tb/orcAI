@@ -402,7 +402,7 @@ def save_as_zarr(
     None
     """
 
-    zarr_file = zarr.open(
+    zarr_file = zarr.open_array(
         filename,
         mode="w",
         shape=obj.shape,

@@ -83,7 +83,7 @@ def _make_snippet_table(
         )
 
     try:
-        label_filepointer = zarr.open(label_zarr_path, mode="r")
+        label_filepointer = zarr.open_array(label_zarr_path, mode="r")
     except FileNotFoundError as _:
         msgr.warning(f"Label file not found: {label_zarr_path}")
         return (None, recording_duration, n_segments, recording, "missing label files")
