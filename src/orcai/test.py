@@ -231,7 +231,7 @@ def _test_model_on_dataset(
     label_names: list[str],
     dataset_name: str,
     msgr: Messenger,
-) -> dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame | str | dict[str, pd.DataFrame]]:
     """Test a model on a dataset."""
     msgr.part(f"Testing model on {dataset_name}")
     msgr.info(f"Evaluating model on {dataset_name}")

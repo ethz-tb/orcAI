@@ -313,7 +313,7 @@ ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
 
 
 def build_model(
-    input_shape: tuple[int, int, int],
+    input_shape: tuple,
     orcai_parameter: dict,
     msgr: Messenger = Messenger(),
 ) -> keras.Model:

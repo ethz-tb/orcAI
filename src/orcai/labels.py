@@ -1,5 +1,6 @@
 from importlib.resources import files
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ def _convert_annotation(
     label_calls: list,
     labels_present: list,
     labels_masked: list,
-    call_equivalences: (Path | str) | dict = None,
+    call_equivalences: Path | str | dict | None = None,
     msgr: Messenger = Messenger(),
 ) -> tuple[pd.DataFrame, dict]:
     """Transform annotation into array with 0 for absence and 1 for presence and
@@ -39,7 +40,7 @@ def _convert_annotation(
         List of labels that are present in the annotation file.
     labels_masked : list
         List of labels that are masked in the annotation file.
-    call_equivalences : (Path | str) | dict
+    call_equivalences : Path | str | dict | None
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     msgr : Messenger
         Messenger object for logging.
@@ -57,6 +58,7 @@ def _convert_annotation(
         If the spectrogram file is not found.
     """
     msgr.part("Converting annotation to label array")
+
     # read annotation file
     recording = annotation_file_path.stem
     annotations = read_annotation_file(
@@ -122,11 +124,11 @@ def _convert_annotation(
 def create_label_arrays(
     recording_table_path: Path | str,
     output_dir: Path | str,
-    base_dir_annotation: Path | str = None,
-    orcai_parameter: (Path | str) | dict = files("orcai.defaults").joinpath(
+    base_dir_annotation: Path | str | None = None,
+    orcai_parameter: Any = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
-    call_equivalences: (Path | str) | dict = None,
+    call_equivalences: Path | str | dict | None = None,
     overwrite: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -141,15 +143,15 @@ def create_label_arrays(
         (even if no instance of this call is annotated).
     output_dir : Path | str
         Output directory for the labels. Labels are stored in subdirectories named '<recording>/labels'
-    base_dir_annotation : Path
-        Base directory for the annotation files. If None the base_dir_annotation is taken from the recording_table.
+    base_dir_annotation : Path | str | None
+        Base directory for the annotation files. If None, the base_dir_annotation is taken from the recording_table.
     orcai_parameter : (Path | str) | dict
         Path to a JSON file containing orcai parameter or a dictionary of the same.
-    call_equivalences : (Path | str) | dict
+    call_equivalences : Path | str | dict | None
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
-    msgr : Messenger
+    msgr : Messenger | None
         Messenger object for logging. If None, a new Messenger object is created.
 
     Returns

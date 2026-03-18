@@ -1,6 +1,7 @@
 from functools import partial
 from importlib.resources import files
 from pathlib import Path
+from typing import Any
 
 import keras
 import keras_tuner as kt
@@ -124,14 +125,12 @@ def _save_trial_data(
 
 
 def hyperparameter_search(
-    data_dir: Path | str,
-    output_dir: Path | str,
-    orcai_parameter: Path | str = files("orcai.defaults").joinpath(
+    data_dir: Path,
+    output_dir: Path,
+    orcai_parameter: Any = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
-    hps_parameter: Path | str = files("orcai.defaults").joinpath(
-        "default_hps_parameter.json"
-    ),
+    hps_parameter: Any = files("orcai.defaults").joinpath("default_hps_parameter.json"),
     parallel: bool = False,
     compression_type: str | None = "GZIP",
     verbosity: int = 2,
@@ -141,9 +140,9 @@ def hyperparameter_search(
 
     Parameter
     ----------
-    data_dir : Path | str
+    data_dir : Path
         Path to the data directory
-    output_dir : Path | str
+    output_dir : Path
         Path to the output directory
     orcai_parameter : Path | str
         Path to the OrcAi parameter file

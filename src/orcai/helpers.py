@@ -121,7 +121,7 @@ def create_recording_table(
         Path to a .csv file with a previous table of recordings to update.
     update_paths : bool
         If True the paths in the table to update are updated with the new paths. Only valid if update_table is not None.
-    exclude_patterns : (Path | str) | array | None
+    exclude_patterns : Path | str | list[str] | None
         Path to a JSON file containing filenames to exclude from the table or an array containing the same.
     remove_duplicate_filenames : bool
         If True, remove duplicate filenames from the table.

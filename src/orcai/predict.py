@@ -1,5 +1,6 @@
 from importlib.resources import files
 from pathlib import Path
+from typing import Any
 
 import keras
 import numpy as np
@@ -18,9 +19,9 @@ from orcai.spectrogram import make_spectrogram
 
 def _check_duration(
     calls: pd.DataFrame,
-    call_duration_limits: dict[str : tuple[float | None, float | None]],
+    call_duration_limits: dict[str, tuple[float | None, float | None]],
     delta_t: float,
-    label_suffix: str = "*",
+    label_suffix: str | None = "*",
 ) -> str:
     """
     Checks duration of calls against call duration limits.
@@ -33,7 +34,7 @@ def _check_duration(
         Dictionary with call duration limits for each label.
     delta_t : float
         Time step duration in seconds.
-    label_suffix : str
+    label_suffix : str | None
          Suffix that was added to label names during prediction.
 
 
@@ -43,7 +44,8 @@ def _check_duration(
         str "keep", "too long", or "too short"
 
     """
-    label = calls["label"].replace(f"{label_suffix}", "")
+    if label_suffix is not None and label_suffix != "":
+        label = calls["label"].replace(f"{label_suffix}", "")
 
     if label in call_duration_limits:
         min_duration, max_duration = call_duration_limits[label]
@@ -77,7 +79,7 @@ def filter_predictions(
     call_duration_limits: (Path | str) | dict = files("orcai.defaults").joinpath(
         "default_call_duration_limits.json"
     ),
-    label_suffix: str = "*",
+    label_suffix: str | None = "*",
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> pd.DataFrame:
@@ -168,7 +170,7 @@ def filter_predictions(
 
 
 def filter_predictions_file(
-    predicted_labels: Path | str,
+    predicted_labels_path: Path | str,
     output_file: Path | str = "default",
     overwrite: bool = False,
     call_duration_limits: (Path | str) | dict = files("orcai.defaults").joinpath(
@@ -178,7 +180,7 @@ def filter_predictions_file(
     columns: list[str] = ["start", "stop", "label", "mean_p", "label_source"],
     verbosity: int = 2,
     msgr: Messenger | None = None,
-):
+) -> None:
     """
     Filter predictions file based on duration.
 
@@ -213,9 +215,12 @@ def filter_predictions_file(
         If the output file already exists.
 
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=verbosity)
+
     if output_file == "default":
-        filename = Path(predicted_labels).stem + "_filtered.txt"
-        output_file = Path(predicted_labels).with_name(filename)
+        filename = Path(predicted_labels_path).stem + "_filtered.txt"
+        output_file = Path(predicted_labels_path).with_name(filename)
     else:
         output_file = Path(output_file)
     msgr.info(f"Output file: {output_file}")
@@ -224,7 +229,7 @@ def filter_predictions_file(
         raise FileExistsError(f"Annotation file already exists: {output_file}")
 
     predicted_labels = pd.read_csv(
-        predicted_labels, sep="\t", encoding="utf-8", names=columns
+        predicted_labels_path, sep="\t", encoding="utf-8", names=columns
     )
 
     predicted_labels_duration_ok = filter_predictions(
@@ -252,7 +257,7 @@ def compute_aggregated_predictions(
     orcai_parameter: dict,
     shape: dict,
     msgr: Messenger = Messenger(verbosity=0),
-    progressbar: tqdm = None,
+    progressbar: tqdm | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Computes aggregated predictions for a spectrogram.
@@ -271,7 +276,7 @@ def compute_aggregated_predictions(
         Model shape dictionary.
     msgr : Messenger
         Messenger object for logging.
-    progressbar : tqdm
+    progressbar : tqdm | None
         Progressbar object. If None, no progressbar is used.
 
     Returns
@@ -339,8 +344,8 @@ def compute_aggregated_predictions(
 
 def _calulate_mean_probabilities(
     probabilities: np.ndarray,
-    row_start: list[int],
-    row_stop: list[int],
+    row_start: list[int] | np.ndarray[tuple[Any, ...], np.dtype[Any]],
+    row_stop: list[int] | np.ndarray[tuple[Any, ...], np.dtype[Any]],
 ) -> list[float]:
     """
     Calculate the mean probabilities for each predicted call.
@@ -449,7 +454,7 @@ def _generate_label_dataframe(
         DataFrame with predicted labels.
     """
 
-    if (label_suffix is not None) & (label_suffix != ""):
+    if label_suffix is not None and label_suffix != "":
         label_names = [label + label_suffix for label in label_names]
     predicted_labels = (
         pd.DataFrame(
@@ -467,22 +472,22 @@ def _generate_label_dataframe(
 
 
 def predict_wav(
-    recording_path: Path | str,
+    recording_path: Path,
     channel: int,
     model: keras.Model,
     orcai_parameter: dict,
     shape: dict,
     threshold: float = 0.5,
-    label_suffix: str = "*",
+    label_suffix: str | None = "*",
     msgr: Messenger = Messenger(verbosity=0),
-    progressbar: tqdm = None,
+    progressbar: tqdm | None = None,
 ) -> tuple[pd.DataFrame, np.ndarray, float]:
     """
     Predicts calls in a single wav file.
 
     Parameter
     ----------
-    recording_path : Path | str
+    recording_path : Path
         Path to the wav file.
     channel : int
         Channel of the wav file.
@@ -586,7 +591,7 @@ def _get_output_path(
     recording_path: Path,
     channel: int,
     model_name: str,
-):
+) -> Path:
     """
     Generates the output path for the predicted labels.
 
@@ -618,10 +623,10 @@ def _predict_and_save(
     output_path: Path | str = "default",
     overwrite: bool = False,
     save_probabilities: bool = False,
-    call_duration_limits: (Path | str) | dict = None,
-    label_suffix: str = "*",
+    call_duration_limits: (Path | str) | dict | None = None,
+    label_suffix: str | None = "*",
     msgr: Messenger = Messenger(verbosity=0),
-    progressbar: tqdm = None,
+    progressbar: tqdm | None = None,
 ) -> None:
     """
     Predicts calls in a single wav file.
@@ -652,7 +657,7 @@ def _predict_and_save(
         Suffix to add to the predicted calls.
     msgr : Messenger
         Messenger object for logging.
-    progressbar : tqdm
+    progressbar : tqdm | None
         Progressbar object.
 
     Returns
@@ -683,7 +688,7 @@ def _predict_and_save(
             raise FileExistsError(f"Annotation file already exists: {output_path}")
 
     predicted_labels, aggregated_predictions, delta_t = predict_wav(
-        recording_path=recording_path,
+        recording_path=Path(recording_path),
         channel=channel,
         model=model,
         orcai_parameter=orcai_parameter,

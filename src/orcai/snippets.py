@@ -28,7 +28,7 @@ def _make_snippet_table(
     orcai_parameter: dict,
     rng=np.random.default_rng(),
     msgr: Messenger = Messenger(verbosity=2),
-) -> tuple[pd.DataFrame, int, int, str, str]:
+) -> tuple[pd.DataFrame | None, int, int, str, str]:
     """Generates times for snippets to be extracted from recordings
 
     Parameter
@@ -42,7 +42,7 @@ def _make_snippet_table(
 
     Returns
     -------
-    snippet_table: pd.DataFrame
+    snippet_table: pd.DataFrame | None
         snippet table with columns recording, data_type, row_start, row_stop and call names
     recording_duration: int
         recording duration
@@ -567,7 +567,7 @@ def _get_call_weights(
     dataset_length: int,
     call_names: list[str],
     method: str = "balanced",
-) -> np.ndarray:
+) -> np.ndarray | dict[str, float]:
     """Get call weights from a dataset
 
     Parameter
@@ -584,8 +584,8 @@ def _get_call_weights(
 
     Returns
     -------
-    np.ndarray
-        Dictionary of call weights
+    np.ndarray | dict[str, float]
+        Array or dictionary of call weights
     Raises
     ------
     ValueError
@@ -615,11 +615,11 @@ def _get_call_weights(
 
 def create_tvt_data(
     tvt_dir: Path | str,
-    orcai_parameter: dict | (Path | str) = files("orcai.defaults").joinpath(
+    orcai_parameter: dict | (Path | str) | Any = files("orcai.defaults").joinpath(
         "default_orcai_parameter.json"
     ),
     overwrite: bool = False,
-    compression_type: str | None = "GZIP",
+    compression_type: str = "GZIP",
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> dict[str, tf.data.Dataset]:
@@ -633,8 +633,8 @@ def create_tvt_data(
         Dict containing model specifications or path to json containing the same, by default files("orcai.defaults").joinpath("default_orcai_parameter.json")
     overwrite : bool
         Overwrite existing datasets
-    compression_type: str | None
-        Compression for data files. Accepts "GZIP" or "NONE".
+    compression_type: str
+        Compression for data files. Accepts "GZIP" or "" (no compression).
     verbosity : int
         Verbosity level [0, 1, 2]
     msgr : Messenger

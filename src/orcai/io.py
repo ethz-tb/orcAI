@@ -1,6 +1,8 @@
 import json
 from glob import glob
+from os import PathLike
 from pathlib import Path
+from typing import Any, TypedDict
 
 import keras
 import numpy as np
@@ -14,6 +16,14 @@ from orcai.json_encoder import JsonEncoderExt
 
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 SHUFFLE_BUFFER_SIZE = 1000
+
+DatasetShape = TypedDict(
+    "DatasetShape",
+    {
+        "spectrogram": tuple[int, int, int],
+        "labels": tuple[int, int],
+    },
+)
 
 
 class DataLoader:
@@ -237,7 +247,7 @@ def save_dataset(
 
 def _parse_example(
     proto,
-    dataset_shape: dict[tuple[int, int, int], tuple[int, int]],
+    dataset_shape: DatasetShape,
 ):
     feature_description = {
         "spectrogram": tf.io.FixedLenFeature(
@@ -256,8 +266,8 @@ def _parse_example(
 def load_dataset(
     path: Path | str,
     batch_size: int,
-    compression_type: str = "GZIP",
-    seed: int | list[int] = None,
+    compression_type: str | None = "GZIP",
+    seed: int | list[int] | None = None,
 ) -> tf.data.Dataset:
     """Load sharded TFRecord files from a directory and return tf.data.Dataset.
 
@@ -267,7 +277,7 @@ def load_dataset(
         Path to the directory containing the dataset.
     batch_size : int
         Batch size for the dataset.
-    compression : str
+    compression : str | None
         Compression type for the dataset. Default is "GZIP".
     seed : int | list[int]
         Random seed for shuffling the dataset. Default is None.
@@ -371,13 +381,13 @@ def write_json(dictionary, filename) -> None:
 
 
 def save_as_zarr(
-    obj: any,
+    obj: np.ndarray[tuple[Any, ...], np.dtype[Any]],
     filename: Path,
 ) -> None:
     """write object to zarr file
     Parameter
     ----------
-    obj : any
+    obj : np.ndarray
         The object to write to the Zarr file.
     filename : str
         The name of the Zarr file to write to.
@@ -402,12 +412,13 @@ def save_as_zarr(
 
 
 def read_annotation_file(
-    annotation_file_path: Path, col_names: list[str] = ["start", "stop", "origlabel"]
+    annotation_file_path: PathLike[str],
+    col_names: list[str] = ["start", "stop", "origlabel"],
 ) -> pd.DataFrame:
     """read annotation file and return with recording as additional column
     Parameter
     ----------
-    annotation_file_path : str
+    annotation_file_path : PathLike[str]
         The path to the annotation file.
 
     Returns
@@ -510,7 +521,7 @@ def _convert_steps_to_seconds(
 
 def save_predictions(
     predicted_labels: pd.DataFrame,
-    output_path: Path | str,
+    output_path: PathLike[str],
     delta_t: float,
     columns: list[str] = ["start", "stop", "label", "mean_p", "label_source"],
     msgr: Messenger = Messenger(verbosity=0),
@@ -543,7 +554,7 @@ def save_prediction_probabilities(
     aggregated_predictions: np.ndarray,
     orcai_parameter: dict,
     delta_t: float,
-    output_path: Path | str,
+    output_path: Path,
     msgr: Messenger = Messenger(verbosity=0),
 ) -> None:
     """
@@ -556,7 +567,7 @@ def save_prediction_probabilities(
         orcai parameter dictionary.
     delta_t : float
         Time step duration in seconds.
-    output_path : Path | str
+    output_path : Path
         Path to the output file.
     msgr : Messenger
         Messenger object for logging.

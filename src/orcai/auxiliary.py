@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timedelta
 from importlib.metadata import version
 from pathlib import Path
+from typing import IO, Any, TypeAlias
 
 import click
 import numpy as np
@@ -26,18 +27,22 @@ SEED_ID_LOAD_UNFILTERED_TEST_DATA = 11
 # Value used to mask labels in the dataset
 MASK_VALUE = -1.0
 
+Message: TypeAlias = (
+    str | dict[Any, Any] | list[str] | pd.DataFrame | pd.Series | np.ndarray
+)
+
 
 class Messenger:
     """Class for printing messages with different levels of verbosity and indentation"""
 
     def __init__(
         self,
-        title: str = None,
+        title: str | None = None,
         n_indent: int = 0,
         verbosity: int = 2,
         indent_str: str = "    ",
         show_part_times: bool = True,
-        file: Path = None,
+        file: IO[Any] | None = None,
     ):
         """
         Initialize the Messenger object with the specified verbosity level and indentation.
@@ -54,7 +59,7 @@ class Messenger:
             The string to use for indentation.
         show_part_times: bool
             Whether to show the time taken for each part.
-        file: Path
+        file: IO[Any] | None
             The file to write the messages to (default: None, which means stdout).
         """
         self.n_indent = n_indent
@@ -69,23 +74,23 @@ class Messenger:
 
     def print(
         self,
-        message: str,
+        message: Message,
         indent: int = 0,
         set_indent: int | None = None,
         prepend: str = "",
         severity: int = 2,
         **kwargs,
-    ):
+    ) -> None:
         """
         Print a message with the specified indentation level and verbosity.
 
         Parameter
         ---------
-        message: str | dict | list
+        message: Message
             The message (or dict or list) to print.
         indent: int
             The number of additional indent levels after this message.
-        set_indent: int
+        set_indent: int | None
             The absolute indent level for this message.
         prepend: str
             A string to prepend to the message.
@@ -98,30 +103,51 @@ class Messenger:
         if set_indent is not None:
             self.n_indent = set_indent
 
-        if isinstance(message, dict):
-            message = self.dict_to_str(message)
+        if isinstance(message, dict | np.ndarray):
+            message_str = self.dict_to_str(message)
         elif isinstance(message, list):
-            message = self.list_to_str(message)
+            message_str = self.list_to_str(message)
         elif isinstance(message, pd.DataFrame | pd.Series):
-            message = self.pd_to_str(message)
+            message_str = self.pd_to_str(message)
         else:
-            message = self.indent_str * self.n_indent + prepend + message
+            message_str = self.indent_str * self.n_indent + prepend + str(message)
 
-        message = click.style(message, **kwargs)
+        message_str = click.style(message_str, **kwargs)
 
-        click.echo(message, file=self.file)
+        click.echo(message_str, file=self.file)
 
         self.n_indent = self.n_indent + indent
 
-    def debug(self, message, indent=0, set_indent=None, severity=3, **kwargs):
+    def debug(
+        self,
+        message: Message,
+        indent: int = 0,
+        set_indent: int | None = None,
+        severity: int = 3,
+        **kwargs,
+    ) -> None:
         """Print a debug message."""
         self.print(message, indent, set_indent, severity=severity, **kwargs)
 
-    def info(self, message, indent=0, set_indent=None, severity=2, **kwargs):
+    def info(
+        self,
+        message: Message,
+        indent: int = 0,
+        set_indent: int | None = None,
+        severity: int = 2,
+        **kwargs,
+    ) -> None:
         """Print a info message."""
         self.print(message, indent, set_indent, severity=severity, **kwargs)
 
-    def start(self, message, indent=0, set_indent=0, severity=2, **kwargs):
+    def start(
+        self,
+        message: Message,
+        indent: int = 0,
+        set_indent: int | None = 0,
+        severity: int = 2,
+        **kwargs,
+    ) -> None:
         """Print a message in bold at indent 0 to indicate the start of a script"""
         self.print(
             message,
@@ -142,7 +168,14 @@ class Messenger:
                 **kwargs,
             )
 
-    def part(self, message, indent=1, set_indent=0, severity=2, **kwargs):
+    def part(
+        self,
+        message: Message,
+        indent: int = 1,
+        set_indent: int | None = 0,
+        severity: int = 2,
+        **kwargs,
+    ) -> None:
         """Print a message in bold at indent 0 to indicate a new part"""
 
         last_part_time = self.part_times.pop() if len(self.part_times) > 0 else None
@@ -165,7 +198,14 @@ class Messenger:
             **kwargs,
         )
 
-    def success(self, message, indent=0, set_indent=0, severity=2, **kwargs):
+    def success(
+        self,
+        message: Message,
+        indent: int = 0,
+        set_indent: int | None = 0,
+        severity: int = 2,
+        **kwargs,
+    ) -> None:
         """Print a success message."""
         self.part(
             message,
@@ -176,7 +216,14 @@ class Messenger:
             **kwargs,
         )
 
-    def warning(self, message, indent=0, set_indent=None, severity=1, **kwargs):
+    def warning(
+        self,
+        message: Message,
+        indent: int = 0,
+        set_indent: int | None = None,
+        severity: int = 1,
+        **kwargs,
+    ) -> None:
         """Print a warning message."""
         self.print(
             message,
@@ -188,7 +235,14 @@ class Messenger:
             **kwargs,
         )
 
-    def error(self, message, indent=0, set_indent=None, severity=0, **kwargs):
+    def error(
+        self,
+        message: Message,
+        indent: int = 0,
+        set_indent: int | None = None,
+        severity: int = 0,
+        **kwargs,
+    ) -> None:
         """Print an error message."""
         self.print(
             message,
@@ -200,12 +254,12 @@ class Messenger:
             **kwargs,
         )
 
-    def print_platform_info(self, severity=2, **kwargs):
+    def print_platform_info(self, severity: int = 2, **kwargs) -> None:
         if self.verbosity < severity:
             return
+
         import platform
         import sys
-
         import keras
         import tensorflow as tf
 
@@ -240,7 +294,13 @@ class Messenger:
                 **kwargs,
             )
 
-    def print_tf_device_info(self, indent=0, set_indent=None, severity=2, **kwargs):
+    def print_tf_device_info(
+        self,
+        indent: int = 0,
+        set_indent: int | None = None,
+        severity: int = 2,
+        **kwargs,
+    ) -> None:
         """print tensorflow devices"""
         if self.verbosity < severity:
             return
@@ -271,7 +331,13 @@ class Messenger:
             **kwargs,
         )
 
-    def print_memory_usage(self, indent=0, set_indent=None, severity=2, **kwargs):
+    def print_memory_usage(
+        self,
+        indent: int = 0,
+        set_indent: int | None = None,
+        severity: int = 2,
+        **kwargs,
+    ) -> None:
         """print memory usage"""
         if self.verbosity < severity:
             return
@@ -288,8 +354,13 @@ class Messenger:
         )
 
     def print_file_size(
-        self, file: Path, indent=0, set_indent=None, severity=2, **kwargs
-    ):
+        self,
+        file: Path,
+        indent: int = 0,
+        set_indent: int | None = None,
+        severity: int = 2,
+        **kwargs,
+    ) -> None:
         """print size of dataset"""
         if self.verbosity < severity:
             return
@@ -305,8 +376,13 @@ class Messenger:
         )
 
     def print_directory_size(
-        self, directory: Path, indent=0, set_indent=None, severity=2, **kwargs
-    ):
+        self,
+        directory: Path,
+        indent: int = 0,
+        set_indent: int | None = None,
+        severity: int = 2,
+        **kwargs,
+    ) -> None:
         """print size of directory"""
 
         if self.verbosity < severity:
@@ -323,12 +399,14 @@ class Messenger:
             **kwargs,
         )
 
-    def list_to_str(self, list: list) -> str:
+    def list_to_str(self, list: list[Any]) -> str:
         """Convert a list to a formatted string with indentation."""
-        list_string = "\n".join(self.indent_str * self.n_indent + line for line in list)
+        list_string = "\n".join(
+            self.indent_str * self.n_indent + str(line) for line in list
+        )
         return list_string
 
-    def dict_to_str(self, dictionary: dict) -> str:
+    def dict_to_str(self, dictionary: dict | np.ndarray) -> str:
         """Convert a dictionary or list to a formatted string with indentation."""
         json_string = json.dumps(dictionary, indent=4, cls=JsonEncoderExt)
         indented_json = "\n".join(
@@ -336,7 +414,7 @@ class Messenger:
         )
         return indented_json
 
-    def pd_to_str(self, obj: pd.DataFrame) -> str:
+    def pd_to_str(self, obj: pd.DataFrame | pd.Series) -> str:
         """Convert a DataFrame to a formatted string with indentation."""
         obj_string = obj.to_string()
         indented_obj = "\n".join(
@@ -409,6 +487,7 @@ def seconds_to_hms(seconds: int) -> str:
     ---------
     seconds: int
         The number of seconds to convert.
+
     Returns
     -------
         str: The time in hh:mm:ss format
@@ -426,6 +505,7 @@ def find_consecutive_ones(binary_vector: np.ndarray) -> tuple[np.ndarray, np.nda
     ---------
     binary_vector: np.ndarray
         A binary vector (1D array of 0s and 1s).
+
     Returns
     -------
         tuple[np.ndarray, np.ndarray]: (start, end) indices for each sequence of ones.
