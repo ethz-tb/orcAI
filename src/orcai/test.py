@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import keras
 import numpy as np
@@ -20,7 +21,7 @@ from orcai.io import load_dataset, load_orcai_model
 tf.get_logger().setLevel(40)  # suppress tensorflow logging (ERROR and worse only)
 
 
-def _stack_batch(batch: list[np.ndarray]) -> np.ndarray:
+def _stack_batch(batch: Any) -> np.ndarray:
     """Stack a batch of label matrices."""
     stacked = np.vstack(batch).astype(int)
     return stacked

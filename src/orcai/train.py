@@ -37,8 +37,8 @@ def _count_params(trainable_weights: list) -> int:
 def train(
     data_dir: Path | str,
     output_dir: Path | str,
-    orcai_parameter: (Path | str) | dict = files("orcai.defaults").joinpath(
-        "default_orcai_parameter.json"
+    orcai_parameter: (Path | str) | dict = str(
+        files("orcai.defaults").joinpath("default_orcai_parameter.json")
     ),
     compression_type: str | None = "GZIP",
     load_model: bool = False,

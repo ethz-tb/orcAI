@@ -305,7 +305,7 @@ def load_dataset(
     return dataset
 
 
-def write_vector_to_json(vector: list, filename: Path | str) -> None:
+def write_vector_to_json(vector: list | np.ndarray, filename: Path | str) -> None:
     """Write out equally spaced vector in short form with min, max and length
 
     Parameter
@@ -343,8 +343,8 @@ def generate_times_from_spectrogram(filename: Path | str) -> np.ndarray:
     return np.linspace(dictionary["min"], dictionary["max"], dictionary["length"])
 
 
-def read_json(filename: Path | str) -> dict:
-    """Read a JSON file into a dictionary
+def read_json(filename: Path | str) -> Any:
+    """Read a JSON file
 
     Parameter
     ----------
@@ -353,28 +353,31 @@ def read_json(filename: Path | str) -> dict:
 
     Returns
     -------
-    dict
-        The dictionary containing the JSON data.
+    data: dict | list
+        The data read from the JSON file.
     """
+
     with open(filename, "r") as file:
-        dictionary = json.load(file)
-    return dictionary
+        data = json.load(file)
+    return data
 
 
-def write_json(dictionary, filename) -> None:
-    """write dictionary into json file
+def write_json(
+    data: Any, filename: int | str | bytes | PathLike[str] | PathLike[bytes]
+) -> None:
+    """write data into json file
     Parameter
     ----------
-    dictionary : dict
+    data : Any
         The dictionary to write to the JSON file.
-    filename : str
+    filename : int | str | bytes | PathLike[str] | PathLike[bytes]
         The name of the JSON file to write to.
 
     Returns
     -------
     None
     """
-    json_string = json.dumps(dictionary, indent=4, cls=JsonEncoderExt)
+    json_string = json.dumps(data, indent=4, cls=JsonEncoderExt)
     with open(filename, "w") as file:
         file.write(json_string)
     return

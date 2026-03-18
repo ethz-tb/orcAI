@@ -55,7 +55,9 @@ ClickFilePathW = click.Path(
 )
 
 INCLUDED_MODELS = [
-    file.stem for file in files("orcai.models").iterdir() if file.stem != ".DS_Store"
+    Path(str(file)).stem
+    for file in files("orcai.models").iterdir()
+    if Path(str(file)).stem != ".DS_Store"
 ]
 DEFAULT_MODEL = "orcai-isl-v1"
 
@@ -105,7 +107,7 @@ def cli():
     "-c",
     type=int,
     default=1,
-    show_default=1,
+    show_default="1",
     help="Channel to use for prediction if running predictions for a single file. If a csv is given, channel is taken from the csv.",
 )
 @click.option(
@@ -313,7 +315,7 @@ def cli_init_project(**kwargs):
     "-dc",
     type=int,
     default=1,
-    show_default=1,
+    show_default="1",
     help="Default channel number for the recordings.",
 )
 @click.option(

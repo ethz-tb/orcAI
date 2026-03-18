@@ -131,7 +131,7 @@ def _make_snippet_table(
                 index_t_start = np.searchsorted(times, t_start, side="left") - 1
                 index_t_stop = index_t_start + n_spectrogram_snippet_steps
                 label_chunk = label_filepointer[index_t_start:index_t_stop, :]
-                label_duration_snippet = label_chunk.sum(axis=0) * delta_t
+                label_duration_snippet = label_chunk.sum(axis=0) * delta_t  # ty:ignore[unresolved-attribute]
                 label_duration_snippet[label_duration_snippet < 0] = np.nan
                 snippet_table_raw += [
                     list(
@@ -195,9 +195,9 @@ def _compute_snippet_stats(
 def create_snippet_table(
     recording_table_path: Path | str,
     recording_data_dir: Path | str,
-    output_dir: Path | str = None,
-    orcai_parameter: dict | (Path | str) = files("orcai.defaults").joinpath(
-        "default_orcai_parameter.json"
+    output_dir: Path | str | None = None,
+    orcai_parameter: dict | (Path | str) = str(
+        files("orcai.defaults").joinpath("default_orcai_parameter.json")
     ),
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -210,7 +210,7 @@ def create_snippet_table(
         Path to the recording table
     recording_data_dir : (Path | str)
         Path to the recording data directory
-    output_dir : (Path | str)
+    output_dir : (Path | str) | None
         Path to the output directory. If None the output_dir is set to "tvt_data" next to the recording_table_path
     orcai_parameter : dict | (Path | str)
         Dict containing OrcAI parameter or path to json containing the same, by default files("orcai.defaults").joinpath("default_orcai_parameter.json")
@@ -389,8 +389,8 @@ def _filter_snippet_table(
 def create_tvt_snippet_tables(
     output_dir: Path | str,
     snippet_table: (Path | str) | pd.DataFrame | None = None,
-    orcai_parameter: Path | str = files("orcai.defaults").joinpath(
-        "default_orcai_parameter.json"
+    orcai_parameter: Path | str = str(
+        files("orcai.defaults").joinpath("default_orcai_parameter.json")
     ),
     create_unfiltered_test_snippets: bool = False,
     n_unfiltered_test_snippets: int | None = None,
@@ -615,8 +615,8 @@ def _get_call_weights(
 
 def create_tvt_data(
     tvt_dir: Path | str,
-    orcai_parameter: dict | (Path | str) | Any = files("orcai.defaults").joinpath(
-        "default_orcai_parameter.json"
+    orcai_parameter: dict | Path | str = str(
+        files("orcai.defaults").joinpath("default_orcai_parameter.json")
     ),
     overwrite: bool = False,
     compression_type: str = "GZIP",

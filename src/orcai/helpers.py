@@ -48,7 +48,7 @@ def init_project(
         new_file_path = project_dir.joinpath(file.name.replace("default", project_name))
         msgr.info(f"Creating {new_file_path.name}")
         shutil.copy(
-            file,
+            Path(str(file)),
             new_file_path,
         )
 
@@ -98,7 +98,7 @@ def create_recording_table(
     orcai_parameter: Path | str | None = None,
     update_table: Path | str | None = None,
     update_paths: bool = True,
-    exclude_patterns: Path | str | list[str] | None = None,
+    exclude_patterns: Path | str | list | None = None,
     remove_duplicate_filenames: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -157,7 +157,7 @@ def create_recording_table(
     annotation_files = list(Path(base_dir_annotation).glob("**/*.txt"))
 
     if exclude_patterns is not None:
-        if isinstance(exclude_patterns, (Path | str)):
+        if isinstance(exclude_patterns, Path | str):
             exclude_patterns = read_json(exclude_patterns)
         msgr.part(f"Filtering {len(wav_files)} wav files...")
         wav_files = filter_filepaths(wav_files, exclude_patterns, msgr=msgr)

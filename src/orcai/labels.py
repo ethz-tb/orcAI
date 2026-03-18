@@ -74,7 +74,7 @@ def _convert_annotation(
         call_equivalences_keys = set(call_equivalences.keys())
         labels_not_in_equivalences = all_orig_labels.difference(call_equivalences_keys)
         if len(labels_not_in_equivalences) > 0:
-            msgr.info("labels not in call equivalences:", labels_not_in_equivalences)
+            msgr.info(f"labels not in call equivalences: {labels_not_in_equivalences}")
 
     annotations = annotations[["start", "stop", "label"]]
     spectrogram_dir = recording_data_dir.joinpath(recording, "spectrogram")

@@ -90,10 +90,10 @@ def preprocess_spectrogram(
 
 
 def make_spectrogram(
-    wav_file_path: Path | str,
+    wav_file_path: Path,
     channel: int = 1,
-    orcai_parameter: (Path | str) | dict = files("orcai.defaults").joinpath(
-        "default_orcai_parameter.json"
+    orcai_parameter: (Path | str) | dict = str(
+        files("orcai.defaults").joinpath("default_orcai_parameter.json")
     ),
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -229,8 +229,8 @@ def create_spectrograms(
     recording_table_path: Path | str,
     output_dir: Path | str,
     base_dir_recording: Path | str | None = None,
-    orcai_parameter: Path | str | None = files("orcai.defaults").joinpath(
-        "default_orcai_parameter.json"
+    orcai_parameter: Path | str | dict = str(
+        files("orcai.defaults").joinpath("default_orcai_parameter.json")
     ),
     include_not_annotated: bool = False,
     include_no_possible_annotations: bool = False,
@@ -249,7 +249,7 @@ def create_spectrograms(
         Output directory for the spectrograms. Spectograms are stored in subdirectories named '<recording>/spectrogram'
     base_dir_recording : Path
         Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.
-    orcai_parameter : (Path | str) | dict
+    orcai_parameter : Path | str | dict
         Path to the orcai parameter file or a dictionary with parameter.
     include_not_annotated: bool
         Include recordings without annotations.

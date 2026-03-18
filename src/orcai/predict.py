@@ -76,8 +76,8 @@ def _check_duration(
 def filter_predictions(
     predicted_labels: pd.DataFrame,
     delta_t: float,
-    call_duration_limits: (Path | str) | dict = files("orcai.defaults").joinpath(
-        "default_call_duration_limits.json"
+    call_duration_limits: (Path | str) | dict = str(
+        files("orcai.defaults").joinpath("default_call_duration_limits.json")
     ),
     label_suffix: str | None = "*",
     verbosity: int = 2,
@@ -173,8 +173,8 @@ def filter_predictions_file(
     predicted_labels_path: Path | str,
     output_file: Path | str = "default",
     overwrite: bool = False,
-    call_duration_limits: (Path | str) | dict = files("orcai.defaults").joinpath(
-        "default_call_duration_limits.json"
+    call_duration_limits: (Path | str) | dict = str(
+        files("orcai.defaults").joinpath("default_call_duration_limits.json")
     ),
     label_suffix: str = "*",
     columns: list[str] = ["start", "stop", "label", "mean_p", "label_source"],
@@ -729,7 +729,7 @@ def predict(
     recording_path: str | Path,
     channel: int = 1,
     threshold: float = 0.5,
-    model_dir: str | Path = files("orcai.models").joinpath("orcai-v1"),
+    model_dir: str | Path = str(files("orcai.models").joinpath("orcai-v1")),
     output_path: str | Path = "default",
     overwrite: bool = False,
     save_probabilities: bool = False,
