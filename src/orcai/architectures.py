@@ -256,7 +256,7 @@ class MaskedBinaryCrossentropy(keras.losses.Loss):
         self.mask_value = mask_value
         self.from_logits = from_logits
         self.loss_fn = keras.losses.BinaryCrossentropy(
-            from_logits=from_logits, reduction=tf.keras.losses.Reduction.NONE
+            from_logits=from_logits, reduction=None
         )
 
     def call(self, y_true, y_pred):
