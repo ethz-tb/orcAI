@@ -44,7 +44,7 @@ def emoji_fallback(emoji: str, emoji_fallback: str, ascii_fallback: str = "") ->
             return ascii_fallback  # no emoji supported in older windows consoles
 
     if sys.platform == "darwin":
-        if Version(mac_ver()[0]) < Version("26.3"):
+        if Version(mac_ver()[0]) < Version("26.4"):
             return emojize(emoji, version=16.0, handle_version="emoji_fallback")
 
     if "�" not in emoji:  # check if the emoji can be rendered
