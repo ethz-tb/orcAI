@@ -2,10 +2,13 @@ import json
 import os
 import sys
 import time
+from platform import mac_ver
+from packaging.version import Version
 from datetime import datetime, timedelta
 from importlib.metadata import version
 from pathlib import Path
 from typing import IO, Any, TypeAlias
+from emoji import emojize
 
 import click
 import numpy as np
@@ -40,7 +43,11 @@ def emoji_fallback(emoji: str, emoji_fallback: str, ascii_fallback: str = "") ->
         if "WT_SESSION" not in os.environ or "TERM_PROGRAM" not in os.environ:
             return ascii_fallback  # no emoji supported in older windows consoles
 
-    if "�" not in emoji:
+    if sys.platform == "darwin":
+        if Version(mac_ver()[0]) < Version("26.3"):
+            return emojize(emoji, version=16.0, handle_version="emoji_fallback")
+
+    if "�" not in emoji:  # check if the emoji can be rendered
         return emoji
     else:
         return emoji_fallback
