@@ -2,18 +2,17 @@ import json
 import os
 import sys
 import time
-from platform import mac_ver
-from packaging.version import Version
 from datetime import datetime, timedelta
 from importlib.metadata import version
 from pathlib import Path
+from platform import mac_ver
 from typing import IO, Any, TypeAlias
-from emoji import emojize
 
 import click
 import numpy as np
 import pandas as pd
 from humanize import naturalsize
+from packaging.version import Version
 
 from orcai.json_encoder import JsonEncoderExt
 
@@ -35,22 +34,16 @@ Message: TypeAlias = (
     str | dict[Any, Any] | list[str] | pd.DataFrame | pd.Series | np.ndarray
 )
 
+ORCAI_SYMBOL = "🫍"  # default symbol for orcai, will be overridden on platforms that don't support it
 
-def emoji_fallback(emoji: str, emoji_fallback: str, ascii_fallback: str = "") -> str:
+if sys.platform == "win32":
+    # Modern Windows Terminal supports emoji, older consoles don't
+    if "WT_SESSION" not in os.environ or "TERM_PROGRAM" not in os.environ:
+        ORCAI_SYMBOL = "[orcai]"  # no emoji supported in older windows consoles
 
-    if sys.platform == "win32":
-        # Modern Windows Terminal supports emoji, older consoles don't
-        if "WT_SESSION" not in os.environ or "TERM_PROGRAM" not in os.environ:
-            return ascii_fallback  # no emoji supported in older windows consoles
-
-    if sys.platform == "darwin":
-        if Version(mac_ver()[0]) < Version("26.4"):
-            return emojize(emoji, version=16.0, handle_version="emoji_fallback")
-
-    if "�" not in emoji:  # check if the emoji can be rendered
-        return emoji
-    else:
-        return emoji_fallback
+if sys.platform == "darwin":
+    if Version(mac_ver()[0]) < Version("26.4"):
+        ORCAI_SYMBOL = "🐳"  # orca support added in 26.4
 
 
 class Messenger:
@@ -174,7 +167,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend=emoji_fallback("🫍  ", "🐳  ", "[orcai]  "),
+            prepend=ORCAI_SYMBOL + "  ",
             severity=severity,
             bold=True,
             **kwargs,
@@ -213,7 +206,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend=emoji_fallback("🫍  ", "🐳  ", "[orcai]  "),
+            prepend=ORCAI_SYMBOL + "  ",
             severity=severity,
             bold=True,
             **kwargs,
@@ -250,7 +243,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend=emoji_fallback("‼️  ", "‼️  ", "!!  "),
+            prepend="‼️  ",
             severity=severity,
             fg="yellow",
             **kwargs,
@@ -269,7 +262,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend=emoji_fallback("❌ ", "❌ ", "× "),
+            prepend="❌ ",
             severity=severity,
             fg="red",
             **kwargs,

@@ -35,7 +35,7 @@ dependencies = [
     "humanize>=4, <5",
     "tqdm>=4.42.0, <5",
     "numba>=0.61.2, <1",
-    "emoji>=2.15.0",
+    "packaging>=26.0",
 ]
 
 [project.urls]
