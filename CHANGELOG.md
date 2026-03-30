@@ -4,7 +4,7 @@
 
 ### Changes
 
-- **Use the correct cetacean!! 🫍!!** in CLI messages on platforms with support for Emoji Version 17.0. Best-effort checking for support is done in `orcai.auxiliary.emoji_fallback`
+- **Use the correct cetacean!! 🫍!!** in CLI messages on platforms with support for Emoji Version 17.0. Only a bit of checking is done to show only when supported.
 
 
 ## [2.2.0]
