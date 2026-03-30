@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0] - the 🫍 update
+
+### Changes
+
+- **Use the correct cetacean!! 🫍!!** in CLI messages on platforms with support for Emoji Version 17.0. Best-effort checking for support is done in `orcai.auxiliary.emoji_fallback`
+
+
 ## [2.2.0]
 
 ### Changes
@@ -721,3 +728,4 @@
 [2.1.4]:https://github.com/ethz-tb/orcAI/releases/tag/v2.1.4
 [2.1.5]:https://github.com/ethz-tb/orcAI/releases/tag/v2.1.5
 [2.2.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.2.0
+[2.3.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.3.0
