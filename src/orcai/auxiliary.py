@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from datetime import datetime, timedelta
 from importlib.metadata import version
@@ -30,6 +31,19 @@ MASK_VALUE = -1.0
 Message: TypeAlias = (
     str | dict[Any, Any] | list[str] | pd.DataFrame | pd.Series | np.ndarray
 )
+
+
+def emoji_fallback(emoji: str, emoji_fallback: str, ascii_fallback: str = "") -> str:
+
+    if sys.platform == "win32":
+        # Modern Windows Terminal supports emoji, older consoles don't
+        if "WT_SESSION" not in os.environ or "TERM_PROGRAM" not in os.environ:
+            return ascii_fallback  # no emoji supported in older windows consoles
+
+    if "�" not in emoji:
+        return emoji
+    else:
+        return emoji_fallback
 
 
 class Messenger:
@@ -153,7 +167,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend="🐳 ",
+            prepend=emoji_fallback("🫍  ", "🐋  ", "[orcai]  "),
             severity=severity,
             bold=True,
             **kwargs,
@@ -192,7 +206,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend="🐳 ",
+            prepend=emoji_fallback("🫍  ", "🐳  ", "[orcai]  "),
             severity=severity,
             bold=True,
             **kwargs,
@@ -229,7 +243,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend="‼️ ",
+            prepend=emoji_fallback("‼️  ", "‼️  ", "!!  "),
             severity=severity,
             fg="yellow",
             **kwargs,
@@ -248,7 +262,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend="❌ ",
+            prepend=emoji_fallback("❌ ", "❌ ", "× "),
             severity=severity,
             fg="red",
             **kwargs,
