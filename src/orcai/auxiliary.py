@@ -167,7 +167,7 @@ class Messenger:
             message,
             indent,
             set_indent,
-            prepend=emoji_fallback("🫍  ", "🐋  ", "[orcai]  "),
+            prepend=emoji_fallback("🫍  ", "🐳  ", "[orcai]  "),
             severity=severity,
             bold=True,
             **kwargs,
