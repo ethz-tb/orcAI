@@ -746,7 +746,7 @@ def cli_train(**kwargs):
     help="Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug",
 )
 def cli_test(**kwargs):
-    """Test CLI function"""
+    """Test models CLI function"""
     kwargs["msgr"] = Messenger(
         verbosity=kwargs["verbosity"],
         title=f"Testing model {kwargs['model_dir'].name}",
@@ -754,7 +754,7 @@ def cli_test(**kwargs):
     if kwargs["compression_type"] == "None":
         kwargs["compression_type"] = None
 
-    from orcai.test import test_model
+    from orcai.test_models import test_model
 
     test_model(**kwargs)
 
