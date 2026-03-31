@@ -9,7 +9,6 @@
 - It uses ruff as a formatter and linter.
 - It uses ty for type checking
 - It uses pytest for the testing framework
-- it uses pre-commit to manage git hooks
 
 ## Package Management Commands
 
@@ -29,7 +28,7 @@ Use these commands:
 ## Running Python Code
 
 - Run a Python script with `uv run <script-name>.py`
-- Run Python tools with `uv run <tool>` (e.g. `uv run pytest`, `uv run ruff`, `uv run pre-commit`)
+- Run Python tools with `uv run <tool>` (e.g. `uv run pytest`, `uv run ruff`)
 - Launch a Python REPL with `uv run python`
 
 ## Testing

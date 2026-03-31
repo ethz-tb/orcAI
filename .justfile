@@ -9,7 +9,3 @@ build:
 
 test:
     uv run pytest
-
-dev-setup:
-    uv sync --dev
-    uv run pre-commit install
