@@ -3,6 +3,9 @@
 
 # Development
 dev/
+.pytest_cache/
+.ruff_cache/
+.venv/
 
 # Python
 __pycache__/
