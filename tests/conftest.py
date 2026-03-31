@@ -251,7 +251,7 @@ def snippet_table_fixture():
     import zarr
     import numpy as np
 
-    spec_zarr = zarr.open(
+    spec_zarr = zarr.open_array(
         spec_dir / "spectrogram.zarr",
         mode="w",
         shape=(256, 64),
@@ -260,7 +260,7 @@ def snippet_table_fixture():
     )
     spec_zarr[:] = np.random.randn(256, 64).astype("float32")
 
-    labels_zarr = zarr.open(
+    labels_zarr = zarr.open_array(
         labels_dir / "labels.zarr",
         mode="w",
         shape=(256, 7),
@@ -297,3 +297,72 @@ def dataset_shape_fixture():
         "spectrogram": [128, 64, 1],
         "labels": [64, 7],
     }
+
+
+# ---------------------------------------------------------------------------
+# Labels module fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="function")
+def label_calls():
+    """Standard list of label calls for labels module tests."""
+    return ["BR", "BUZZ", "WHISTLE"]
+
+
+@pytest.fixture(scope="function")
+def identity_eq(label_calls):
+    """Identity call equivalences mapping each label name to itself.
+
+    Required because _convert_annotation only creates the 'label' column
+    when call_equivalences is provided.
+    """
+    return {lbl: lbl for lbl in label_calls}
+
+
+@pytest.fixture(scope="function")
+def labels_recording_fixture(tmp_path, label_calls):
+    """Recording with spectrogram times.json and a standard annotation file.
+
+    Creates:
+    - tmp_path/<recording>/spectrogram/times.json  (0–10 s, 100 steps)
+    - tmp_path/annotations/<recording>.txt          (label_calls[0] at 1–3 s,
+                                                     label_calls[1] at 6–8 s)
+
+    Returns a dict with keys: recording, recording_data_dir, annotation_file, ann_dir.
+    """
+    recording = "test_rec"
+    spec_dir = tmp_path / recording / "spectrogram"
+    spec_dir.mkdir(parents=True)
+    (spec_dir / "times.json").write_text(
+        json.dumps({"min": 0.0, "max": 10.0, "length": 100})
+    )
+    ann_dir = tmp_path / "annotations"
+    ann_dir.mkdir()
+    ann_file = ann_dir / f"{recording}.txt"
+    ann_file.write_text(f"1.0\t3.0\t{label_calls[0]}\n6.0\t8.0\t{label_calls[1]}")
+    return {
+        "recording": recording,
+        "recording_data_dir": tmp_path,
+        "annotation_file": ann_file,
+        "ann_dir": ann_dir,
+    }
+
+
+@pytest.fixture(scope="function")
+def recording_table_csv(tmp_path, label_calls, labels_recording_fixture):
+    """Recording table CSV with a single recording, all labels set to True."""
+    import pandas as pd
+
+    rec = labels_recording_fixture["recording"]
+    ann_dir = labels_recording_fixture["ann_dir"]
+    row: dict = {
+        "recording": rec,
+        "base_dir_annotation": str(ann_dir),
+        "rel_annotation_path": f"{rec}.txt",
+    }
+    for lbl in label_calls:
+        row[lbl] = True
+    csv_path = tmp_path / "recording_table.csv"
+    pd.DataFrame([row]).to_csv(csv_path, index=False)
+    return csv_path
