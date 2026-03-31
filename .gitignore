@@ -2,11 +2,7 @@
 .vscode
 
 # Development
-venv/
-orcai-dev/
 dev/
-Results/
-AnalyseData/
 
 # Python
 __pycache__/
@@ -15,7 +11,6 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-.justfile
 
 # macOS
 .DS_Store
