@@ -3,11 +3,14 @@
 Shared pytest fixtures for OrcAI tests including sample inputs, labels, and model parameters.
 
 Created using: claude-haiku-4.5 on 2026-03-31
+Updated using: claude-sonnet-4-6 on 2026-03-31
 """
 
 import io
 import json
 
+import numpy as np
+import pandas as pd
 import pytest
 import tensorflow as tf
 
@@ -230,7 +233,6 @@ def recordings_structure(tmp_path):
 @pytest.fixture(scope="function")
 def snippet_table_fixture():
     """Create a sample DataFrame with snippet table data."""
-    import pandas as pd
     import tempfile
     from pathlib import Path
 
@@ -249,7 +251,6 @@ def snippet_table_fixture():
 
     # Create zarr arrays
     import zarr
-    import numpy as np
 
     spec_zarr = zarr.open_array(
         spec_dir / "spectrogram.zarr",
@@ -352,8 +353,6 @@ def labels_recording_fixture(tmp_path, label_calls):
 @pytest.fixture(scope="function")
 def recording_table_csv(tmp_path, label_calls, labels_recording_fixture):
     """Recording table CSV with a single recording, all labels set to True."""
-    import pandas as pd
-
     rec = labels_recording_fixture["recording"]
     ann_dir = labels_recording_fixture["ann_dir"]
     row: dict = {
@@ -366,3 +365,117 @@ def recording_table_csv(tmp_path, label_calls, labels_recording_fixture):
     csv_path = tmp_path / "recording_table.csv"
     pd.DataFrame([row]).to_csv(csv_path, index=False)
     return csv_path
+
+
+# ---------------------------------------------------------------------------
+# Spectrogram module fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="function")
+def spectrogram_parameter():
+    """Minimal spectrogram parameters for fast unit tests (low sample rate)."""
+    return {
+        "sampling_rate": 8000,
+        "nfft": 512,
+        "n_overlap": 256,
+        "freq_range": [200, 3000],
+        "quantiles": [0.01, 0.99],
+    }
+
+
+@pytest.fixture(scope="function")
+def spectrogram_frequencies(spectrogram_parameter):
+    """Frequency axis matching spectrogram_parameter (via librosa)."""
+    from librosa import fft_frequencies
+
+    return fft_frequencies(
+        sr=spectrogram_parameter["sampling_rate"],
+        n_fft=spectrogram_parameter["nfft"],
+    )
+
+
+@pytest.fixture(scope="function")
+def synthetic_spectrogram_raw(spectrogram_parameter):
+    """Synthetic raw dB spectrogram (freq x time) matching spectrogram_parameter."""
+    n_freq = spectrogram_parameter["nfft"] // 2 + 1
+    rng = np.random.default_rng(0)
+    return rng.standard_normal((n_freq, 50)).astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# Predict module fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="function")
+def predicted_labels_df():
+    """Sample DataFrame of predicted labels with '*' suffix."""
+    return pd.DataFrame(
+        {
+            "start": [0, 10, 20, 50],
+            "stop": [5, 15, 25, 55],
+            "label": ["BR*", "BUZZ*", "BR*", "WHISTLE*"],
+            "mean_p": [0.8, 0.9, 0.7, 0.6],
+            "label_source": ["test-model"] * 4,
+        }
+    )
+
+
+@pytest.fixture(scope="function")
+def call_duration_limits_dict():
+    """Call duration limits dict (seconds) keyed by label name (no suffix)."""
+    return {
+        "BR": [2.0, 8.0],
+        "BUZZ": [3.0, 20.0],
+        "WHISTLE": [1.0, 10.0],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Snippets module fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="function")
+def snippet_table_df(label_calls):
+    """Minimal snippet table for _compute_snippet_stats / _filter_snippet_table tests."""
+    rows = []
+    for i, data_type in enumerate(["train", "val", "test"] * 4):
+        row: dict = {
+            "recording": f"rec{i}",
+            "recording_data_dir": f"/data/rec{i}",
+            "data_type": data_type,
+            "row_start": i * 100,
+            "row_stop": i * 100 + 100,
+        }
+        for j, lbl in enumerate(label_calls):
+            row[lbl] = float((i + j) % 3)  # mix of 0.0, 1.0, 2.0 values
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+@pytest.fixture(scope="function")
+def orcai_parameter_snippets(label_calls):
+    """orcai_parameter with model and snippets sections for snippet module tests."""
+    return {
+        "name": "test",
+        "seed": 42,
+        "calls": label_calls,
+        "model": {
+            "filters": [32, 64],
+            "n_batch_train": 2,
+            "n_batch_val": 1,
+            "n_batch_test": 1,
+            "batch_size": 4,
+        },
+        "snippets": {
+            "segment_duration": 100,  # large enough so val/test slices fit snippet_duration
+            "snippets_per_sec": 0.2,
+            "snippet_duration": 4,
+            "fraction_removal": 0.5,
+            "train": 0.8,
+            "val": 0.1,
+            "test": 0.1,
+        },
+    }
