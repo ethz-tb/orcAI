@@ -3,7 +3,8 @@ repos:
     hooks:
       - id: just-lint
         name: just lint
-        entry: just lint
+        entry: just
+        args: [lint]
         language: system
         stages: [pre-commit]
         types: [file, python]
