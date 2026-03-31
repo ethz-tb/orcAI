@@ -8,11 +8,15 @@ Updated using: claude-sonnet-4-6 on 2026-03-31
 
 import io
 import json
+import tempfile
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 import tensorflow as tf
+import zarr
+from librosa import fft_frequencies
 
 from orcai.auxiliary import Messenger
 
@@ -233,9 +237,6 @@ def recordings_structure(tmp_path):
 @pytest.fixture(scope="function")
 def snippet_table_fixture():
     """Create a sample DataFrame with snippet table data."""
-    import tempfile
-    from pathlib import Path
-
     # Create temporary zarr structure
     tmp_dir = tempfile.mkdtemp()
     base_path = Path(tmp_dir)
@@ -250,8 +251,6 @@ def snippet_table_fixture():
     labels_dir.mkdir()
 
     # Create zarr arrays
-    import zarr
-
     spec_zarr = zarr.open_array(
         spec_dir / "spectrogram.zarr",
         mode="w",
@@ -290,14 +289,6 @@ def annotation_file_fixture(tmp_path):
         f.write("4.5\t5.5\tWHISTLE\n")
     return annotation_path
 
-
-@pytest.fixture(scope="function")
-def dataset_shape_fixture():
-    """Standard dataset shape for testing."""
-    return {
-        "spectrogram": [128, 64, 1],
-        "labels": [64, 7],
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -387,8 +378,6 @@ def spectrogram_parameter():
 @pytest.fixture(scope="function")
 def spectrogram_frequencies(spectrogram_parameter):
     """Frequency axis matching spectrogram_parameter (via librosa)."""
-    from librosa import fft_frequencies
-
     return fft_frequencies(
         sr=spectrogram_parameter["sampling_rate"],
         n_fft=spectrogram_parameter["nfft"],
