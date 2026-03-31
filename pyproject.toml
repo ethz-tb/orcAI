@@ -48,14 +48,26 @@ orcai = "orcai.cli:cli"
 "orcai.defaults" = ["*.json"]
 "orcai.models" = ["*.*", "*/*.*"]
 
-[tool.pytest]
+[tool.pytest.ini_options]
 minversion = "9.0"
 testpaths = ["tests"]
+addopts = "--cov=orcai --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/orcai"]
+omit = ["*/defaults/*", "*/models/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
 
 [dependency-groups]
 dev = [
     "ipython>=9.2.0",
     "pytest>=9.0.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.12.8",
     "ty>=0.0.23",
 ]
