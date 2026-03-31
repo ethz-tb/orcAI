@@ -87,3 +87,5 @@ Created using: claude-haiku-4.5 on 2026-03-30
 ```
 
 if you later edit the file, add or update a second line at the end like `Created using: claude-haiku-4.5 on 2026-03-30`
+
+after editing a file always run `just ruffle` in the file and fix errors
