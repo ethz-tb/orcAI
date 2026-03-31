@@ -481,7 +481,7 @@ def predict_wav(
     label_suffix: str | None = "*",
     msgr: Messenger = Messenger(verbosity=0),
     progressbar: tqdm | None = None,
-) -> tuple[pd.DataFrame, np.ndarray, float]:
+) -> tuple[pd.DataFrame, np.ndarray, np.float64]:
     """
     Predicts calls in a single wav file.
 
@@ -729,7 +729,7 @@ def predict(
     recording_path: str | Path,
     channel: int = 1,
     threshold: float = 0.5,
-    model_dir: str | Path = str(files("orcai.models").joinpath("orcai-v1")),
+    model_dir: str | Path = str(files("orcai.models").joinpath("orcai-isl-v1")),
     output_path: str | Path = "default",
     overwrite: bool = False,
     save_probabilities: bool = False,

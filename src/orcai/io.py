@@ -556,7 +556,7 @@ def save_predictions(
 def save_prediction_probabilities(
     aggregated_predictions: np.ndarray,
     orcai_parameter: dict,
-    delta_t: float,
+    delta_t: np.float64,
     output_path: Path,
     msgr: Messenger = Messenger(verbosity=0),
 ) -> None:
