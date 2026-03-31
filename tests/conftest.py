@@ -5,8 +5,13 @@ Shared pytest fixtures for OrcAI tests including sample inputs, labels, and mode
 Created using: claude-haiku-4.5 on 2026-03-31
 """
 
+import io
+import json
+
 import pytest
 import tensorflow as tf
+
+from orcai.auxiliary import Messenger
 
 
 @pytest.fixture(scope="session")
@@ -102,3 +107,121 @@ def sample_labels_with_mask(num_labels):
     mask_indices = tf.tile(mask_indices, (1, 1, num_labels))
     labels = tf.where(mask_indices, tf.constant(-1.0), labels)
     return labels
+
+
+@pytest.fixture(scope="function")
+def test_messenger():
+    """Create a test Messenger with string output."""
+    output = io.StringIO()
+    return Messenger(verbosity=2, file=output), output
+
+
+@pytest.fixture(scope="function")
+def hps_parameter_simple():
+    """Simple hyperparameter search parameter for testing."""
+    return {
+        "filters": {"f1": [32, 64], "f2": [64, 128]},
+        "kernel_size": [3, 5],
+        "dropout_rate": [0.2, 0.3],
+        "batch_size": [16, 32],
+        "tuner": {"max_epochs": 2, "early_stopping_patience": 1},
+    }
+
+
+@pytest.fixture(scope="function")
+def hps_parameter_simple_with_lstm(hps_parameter_simple):
+    """Hyperparameter search parameter with LSTM units for testing."""
+    param = hps_parameter_simple.copy()
+    param["lstm_units"] = [128, 256]
+    return param
+
+
+@pytest.fixture(scope="function")
+def hps_parameter_minimal():
+    """Minimal hyperparameter search parameter for testing."""
+    return {
+        "filters": {"f1": [32]},
+        "kernel_size": [3],
+        "dropout_rate": [0.3],
+        "batch_size": [32],
+        "tuner": {"max_epochs": 1, "early_stopping_patience": 1},
+    }
+
+
+@pytest.fixture(scope="function")
+def orcai_parameter_hpsearch():
+    """OrcAI parameter for hyperparameter search testing."""
+    return {
+        "name": "test",
+        "seed": 42,
+        "architecture": "ResNet1DConv",
+        "calls": ["BR", "BUZZ"],
+        "model": {
+            "filters": [32],
+            "kernel_size": 3,
+            "dropout_rate": 0.3,
+            "learning_rate": 0.001,
+            "monitor": "val_loss",
+            "batch_size": 32,
+        },
+    }
+
+
+@pytest.fixture(scope="function")
+def orcai_parameter_hpsearch_lstm():
+    """OrcAI parameter for LSTM hyperparameter search testing."""
+    return {
+        "name": "test",
+        "seed": 42,
+        "architecture": "ResNetLSTM",
+        "calls": ["BR"],
+        "model": {
+            "filters": [32],
+            "kernel_size": 3,
+            "dropout_rate": 0.3,
+            "lstm_units": 128,
+            "learning_rate": 0.001,
+            "monitor": "val_loss",
+            "batch_size": 32,
+        },
+    }
+
+
+@pytest.fixture(scope="function")
+def dataset_shapes_fixture(sample_input_shape):
+    """Dataset shapes for hyperparameter search testing."""
+    return {"spectrogram": list(sample_input_shape)}
+
+
+@pytest.fixture(scope="function")
+def data_dir_with_shapes(tmp_path, dataset_shapes_fixture):
+    """Create a temporary data directory with dataset_shapes.json."""
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    with open(data_dir / "dataset_shapes.json", "w") as f:
+        json.dump(dataset_shapes_fixture, f)
+    return data_dir
+
+
+@pytest.fixture(scope="function")
+def recordings_structure(tmp_path):
+    """Create a temporary recordings directory structure with test files."""
+    recording_dir = tmp_path / "recordings"
+    recording_dir.mkdir()
+    (recording_dir / "test1.wav").touch()
+    (recording_dir / "test2.wav").touch()
+
+    subdir = recording_dir / "subdir"
+    subdir.mkdir()
+    (subdir / "test3.wav").touch()
+
+    annotation_dir = tmp_path / "annotations"
+    annotation_dir.mkdir()
+    (annotation_dir / "test1.txt").touch()
+    (annotation_dir / "test2.txt").touch()
+
+    return {
+        "recording_dir": recording_dir,
+        "annotation_dir": annotation_dir,
+        "tmp_path": tmp_path,
+    }
