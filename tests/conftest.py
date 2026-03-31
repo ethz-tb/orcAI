@@ -225,3 +225,75 @@ def recordings_structure(tmp_path):
         "annotation_dir": annotation_dir,
         "tmp_path": tmp_path,
     }
+
+
+@pytest.fixture(scope="function")
+def snippet_table_fixture():
+    """Create a sample DataFrame with snippet table data."""
+    import pandas as pd
+    import tempfile
+    from pathlib import Path
+
+    # Create temporary zarr structure
+    tmp_dir = tempfile.mkdtemp()
+    base_path = Path(tmp_dir)
+
+    # Create a test recording data directory with zarr files
+    recording_dir = base_path / "recording_0"
+    recording_dir.mkdir()
+
+    spec_dir = recording_dir / "spectrogram"
+    spec_dir.mkdir()
+    labels_dir = recording_dir / "labels"
+    labels_dir.mkdir()
+
+    # Create zarr arrays
+    import zarr
+    import numpy as np
+
+    spec_zarr = zarr.open(
+        spec_dir / "spectrogram.zarr",
+        mode="w",
+        shape=(256, 64),
+        chunks=(100, 64),
+        dtype="float32",
+    )
+    spec_zarr[:] = np.random.randn(256, 64).astype("float32")
+
+    labels_zarr = zarr.open(
+        labels_dir / "labels.zarr",
+        mode="w",
+        shape=(256, 7),
+        chunks=(100, 7),
+        dtype="float32",
+    )
+    labels_zarr[:] = np.random.randint(0, 2, (256, 7)).astype("float32")
+
+    # Create snippet table
+    data = {
+        "recording_data_dir": [str(recording_dir), str(recording_dir)],
+        "row_start": [0, 128],
+        "row_stop": [128, 256],
+    }
+
+    return pd.DataFrame(data)
+
+
+@pytest.fixture(scope="function")
+def annotation_file_fixture(tmp_path):
+    """Create a sample annotation file."""
+    annotation_path = tmp_path / "test_annotation.txt"
+    with open(annotation_path, "w") as f:
+        f.write("0.5\t1.5\tBR\n")
+        f.write("2.0\t3.0\tBUZZ\n")
+        f.write("4.5\t5.5\tWHISTLE\n")
+    return annotation_path
+
+
+@pytest.fixture(scope="function")
+def dataset_shape_fixture():
+    """Standard dataset shape for testing."""
+    return {
+        "spectrogram": [128, 64, 1],
+        "labels": [64, 7],
+    }
