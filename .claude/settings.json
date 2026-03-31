@@ -1,0 +1,21 @@
+{
+    "permissions": {
+        "allow": [
+            "Bash(uv build)",
+            "Bash(uv run pytest)",
+            "Bash(uv run ruff check)",
+            "Bash(uv add:*)",
+            "Bash(uv remove:*)",
+            "Bash(uv sync:*)",
+            "Bash(uv run:*)",
+            "Bash(just lint:*)",
+            "Bash(just build:*)",
+            "Bash(just test:*)",
+            "Bash(just dev-setup:*)"
+        ],
+        "deny": [
+            "Bash(rm -rf *)",
+            "Bash(git push --force)"
+        ]
+    }
+}

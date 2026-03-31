@@ -1,4 +1,4 @@
-ruffle files=".":
+lint files=".":
     uv run ruff check {{ files }} --fix
     uv run ruff format {{ files }}
     uv run ty check {{ files }}

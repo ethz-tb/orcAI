@@ -1,91 +1,47 @@
-# CLAUDE.md
+# Project conventions
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+- This is a python 3.11 project
+- it uses type hints and docstring throughout.
+- Avoid flowery language and keep descriptions short and to the point.
+- Files created or edited by Claude AI are always annotated with a line in the docstring stating model identifier used in this session and the date of of creation. If no docstring exists yet, add one with a title and a short description.
+- It uses uv as a package and project manager
+- It uses uv as the build backend
+- It uses ruff as a formatter and linter.
+- It uses ty for type checking
+- It uses pytest for the testing framework
+- it uses pre-commit to manage git hooks
 
-## Commands
+## Package Management Commands
 
-This project uses a just to organise development commands. The dev commands can be found in `.justfile`
+- All Python dependencies **must be installed and synchronized** using uv
+- Never use pip, pip-tools, poetry, or conda directly for dependency management
 
-This project uses `pre-commit` to configure pre-commit hooks.
+Use these commands:
 
-## Architecture
+- Install dependencies: `uv add <package>`
+- Remove dependencies: `uv remove <package>`
+- Sync environment: `uv sync`
 
-OrcAI detects and classifies killer whale vocalizations (7 call types: BR, BUZZ, HERDING, PHS, SS, TAILSLAP, WHISTLE) in audio recordings using a ResNet-CNN + LSTM model.
+## Build commands
 
-### Three subsystems
+- Build package: `uv build`
 
-1. **Data Preparation** — raw `.wav` + Audacity annotation `.txt` files → Zarr spectrograms → Zarr label arrays → TFRecords datasets
-2. **Model Training/Tuning** — hyperparameter search (Keras Tuner), training, evaluation
-3. **Prediction/Inference** — apply trained models to unannotated recordings, filter predictions by call duration
+## Running Python Code
 
-### Data pipeline (CLI commands in order)
+- Run a Python script with `uv run <script-name>.py`
+- Run Python tools with `uv run <tool>` (e.g. `uv run pytest`, `uv run ruff`, `uv run pre-commit`)
+- Launch a Python REPL with `uv run python`
 
+## Testing
 
-create-spectrograms → create-label-arrays → create-snippet-table
-  → create-tvt-snippet-tables → create-tvt-data → train → test
+- pytest settings are defined in pyproject.toml
+- tests are in the tests module
+- Tests use fixtures defined in conftest.py. If necessary, define new fixtures in conftest.py.
+- Run tests: `uv run pytest`
+- Type checking: `uv run ty check`
 
+## Linting and formatting
 
-Prediction uses: `predict` → `filter-predictions`
-
-### Key modules
-
-| Module             | Role                                                                  |
-| ------------------ | --------------------------------------------------------------------- |
-| `cli.py`           | All CLI commands via rich-click                                       |
-| `spectrogram.py`   | `.wav` → power spectrograms (librosa STFT, 48kHz, 0–16kHz)            |
-| `labels.py`        | Annotation files → Zarr label arrays (0=absent, 1=present, -1=masked) |
-| `snippets.py`      | Snippet tables and train/val/test splits                              |
-| `architectures.py` | ResNet-CNN + LSTM (`ResNetLSTM`), custom masked loss/metric layers    |
-| `io.py`            | Zarr/TFRecords I/O, `DataLoader` class, model serialization           |
-| `train.py`         | Training loop with early stopping and LR scheduling                   |
-| `predict.py`       | Inference on new recordings                                           |
-| `test_models.py`   | Confusion matrices, misclassification tables, metrics                 |
-| `hpsearch.py`      | Keras Tuner hyperparameter search                                     |
-| `auxiliary.py`     | `Messenger` (logging), `MASK_VALUE = -1.0`, seed constants            |
-
-### Model architecture
-
-- Input: 4D spectrograms (time × frequency × channels × 1)
-- CNN: Separable Conv2D residual blocks with batch norm + max pooling
-- LSTM: 128 units for temporal context
-- Output: per-timestep binary classification per call type
-- Loss: `MaskedBinaryCrossentropy` — skips frames where label == `MASK_VALUE` (-1.0)
-
-### Data formats
-
-- Spectrograms: Zarr (3D: time × frequency, metadata as JSON)
-- Labels: Zarr (2D: time × call-types)
-- Datasets: GZIP-compressed TFRecords
-- Models: Keras saved format, with `model_shape.json` and `orcai_parameter.json` sidecar files
-
-### Built-in models
-
-Stored in `src/orcai/models/`:
-
-- `orcai-isl-v1` (default): Iceland herring-feeding killer whales
-- `orcai-nor-v1`: Norwegian population (fine-tuned from isl-v1)
-
-Default configs are in `src/orcai/defaults/`.
-
-## General Instructions
-
-When editing or creating a file clearly add a docstring on the first lines with:
-
-- a title
-- a very short description, avoid flowery language.
-- correct LLM model identifier used in this session and the date of edit or creation
-
-here is an example if you create a file:
-
-```python
-"""Tests for orcai.architectures Module
-
-Tests for neural network architectures, custom layers, loss functions, and metrics.
-
-Created using: claude-haiku-4.5 on 2026-03-30
-"""
-```
-
-if you later edit the file, add or update a second line at the end like `Created using: claude-haiku-4.5 on 2026-03-30`
-
-after editing a file always run `just ruffle` in the file and fix errors
+- Run linter and formatter after after done with edits.
+- Lint: `uv run ruff check <files> --fix`
+- Format: `uv run ruff format <files>`
