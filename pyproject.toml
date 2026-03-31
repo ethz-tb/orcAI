@@ -55,6 +55,7 @@ testpaths = ["tests"]
 [dependency-groups]
 dev = [
     "ipython>=9.2.0",
+    "pre-commit>=4.5.1",
     "pytest>=9.0.0",
     "ruff>=0.12.8",
     "ty>=0.0.23",

@@ -4,16 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-```bash
-# Lint, format, and type-check
-just ruffle
+This project uses a just to organise development commands. The dev commands can be found in `.justfile`
 
-# Build package
-just build
-
-# Run tests
-uv run pytest
-```
+This project uses `pre-commit` to configure pre-commit hooks.
 
 ## Architecture
 
