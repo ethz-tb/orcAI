@@ -149,11 +149,10 @@ class TestInitProject:
 
         # Parameter should be merged without error
 
-    def test_init_project_with_custom_messenger(self, tmp_path):
+    def test_init_project_with_custom_messenger(self, tmp_path, test_messenger):
         """Test init_project with custom Messenger."""
         project_dir = tmp_path / "test_project"
-        output = io.StringIO()
-        msgr = Messenger(verbosity=2, file=output)
+        msgr, output = test_messenger
 
         with (
             patch("orcai.helpers.files") as mock_files,
@@ -221,17 +220,11 @@ class TestCreateRecordingTable:
         default_output = recording_dir / "recording_table.csv"
         assert default_output.exists()
 
-    def test_create_recording_table_with_annotations(self, tmp_path):
+    def test_create_recording_table_with_annotations(self, recordings_structure):
         """Test recording table with annotation files."""
-        recording_dir = tmp_path / "recordings"
-        annotation_dir = tmp_path / "annotations"
-        recording_dir.mkdir()
-        annotation_dir.mkdir()
-
-        (recording_dir / "test.wav").touch()
-        (annotation_dir / "test.txt").touch()
-
-        output_path = tmp_path / "table.csv"
+        recording_dir = recordings_structure["recording_dir"]
+        annotation_dir = recordings_structure["annotation_dir"]
+        output_path = recordings_structure["tmp_path"] / "table.csv"
 
         table = create_recording_table(
             recording_dir,
