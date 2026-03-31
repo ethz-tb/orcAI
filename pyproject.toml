@@ -48,10 +48,14 @@ orcai = "orcai.cli:cli"
 "orcai.defaults" = ["*.json"]
 "orcai.models" = ["*.*", "*/*.*"]
 
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests"]
+
 [dependency-groups]
 dev = [
     "ipython>=9.2.0",
-    "pytest>=8.4.1",
+    "pytest>=9.0.0",
     "ruff>=0.12.8",
     "ty>=0.0.23",
 ]
