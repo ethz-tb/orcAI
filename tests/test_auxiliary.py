@@ -23,11 +23,11 @@ from orcai.auxiliary import (
     SEED_ID_LOAD_VAL_DATA,
     SEED_ID_MAKE_SNIPPET_TABLE,
     SEED_ID_UNFILTERED_TEST_DATA,
+    Messenger,
     filter_filepaths,
     find_consecutive_ones,
     resolve_recording_data_dir,
     seconds_to_hms,
-    Messenger,
 )
 
 

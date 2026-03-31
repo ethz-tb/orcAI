@@ -11,12 +11,12 @@ import pytest
 import tensorflow as tf
 
 from orcai.architectures import (
+    ORCAI_ARCHITECTURES,
+    ORCAI_ARCHITECTURES_FN,
     MaskedAUC,
     MaskedBinaryAccuracy,
     MaskedBinaryCrossentropy,
     ReduceFrequencyMean,
-    ORCAI_ARCHITECTURES,
-    ORCAI_ARCHITECTURES_FN,
     build_model,
     res_net_1Dconv_arch,
     res_net_LSTM_arch,
