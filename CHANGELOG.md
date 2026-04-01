@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.0]
+
+### Added
+
+- Automated test of all `orcai` modules. Added using Claude Code (`claude-sonnet-4-6` or `claude-haiku-4.5`) as an exercise for @dcangst.
+  - automated test coverage is 66%. Pure computation functions are well-covered, I/O-heavy and pipeline functions (e.g. data functions (snippets, and spectrogram creation) and training functions (requires data and compute infrastructure)) are, by choice/necessity, not covered.
+  - There is one integration test for `orcai predict`, however it requires a local WAV file for testing. This raises coverage to 70%.
+  - commands for training listed in `.justfile`.
+
+### Changes
+
+- **breaking** rename `orcai.test` module to `orcai.test_model` to prevent confusion with automated tests.
+
 ## [2.3.0] - the 🫍 update
 
 ### Changes
@@ -729,3 +742,5 @@
 [2.1.5]:https://github.com/ethz-tb/orcAI/releases/tag/v2.1.5
 [2.2.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.2.0
 [2.3.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.3.0
+[3.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.0
+
