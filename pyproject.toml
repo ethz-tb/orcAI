@@ -51,7 +51,7 @@ orcai = "orcai.cli:cli"
 [tool.pytest.ini_options]
 minversion = "9.0"
 testpaths = ["tests"]
-addopts = "--cov=orcai --cov-report=term-missing -m 'not integration'"
+addopts = "-m 'not integration'"
 markers = ["integration: end-to-end tests requiring real data (deselected by default)"]
 
 [tool.coverage.run]
