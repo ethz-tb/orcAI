@@ -22,6 +22,16 @@ from orcai.auxiliary import Messenger
 
 
 @pytest.fixture(scope="session")
+def wav_file(request):
+    return request.config.getoption("--wav-file")
+
+
+@pytest.fixture(scope="session")
+def channel(request):
+    return request.config.getoption("--channel")
+
+
+@pytest.fixture(scope="session")
 def tf_suppress_logging():
     """Suppress TensorFlow logging during tests."""
     tf.get_logger().setLevel(40)
@@ -288,7 +298,6 @@ def annotation_file_fixture(tmp_path):
         f.write("2.0\t3.0\tBUZZ\n")
         f.write("4.5\t5.5\tWHISTLE\n")
     return annotation_path
-
 
 
 # ---------------------------------------------------------------------------

@@ -9,6 +9,9 @@ dev/
 .coverage
 htmlcov/
 
+# local integration test data
+local_test_data/
+
 # Python
 __pycache__/
 
