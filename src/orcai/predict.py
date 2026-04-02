@@ -309,6 +309,7 @@ def compute_aggregated_predictions(
 
     # Step 2: Model predictions for all snippets
     msgr.info("Prediction of snippets")
+    msgr.print_tf_device_info(severity=3)
     snippets = snippets[..., np.newaxis]  # Shape: (num_snippets, 736, 171, 1)
     predictions = model.predict(
         snippets,
