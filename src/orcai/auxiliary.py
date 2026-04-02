@@ -326,16 +326,19 @@ class Messenger:
         )  # suppress tensorflow logging (ERROR and worse only)
 
         physical_devices = tf.config.list_physical_devices("GPU")
-        devices_info = [
-            tf.config.experimental.get_device_details(i) for i in physical_devices
-        ]
 
-        devices_string = ", ".join(
-            [
-                f"{dev.name.replace('physical_device:', '')}: {info['device_name']}"
-                for dev, info in zip(physical_devices, devices_info)
+        if len(physical_devices) == 0:
+            devices_string = "No GPU devices found. Using CPU."
+        else:
+            devices_info = [
+                tf.config.experimental.get_device_details(i) for i in physical_devices
             ]
-        )
+            devices_string = ", ".join(
+                [
+                    f"{dev.name.replace('physical_device:', '')}: {info['device_name']}"
+                    for dev, info in zip(physical_devices, devices_info)
+                ]
+            )
 
         self.info(
             f"Available TensorFlow devices: {devices_string}",
