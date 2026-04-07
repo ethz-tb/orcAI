@@ -38,7 +38,9 @@ class TestComputeSnippetStats:
         """Total column equals sum of train + val + test."""
         stats = _compute_snippet_stats(snippet_table_df, for_calls=label_calls)
         computed_total = stats[["train", "val", "test"]].sum(axis=1)
-        pd.testing.assert_series_equal(stats["total"], computed_total, check_names=False)
+        pd.testing.assert_series_equal(
+            stats["total"], computed_total, check_names=False
+        )
 
     def test_rows_are_call_names(self, snippet_table_df, label_calls):
         """One row per call in for_calls."""
@@ -78,7 +80,9 @@ class TestFilterSnippetTable:
         result = _filter_snippet_table(snippet_table_df, orcai_parameter_snippets)
         assert set(result.columns) == set(snippet_table_df.columns)
 
-    def test_fraction_removal_zero_keeps_all(self, snippet_table_df, orcai_parameter_snippets):
+    def test_fraction_removal_zero_keeps_all(
+        self, snippet_table_df, orcai_parameter_snippets
+    ):
         """fraction_removal=0 keeps all no-label snippets."""
         params = {**orcai_parameter_snippets}
         params["snippets"] = {**params["snippets"], "fraction_removal": 0.0}
@@ -91,13 +95,17 @@ class TestFilterSnippetTable:
         assert list(result.index) == list(range(len(result)))
 
     @pytest.mark.parametrize("seed", [0, 42, 123])
-    def test_deterministic_with_same_seed(self, snippet_table_df, orcai_parameter_snippets, seed):
+    def test_deterministic_with_same_seed(
+        self, snippet_table_df, orcai_parameter_snippets, seed
+    ):
         """Same rng seed produces identical results."""
         rng1 = np.random.default_rng(seed)
         rng2 = np.random.default_rng(seed)
         r1 = _filter_snippet_table(snippet_table_df, orcai_parameter_snippets, rng=rng1)
         r2 = _filter_snippet_table(snippet_table_df, orcai_parameter_snippets, rng=rng2)
-        pd.testing.assert_frame_equal(r1.reset_index(drop=True), r2.reset_index(drop=True))
+        pd.testing.assert_frame_equal(
+            r1.reset_index(drop=True), r2.reset_index(drop=True)
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -142,11 +150,15 @@ def _build_recording_dir(
 class TestMakeSnippetTable:
     """Tests for _make_snippet_table."""
 
-    def test_success_returns_dataframe(self, tmp_path, label_calls, orcai_parameter_snippets):
+    def test_success_returns_dataframe(
+        self, tmp_path, label_calls, orcai_parameter_snippets
+    ):
         """Returns a DataFrame when directory structure is complete."""
         rec_dir = tmp_path / "test_rec"
         _build_recording_dir(rec_dir, label_calls)
-        snippet_table, _, _, _, status = _make_snippet_table(rec_dir, orcai_parameter_snippets)
+        snippet_table, _, _, _, status = _make_snippet_table(
+            rec_dir, orcai_parameter_snippets
+        )
         assert status == "success"
         assert isinstance(snippet_table, pd.DataFrame)
 
@@ -155,10 +167,18 @@ class TestMakeSnippetTable:
         rec_dir = tmp_path / "test_rec"
         _build_recording_dir(rec_dir, label_calls)
         snippet_table, *_ = _make_snippet_table(rec_dir, orcai_parameter_snippets)
-        for col in ["recording", "recording_data_dir", "data_type", "row_start", "row_stop"]:
+        for col in [
+            "recording",
+            "recording_data_dir",
+            "data_type",
+            "row_start",
+            "row_stop",
+        ]:
             assert col in snippet_table.columns
 
-    def test_missing_spectrogram_raises(self, tmp_path, label_calls, orcai_parameter_snippets):
+    def test_missing_spectrogram_raises(
+        self, tmp_path, label_calls, orcai_parameter_snippets
+    ):
         """FileNotFoundError raised when times.json is missing."""
         rec_dir = tmp_path / "no_spec"
         rec_dir.mkdir()
@@ -167,7 +187,9 @@ class TestMakeSnippetTable:
         with pytest.raises(FileNotFoundError):
             _make_snippet_table(rec_dir, orcai_parameter_snippets)
 
-    def test_missing_label_file_returns_none(self, tmp_path, label_calls, orcai_parameter_snippets):
+    def test_missing_label_file_returns_none(
+        self, tmp_path, label_calls, orcai_parameter_snippets
+    ):
         """Returns None snippet table when labels.zarr is missing."""
         rec_dir = tmp_path / "no_labels"
         rec_dir.mkdir()
@@ -176,15 +198,21 @@ class TestMakeSnippetTable:
         (spec_dir / "times.json").write_text(
             json.dumps({"min": 0.0, "max": 500.0, "length": 500})
         )
-        snippet_table, _, _, _, status = _make_snippet_table(rec_dir, orcai_parameter_snippets)
+        snippet_table, _, _, _, status = _make_snippet_table(
+            rec_dir, orcai_parameter_snippets
+        )
         assert snippet_table is None
         assert status == "missing label files"
 
-    def test_recording_too_short_returns_none(self, tmp_path, label_calls, orcai_parameter_snippets):
+    def test_recording_too_short_returns_none(
+        self, tmp_path, label_calls, orcai_parameter_snippets
+    ):
         """Returns None when recording is shorter than segment_duration."""
         rec_dir = tmp_path / "short_rec"
         # Recording of 5s, segment_duration=10 → n_segments=0
         _build_recording_dir(rec_dir, label_calls, n_time=50, recording_duration=5.0)
-        snippet_table, _, _, _, status = _make_snippet_table(rec_dir, orcai_parameter_snippets)
+        snippet_table, _, _, _, status = _make_snippet_table(
+            rec_dir, orcai_parameter_snippets
+        )
         assert snippet_table is None
         assert status == "shorter than segment_duration"

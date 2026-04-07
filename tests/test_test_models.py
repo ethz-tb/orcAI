@@ -137,7 +137,12 @@ class TestComputeConfusionTable:
         y_true, y_pred = self._perfect_batch()
         result = compute_confusion_table(y_true, y_pred, ["A", "B"])
         for lbl in result.index:
-            total = result.loc[lbl, "TP"] + result.loc[lbl, "FP"] + result.loc[lbl, "FN"] + result.loc[lbl, "TN"]
+            total = (
+                result.loc[lbl, "TP"]
+                + result.loc[lbl, "FP"]
+                + result.loc[lbl, "FN"]
+                + result.loc[lbl, "TN"]
+            )
             assert total == pytest.approx(1.0, abs=1e-6)
 
 
@@ -154,22 +159,31 @@ class TestComputeMisclassificationTable:
         n = 3
         m1 = np.eye(n, dtype=int)
         m2 = np.eye(n, dtype=int)
-        result = _compute_misclassification_table(m1, m2, "true", "pred", ["A", "B", "C"])
-        assert result.shape == (n + 1, n + 2)  # +1 NOLABEL row, +1 NOLABEL col, +1 fraction_time
+        result = _compute_misclassification_table(
+            m1, m2, "true", "pred", ["A", "B", "C"]
+        )
+        assert result.shape == (
+            n + 1,
+            n + 2,
+        )  # +1 NOLABEL row, +1 NOLABEL col, +1 fraction_time
 
     def test_diagonal_dominant_for_perfect_predictions(self):
         """Perfect label alignment → high diagonal values."""
         m = np.zeros((6, 2), dtype=int)
         m[:3, 0] = 1  # first 3 rows: label A
         m[3:, 1] = 1  # last 3 rows: label B
-        result = _compute_misclassification_table(m, m.copy(), "true", "pred", ["A", "B"])
+        result = _compute_misclassification_table(
+            m, m.copy(), "true", "pred", ["A", "B"]
+        )
         assert result.loc["true_A", "pred_A"] == pytest.approx(1.0)
         assert result.loc["true_B", "pred_B"] == pytest.approx(1.0)
 
     def test_column_and_index_names(self):
         """Columns and index follow <suffix>_<label> convention."""
         m = np.zeros((4, 2), dtype=int)
-        result = _compute_misclassification_table(m, m.copy(), "true", "pred", ["X", "Y"])
+        result = _compute_misclassification_table(
+            m, m.copy(), "true", "pred", ["X", "Y"]
+        )
         assert "pred_X" in result.columns
         assert "true_X" in result.index
 
@@ -195,6 +209,8 @@ class TestComputeMisclassificationTables:
         import pandas as pd
 
         m = np.zeros((4, 2), dtype=int)
-        result = compute_misclassification_tables(m, m.copy(), "true", "pred", ["A", "B"])
+        result = compute_misclassification_tables(
+            m, m.copy(), "true", "pred", ["A", "B"]
+        )
         for df in result.values():
             assert isinstance(df, pd.DataFrame)

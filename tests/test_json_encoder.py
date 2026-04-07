@@ -85,6 +85,13 @@ class TestJsonEncoderExtFallback:
 
     def test_standard_types_unchanged(self):
         """Standard JSON-serializable types pass through unchanged."""
-        data = {"int": 1, "float": 2.5, "str": "hello", "list": [1, 2], "bool": True, "none": None}
+        data = {
+            "int": 1,
+            "float": 2.5,
+            "str": "hello",
+            "list": [1, 2],
+            "bool": True,
+            "none": None,
+        }
         result = encode(data)
         assert result == data
