@@ -6,8 +6,6 @@ Created using: claude-sonnet-4-6 on 2026-03-31
 """
 
 import keras
-import numpy as np
-import pytest
 
 from orcai.train import _count_params
 
@@ -36,8 +34,8 @@ class TestCountParams:
         """Counts params across multiple layers."""
         model = keras.Sequential(
             [
-                keras.layers.Dense(8, input_shape=(4,)),   # 4*8+8 = 40
-                keras.layers.Dense(2),                     # 8*2+2 = 18
+                keras.layers.Dense(8, input_shape=(4,)),  # 4*8+8 = 40
+                keras.layers.Dense(2),  # 8*2+2 = 18
             ]
         )
         count = _count_params(model.trainable_weights)

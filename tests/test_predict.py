@@ -115,8 +115,8 @@ class TestCalculateMeanProbabilities:
         probs = np.array([0.1, 0.5, 0.9, 0.3])
         result = _calulate_mean_probabilities(probs, [0, 2], [2, 4])
         assert len(result) == 2
-        assert result[0] == pytest.approx(0.3)   # mean(probs[0:2]) = mean(0.1, 0.5)
-        assert result[1] == pytest.approx(0.6)   # mean(0.9, 0.3)
+        assert result[0] == pytest.approx(0.3)  # mean(probs[0:2]) = mean(0.1, 0.5)
+        assert result[1] == pytest.approx(0.6)  # mean(0.9, 0.3)
 
 
 # ---------------------------------------------------------------------------
@@ -178,14 +178,10 @@ class TestComputeBinaryPredictions:
         preds = np.zeros((10, 1))
         preds[3:6, 0] = 0.6
         # threshold=0.7 → nothing detected
-        _, _, labels_high, _ = compute_binary_predictions(
-            preds, ["BR"], threshold=0.7
-        )
+        _, _, labels_high, _ = compute_binary_predictions(preds, ["BR"], threshold=0.7)
         assert len(labels_high) == 0
         # threshold=0.5 → detected
-        _, _, labels_low, _ = compute_binary_predictions(
-            preds, ["BR"], threshold=0.5
-        )
+        _, _, labels_low, _ = compute_binary_predictions(preds, ["BR"], threshold=0.5)
         assert "BR" in labels_low
 
 
@@ -289,7 +285,9 @@ class TestGetOutputPath:
 class TestFilterPredictions:
     """Tests for filter_predictions."""
 
-    def test_keeps_all_within_limits(self, predicted_labels_df, call_duration_limits_dict):
+    def test_keeps_all_within_limits(
+        self, predicted_labels_df, call_duration_limits_dict
+    ):
         """All calls within limits are kept."""
         # predicted_labels_df has durations 5, 5, 5, 5 (stop-start), delta_t=1
         # BR limits [2,8], BUZZ limits [3,20], WHISTLE limits [1,10] → all kept
@@ -310,7 +308,9 @@ class TestFilterPredictions:
                 "mean_p": [0.9],
             }
         )
-        result = filter_predictions(df, delta_t=1.0, call_duration_limits=call_duration_limits_dict)
+        result = filter_predictions(
+            df, delta_t=1.0, call_duration_limits=call_duration_limits_dict
+        )
         assert len(result) == 0
 
     def test_removes_too_long(self, call_duration_limits_dict):
@@ -323,20 +323,28 @@ class TestFilterPredictions:
                 "mean_p": [0.9],
             }
         )
-        result = filter_predictions(df, delta_t=1.0, call_duration_limits=call_duration_limits_dict)
+        result = filter_predictions(
+            df, delta_t=1.0, call_duration_limits=call_duration_limits_dict
+        )
         assert len(result) == 0
 
     def test_empty_input_returns_empty(self, call_duration_limits_dict):
         """Empty input DataFrame is returned unchanged."""
         df = pd.DataFrame(columns=["start", "stop", "label", "mean_p"])
-        result = filter_predictions(df, delta_t=1.0, call_duration_limits=call_duration_limits_dict)
+        result = filter_predictions(
+            df, delta_t=1.0, call_duration_limits=call_duration_limits_dict
+        )
         assert result.empty
 
-    def test_output_columns_preserved(self, predicted_labels_df, call_duration_limits_dict):
+    def test_output_columns_preserved(
+        self, predicted_labels_df, call_duration_limits_dict
+    ):
         """Output has the same columns as input (filter_predictions modifies df in-place)."""
         original_cols = list(predicted_labels_df.columns)
         result = filter_predictions(
-            predicted_labels_df, delta_t=1.0, call_duration_limits=call_duration_limits_dict
+            predicted_labels_df,
+            delta_t=1.0,
+            call_duration_limits=call_duration_limits_dict,
         )
         assert list(result.columns) == original_cols
 
@@ -362,8 +370,7 @@ class TestFilterPredictionsFile:
     def _write_predictions_file(self, path: Path, rows: list[tuple]) -> None:
         """Write a tab-separated predictions file."""
         lines = "\n".join(
-            f"{start}\t{stop}\t{label}\t{p}\tsource"
-            for start, stop, label, p in rows
+            f"{start}\t{stop}\t{label}\t{p}\tsource" for start, stop, label, p in rows
         )
         path.write_text(lines)
 
