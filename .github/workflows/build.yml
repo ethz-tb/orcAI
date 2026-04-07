@@ -7,8 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  uv-example:
-    name: python
+  build-orcai:
+    name: build orcai
     runs-on: ubuntu-latest
 
     steps:
