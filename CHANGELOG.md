@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1]
+
+### Added
+
+- improve reporting of tf devices
+- CI build workflow
+
 ## [3.0.0]
 
 ### Added
@@ -743,4 +750,5 @@
 [2.2.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.2.0
 [2.3.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.3.0
 [3.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.0
+[3.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.1
 
