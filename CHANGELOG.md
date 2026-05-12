@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.2]
+
+### Changes
+
+- update dependencies (vulnerability in urllib3 (not directly used, dependency of tensorflow))
+
+
 ## [3.0.1]
 
 ### Added
@@ -751,4 +758,5 @@
 [2.3.0]:https://github.com/ethz-tb/orcAI/releases/tag/v2.3.0
 [3.0.0]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.0
 [3.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.1
+[3.0.2]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.1
 

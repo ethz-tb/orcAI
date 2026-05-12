@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "orcai"
-version = "3.0.1"
+version = "3.0.2"
 authors = [
     { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
     { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
