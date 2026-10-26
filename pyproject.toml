@@ -1,6 +1,6 @@
 [project]
     name = "orcai"
-    version = "3.0.3"
+    version = "3.0.4"
     description = "A software package to detect acoustic signals in spectrograms generated from audio recordings. https://doi.org/10.1111/mms.70083 "
     readme = "README.md"
     requires-python = "==3.11.*"

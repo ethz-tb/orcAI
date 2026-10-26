@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.4]
+
+### Changes
+
+- linting & formatting (mostly ruff:B008 https://docs.astral.sh/ruff/rules/function-call-in-default-argument/)
+
+
 ## [3.0.3]
 
 ### Changes
@@ -767,4 +774,5 @@
 [3.0.1]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.1
 [3.0.2]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.2
 [3.0.3]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.3
+[3.0.4]:https://github.com/ethz-tb/orcAI/releases/tag/v3.0.4
 
