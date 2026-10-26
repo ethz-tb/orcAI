@@ -1,74 +1,76 @@
-[build-system]
-requires = ["uv_build>=0.11.2,<0.12.0"]
-build-backend = "uv_build"
-
 [project]
-name = "orcai"
-version = "3.0.2"
-authors = [
-    { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
-    { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
-    { name = "Nicholas Ochsner", email = "nicolas.ochsner@env.ethz.ch" },
-    { name = "Daniel Angst", email = "daniel.angst@env.ethz.ch" },
-]
-description = "A software package to detect acoustic signals in spectrograms generated from audio recordings. https://doi.org/10.1111/mms.70083 "
-keywords = [
-    "Bioacoustics",
-    "Orca",
-    "classification",
-]
-readme = "README.md"
-requires-python = "==3.11.*"
-license = "CC-BY-SA-4.0"
-license-files = ["LICENSE"]
-dependencies = [
-    "zarr>=3, <4",
-    "numpy>=2, <3",
-    "pandas>=2, <3",
-    "tensorflow[and-cuda]>=2, <3; sys_platform=='linux'",
-    "tensorflow>=2, <3; sys_platform!='linux'",
-    "keras_tuner>=1, <2",
-    "keras>=3, <4",
-    "librosa<1",
-    "psutil>=7, <8",
-    "rich-click>=1, <2",
-    "humanize>=4, <5",
-    "tqdm>=4.42.0, <5",
-    "numba>=0.61.2, <1",
-    "packaging>=26.0",
-]
+    name = "orcai"
+    version = "3.0.3"
+    description = "A software package to detect acoustic signals in spectrograms generated from audio recordings. https://doi.org/10.1111/mms.70083 "
+    readme = "README.md"
+    requires-python = "==3.11.*"
+    license = "CC-BY-SA-4.0"
+    license-files = ["LICENSE"]
+    authors = [
+        { name = "Chérine Baumgartner", email = "cherine.baumgartner@env.ethz.ch" },
+        { name = "Sebastian Bonhoeffer", email = "sebastian.bonhoeffer@env.ethz.ch" },
+        { name = "Nicholas Ochsner", email = "nicolas.ochsner@env.ethz.ch" },
+        { name = "Daniel Angst", email = "daniel.angst@env.ethz.ch" },
+    ]
+    keywords = [
+        "Bioacoustics",
+        "Orca",
+        "classification",
+    ]
+    dependencies = [
+        "humanize>=4, <5",
+        "keras>=3, <4",
+        "keras_tuner>=1, <2",
+        "librosa<1",
+        "numba>=0.61.2, <1",
+        "numpy>=2, <3",
+        "packaging>=26.0",
+        "pandas>=2, <3",
+        "psutil>=7, <8",
+        "rich-click>=1, <2",
+        "tensorflow>=2, <3; sys_platform!='linux'",
+        "tensorflow[and-cuda]>=2, <3; sys_platform=='linux'",
+        "tqdm>=4.42.0, <5",
+        "zarr>=3, <4",
+    ]
 
-[project.urls]
-Repository = "https://github.com/ethz-tb/orcAI"
+    [project.urls]
+        Repository = "https://github.com/ethz-tb/orcAI"
 
-[project.scripts]
-orcai = "orcai.cli:cli"
-
-[tool.setuptools.package-data]
-"orcai.defaults" = ["*.json"]
-"orcai.models" = ["*.*", "*/*.*"]
-
-[tool.pytest.ini_options]
-minversion = "9.0"
-testpaths = ["tests"]
-addopts = "-m 'not integration'"
-markers = ["integration: end-to-end tests requiring real data (deselected by default)"]
-
-[tool.coverage.run]
-source = ["src/orcai"]
-omit = ["*/defaults/*", "*/models/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "if __name__ == .__main__.:",
-]
+    [project.scripts]
+        orcai = "orcai.cli:cli"
 
 [dependency-groups]
-dev = [
-    "ipython>=9.2.0",
-    "pytest>=9.0.0",
-    "pytest-cov>=7.1.0",
-    "ruff>=0.12.8",
-    "ty>=0.0.23",
-]
+    dev = [
+        "ipython>=9.2.0",
+        "pytest>=9.0.0",
+        "pytest-cov>=7.1.0",
+        "ruff>=0.12.8",
+        "ty>=0.0.23",
+    ]
+
+[build-system]
+    requires = ["uv_build>=0.11.2,<0.14.0"]
+    build-backend = "uv_build"
+
+[tool.coverage.run]
+    source = ["src/orcai"]
+    omit = ["*/defaults/*", "*/models/*"]
+
+[tool.coverage.report]
+    exclude_lines = [
+        "pragma: no cover",
+        "if __name__ == .__main__.:",
+    ]
+
+[tool.pytest.ini_options]
+    addopts = "-m 'not integration'"
+    markers = [
+        "integration: end-to-end tests requiring real data (deselected by default)"
+    ]
+    minversion = "9.0"
+    testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+    "orcai.defaults" = ["*.json"]
+    "orcai.models" = ["*.*", "*/*.*"]
