@@ -1,7 +1,6 @@
 from functools import partial
 from importlib.resources import files
 from pathlib import Path
-from typing import Any
 
 import keras
 import keras_tuner as kt
@@ -24,7 +23,7 @@ def _hp_model_builder(
     input_shape: tuple[int, int, int],
     orcai_parameter: dict,
     hps_parameter: dict,
-    msgr: Messenger = Messenger(verbosity=0),
+    msgr: Messenger | None = None,
 ) -> keras.Model:
     """Build a model for hyperparameter search
     Parameter
@@ -47,6 +46,9 @@ def _hp_model_builder(
     keras.Model
         Model for hyperparameter search
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
+
     hp_filters = hp.Choice("filters", values=list(hps_parameter["filters"].keys()))
     orcai_parameter["model"]["filters"] = hps_parameter["filters"][hp_filters]
     orcai_parameter["model"]["kernel_size"] = hp.Choice(
@@ -58,8 +60,8 @@ def _hp_model_builder(
     orcai_parameter["model"]["batch_size"] = hp.Choice(
         "batch_size", hps_parameter["batch_size"]
     )
-    if "lstm_units" in orcai_parameter["model"].keys():
-        if "lstm_units" in hps_parameter.keys():
+    if "lstm_units" in orcai_parameter["model"]:
+        if "lstm_units" in hps_parameter:
             orcai_parameter["model"]["lstm_units"] = hp.Choice(
                 "lstm_units", hps_parameter["lstm_units"]
             )
@@ -69,7 +71,7 @@ def _hp_model_builder(
                 + "Is the right model specified?"
             )
     else:
-        if "lstm_units" in hps_parameter.keys():
+        if "lstm_units" in hps_parameter:
             raise ValueError(
                 "LSTM units not in model parameter. Is the right model specified?"
             )
@@ -87,7 +89,7 @@ def _hp_model_builder(
 
 
 def _save_trial_data(
-    tuner: kt.Tuner, path: Path, msgr: Messenger = Messenger(verbosity=0)
+    tuner: kt.Tuner, path: Path, msgr: Messenger | None = None
 ) -> None:
     """Save trial data to CSV file
 
@@ -105,6 +107,9 @@ def _save_trial_data(
     None
     Saves a CSV file with trial data
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
+
     trials = tuner.oracle.trials.values()
     results = []
     for trial in trials:
@@ -127,10 +132,8 @@ def _save_trial_data(
 def hyperparameter_search(
     data_dir: Path,
     output_dir: Path,
-    orcai_parameter: Any = files("orcai.defaults").joinpath(
-        "default_orcai_parameter.json"
-    ),
-    hps_parameter: Any = files("orcai.defaults").joinpath("default_hps_parameter.json"),
+    orcai_parameter: (Path | str) | dict | None = None,
+    hps_parameter: (Path | str) | dict | None = None,
     parallel: bool = False,
     compression_type: str | None = "GZIP",
     verbosity: int = 2,
@@ -144,10 +147,10 @@ def hyperparameter_search(
         Path to the data directory
     output_dir : Path
         Path to the output directory
-    orcai_parameter : Path | str
-        Path to the OrcAi parameter file
-    hps_parameter : Path | str
-        Path to the hyperparameter search parameter file
+    orcai_parameter : (Path | str) | dict | None
+        Path to the OrcAi parameter file, None for default parameter file
+    hps_parameter : (Path | str) | dict | None
+        Path to the hyperparameter search parameter file, None for default parameter file
     parallel : bool
         Run hyperparameter search on multiple GPUs
     save_best_model : bool
@@ -171,12 +174,24 @@ def hyperparameter_search(
 
     msgr.part("Loading Hyperparameter search parameter")
 
+    if orcai_parameter is None:
+        orcai_parameter = str(
+            files("orcai.defaults").joinpath("default_orcai_parameter.json")
+        )
+
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
 
     msgr.debug("Model parameter")
     msgr.debug(orcai_parameter["model"])
     model_name = orcai_parameter["name"]
+
+    if hps_parameter is None:
+        hps_parameter = str(
+            files("orcai.defaults").joinpath(
+                "default_hyperparameter_search_parameter.json"
+            )
+        )
 
     if isinstance(hps_parameter, (Path | str)):
         hps_parameter = read_json(hps_parameter)
@@ -271,5 +286,3 @@ def hyperparameter_search(
     )
 
     msgr.success("Hyperparameter search completed")
-
-    return

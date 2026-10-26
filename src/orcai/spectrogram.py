@@ -16,9 +16,11 @@ def calculate_spectrogram(
     wav_file: np.ndarray | Path | str,
     channel: int,
     spectrogram_parameter: dict,
-    msgr: Messenger = Messenger(verbosity=0),
+    msgr: Messenger | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Calculates power spectrogram from .wav file according to spectrogram_parameter"""
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
 
     if isinstance(wav_file, (Path, str)):
         wav_file, _ = load(
@@ -92,9 +94,7 @@ def preprocess_spectrogram(
 def make_spectrogram(
     wav_file_path: Path,
     channel: int = 1,
-    orcai_parameter: (Path | str) | dict = str(
-        files("orcai.defaults").joinpath("default_orcai_parameter.json")
-    ),
+    orcai_parameter: (Path | str) | dict | None = None,
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -106,8 +106,8 @@ def make_spectrogram(
         Path to the wav file.
     channel : int
         Channel of wav_file to use for the spectrogram.
-    orcai_parameter : dict | (Path | str)
-        Dictionary with orcai parameter or path to JSON containing the same. Defaults to default_orcai_parameter.json.
+    orcai_parameter : (Path | str) | dict | None
+        Dict containing OrcAI parameter or path to json containing the same, None for default parameter.
     verbosity : int
         Verbosity level. 0: only errors, 1: only warnings, 2: info, 3: debug.
     msgr : Messenger
@@ -125,6 +125,10 @@ def make_spectrogram(
     if msgr is None:
         msgr = Messenger(verbosity=verbosity, title="Making spectrogram")
 
+    if orcai_parameter is None:
+        orcai_parameter = str(
+            files("orcai.defaults").joinpath("default_orcai_parameter.json")
+        )
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
     spectrogram_parameter = orcai_parameter["spectrogram"]
@@ -195,7 +199,6 @@ def save_spectrogram(
         times,
         Path(output_dir, "times.json"),
     )
-    return
 
 
 def _make_and_save_spectrogram(recording_info, orcai_parameter, output_dir):
@@ -229,9 +232,7 @@ def create_spectrograms(
     recording_table_path: Path | str,
     output_dir: Path | str,
     base_dir_recording: Path | str | None = None,
-    orcai_parameter: Path | str | dict = str(
-        files("orcai.defaults").joinpath("default_orcai_parameter.json")
-    ),
+    orcai_parameter: (Path | str) | dict | None = None,
     include_not_annotated: bool = False,
     include_no_possible_annotations: bool = False,
     overwrite: bool = False,
@@ -247,10 +248,10 @@ def create_spectrograms(
         'rel_recording_path' and columns indicating possibility of presence of calls (True/False).
     output_dir : Path | str
         Output directory for the spectrograms. Spectograms are stored in subdirectories named '<recording>/spectrogram'
-    base_dir_recording : Path
+    base_dir_recording : Path | str | None
         Base directory for the wav files. If None the base_dir_recording is taken from the recording_table.
-    orcai_parameter : Path | str | dict
-        Path to the orcai parameter file or a dictionary with parameter.
+    orcai_parameter : (Path | str) | dict | None
+        Path to the orcai parameter file or a dictionary with parameter. None for default.
     include_not_annotated: bool
         Include recordings without annotations.
     include_no_possible_annotations : bool
@@ -275,6 +276,10 @@ def create_spectrograms(
     recording_table = pd.read_csv(recording_table_path)
     output_dir = Path(output_dir)
 
+    if orcai_parameter is None:
+        orcai_parameter = str(
+            files("orcai.defaults").joinpath("default_orcai_parameter.json")
+        )
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
 
@@ -320,4 +325,3 @@ def create_spectrograms(
         _make_and_save_spectrogram(recording, orcai_parameter, output_dir)
 
     msgr.success("Spectrograms created.")
-    return

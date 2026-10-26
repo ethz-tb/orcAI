@@ -276,7 +276,7 @@ class TestCliConfiguration:
 
     def test_all_subcommands_are_click_commands(self):
         """Test that all subcommands are properly registered Click commands."""
-        for name, cmd in cli.commands.items():
+        for cmd in cli.commands.values():
             assert hasattr(cmd, "callback")
             assert callable(cmd.callback)
 

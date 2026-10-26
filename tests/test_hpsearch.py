@@ -100,7 +100,7 @@ class TestHpModelBuilder:
     ):
         """Test _hp_model_builder with custom Messenger."""
         hp = kt.HyperParameters()
-        msgr, output = test_messenger
+        msgr, _output = test_messenger
 
         model = _hp_model_builder(
             hp,
@@ -358,7 +358,7 @@ class TestHyperparameterSearch:
                         hps_parameter=hps_parameter_minimal,
                         verbosity=verbosity,
                     )
-                except Exception:
+                except Exception:  # noqa:S110, BLE001
                     pass  # Ignore errors for this test
 
     def test_hyperparameter_search_loads_json_paths(

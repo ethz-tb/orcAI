@@ -26,8 +26,8 @@ DATA_TYPES = ["train", "val", "test"]
 def _make_snippet_table(
     recording_dir: Path,
     orcai_parameter: dict,
-    rng=np.random.default_rng(),
-    msgr: Messenger = Messenger(verbosity=2),
+    rng: np.random.Generator | None = None,
+    msgr: Messenger | None = None,
 ) -> tuple[pd.DataFrame | None, int, int, str, str]:
     """Generates times for snippets to be extracted from recordings
 
@@ -37,7 +37,9 @@ def _make_snippet_table(
         Path to the recording data directory
     orcai_parameter : dict
         dict containing orcai parameter
-    msgr : Messenger
+    rng : np.random.Generator | None
+        Random number generator, None for default
+    msgr : Messenger | None
         Messenger object for messages
 
     Returns
@@ -53,6 +55,12 @@ def _make_snippet_table(
     status: str
         status of snippet table creation (success or reason for failure)
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
+
+    if rng is None:
+        rng = np.random.default_rng()
+
     recording = recording_dir.stem
     label_zarr_path = recording_dir.joinpath("labels", "labels.zarr")
     label_list_path = recording_dir.joinpath("labels", "label_list.json")
@@ -134,15 +142,13 @@ def _make_snippet_table(
                 label_duration_snippet = label_chunk.sum(axis=0) * delta_t  # ty:ignore[unresolved-attribute]
                 label_duration_snippet[label_duration_snippet < 0] = np.nan
                 snippet_table_raw += [
-                    list(
-                        [
-                            recording,
-                            str(recording_dir),
-                            type,
-                            index_t_start,
-                            index_t_stop,
-                        ]
-                    )
+                    [
+                        recording,
+                        str(recording_dir),
+                        type,
+                        index_t_start,
+                        index_t_stop,
+                    ]
                     + list(label_duration_snippet)
                 ]
 
@@ -196,9 +202,7 @@ def create_snippet_table(
     recording_table_path: Path | str,
     recording_data_dir: Path | str,
     output_dir: Path | str | None = None,
-    orcai_parameter: dict | (Path | str) = str(
-        files("orcai.defaults").joinpath("default_orcai_parameter.json")
-    ),
+    orcai_parameter: (Path | str) | dict | None = None,
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -212,8 +216,8 @@ def create_snippet_table(
         Path to the recording data directory
     output_dir : (Path | str) | None
         Path to the output directory. If None the output_dir is set to "tvt_data" next to the recording_table_path
-    orcai_parameter : dict | (Path | str)
-        Dict containing OrcAI parameter or path to json containing the same, by default files("orcai.defaults").joinpath("default_orcai_parameter.json")
+    orcai_parameter : (Path | str) | dict | None
+        Dict containing OrcAI parameter or path to json containing the same, None for default parameter.
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     msgr : Messenger
@@ -228,6 +232,10 @@ def create_snippet_table(
 
     msgr.part("Reading recording table")
 
+    if orcai_parameter is None:
+        orcai_parameter = str(
+            files("orcai.defaults").joinpath("default_orcai_parameter.json")
+        )
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
 
@@ -317,14 +325,12 @@ def create_snippet_table(
     )
     msgr.success(f"Snippet table saved to {output_dir.joinpath('all_snippets.csv.gz')}")
 
-    return
-
 
 def _filter_snippet_table(
     snippet_table: pd.DataFrame,
     orcai_parameter: dict,
-    rng=np.random.default_rng(),
-    msgr: Messenger = Messenger(verbosity=2),
+    rng: np.random.Generator | None = None,
+    msgr: Messenger | None = None,
 ) -> pd.DataFrame:
     """Filters snippet table based on snippet parameter and label calls
 
@@ -334,7 +340,9 @@ def _filter_snippet_table(
         snippet_table with columns recording, data_type, row_start, row_stop and call names
     orcai_parameter : dict
         dict containing orcai parameter
-    msgr : Messenger
+    rng : np.random.Generator | None
+        Random number generator, None for default
+    msgr : Messenger | None
         Messenger object for messages
 
     Returns
@@ -342,6 +350,11 @@ def _filter_snippet_table(
     snippet_table: pd.DataFrame
         filtered snippet table
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=2)
+    if rng is None:
+        rng = np.random.default_rng()
+
     msgr.part("Filtering snippet table")
 
     snippets_no_label = snippet_table[
@@ -351,7 +364,7 @@ def _filter_snippet_table(
         100 * len(snippets_no_label) / snippet_table.shape[0], 2
     )
     msgr.info(
-        f"Percentage of snippets containing no label before selection: {str(p_no_label_before)} %"
+        f"Percentage of snippets containing no label before selection: {p_no_label_before!s} %"
     )
 
     # removing rows from extracted_snippets where there is no label present
@@ -376,7 +389,7 @@ def _filter_snippet_table(
     )
 
     msgr.info(
-        f"Percentage of snippets containing no label after selection: {str(p_no_label_after)} %"
+        f"Percentage of snippets containing no label after selection: {p_no_label_after!s} %"
     )
     snippet_table = snippet_table.reset_index(drop=True)
 
@@ -389,9 +402,7 @@ def _filter_snippet_table(
 def create_tvt_snippet_tables(
     output_dir: Path | str,
     snippet_table: (Path | str) | pd.DataFrame | None = None,
-    orcai_parameter: Path | str = str(
-        files("orcai.defaults").joinpath("default_orcai_parameter.json")
-    ),
+    orcai_parameter: (Path | str) | dict | None = None,
     create_unfiltered_test_snippets: bool = False,
     n_unfiltered_test_snippets: int | None = None,
     overwrite: bool = False,
@@ -406,8 +417,8 @@ def create_tvt_snippet_tables(
         Path to the output directory
     snippet_table : (Path | str) | pd.DataFrame | None
         Path to the snippet table csv or the snippet table itself. None if the snippet table should be read from output_dir/all_snippets.csv.gz
-    orcai_parameter : dict | (Path | str)
-        Dict containing OrcAi parameter or path to json containing the same, by default files("orcai.defaults").joinpath("default_orcai_parameter.json")
+    orcai_parameter : (Path | str) | dict | None
+        Dict containing OrcAi parameter or path to json containing the same, None for default parameter.
     unfiltered_test_snippets : bool
         If True, creates an additional test snippet table with unfiltered snippets
     n_unfiltered_test_snippets : int | None
@@ -441,6 +452,10 @@ def create_tvt_snippet_tables(
 
     msgr.part("Reading snippet table")
 
+    if orcai_parameter is None:
+        orcai_parameter = str(
+            files("orcai.defaults").joinpath("default_orcai_parameter.json")
+        )
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
 
@@ -559,8 +574,6 @@ def create_tvt_snippet_tables(
 
     msgr.success("All snippet tables created and saved to disk")
 
-    return
-
 
 def _get_call_weights(
     dataset: tf.data.Dataset,
@@ -615,9 +628,7 @@ def _get_call_weights(
 
 def create_tvt_data(
     tvt_dir: Path | str,
-    orcai_parameter: dict | Path | str = str(
-        files("orcai.defaults").joinpath("default_orcai_parameter.json")
-    ),
+    orcai_parameter: (Path | str) | dict | None = None,
     overwrite: bool = False,
     compression_type: str = "GZIP",
     verbosity: int = 2,
@@ -629,8 +640,8 @@ def create_tvt_data(
     ----------
     tvt_dir : (Path | str)
         Path to the directory containing the training, validation and test snippet tables
-    orcai_parameter : dict | (Path | str)
-        Dict containing model specifications or path to json containing the same, by default files("orcai.defaults").joinpath("default_orcai_parameter.json")
+    orcai_parameter : (Path | str) | dict | None
+        Dict containing model specifications or path to json containing the same, None for default parameter.
     overwrite : bool
         Overwrite existing datasets
     compression_type: str
@@ -663,7 +674,10 @@ def create_tvt_data(
     msgr.part("Reading in snippet tables and generating loaders")
 
     dataset_paths = {itype: Path(tvt_dir, f"{itype}_dataset") for itype in data_types}
-
+    if orcai_parameter is None:
+        orcai_parameter = (
+            str(files("orcai.defaults").joinpath("default_orcai_parameter.json")),
+        )
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
 

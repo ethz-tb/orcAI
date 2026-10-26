@@ -37,9 +37,7 @@ def _count_params(trainable_weights: list) -> int:
 def train(
     data_dir: Path | str,
     output_dir: Path | str,
-    orcai_parameter: (Path | str) | dict = str(
-        files("orcai.defaults").joinpath("default_orcai_parameter.json")
-    ),
+    orcai_parameter: (Path | str) | dict | None = None,
     compression_type: str | None = "GZIP",
     load_model: bool = False,
     load_model_from: Path | str | None = None,
@@ -54,8 +52,8 @@ def train(
         Path to the directory containing the training, validation and test datasets.
     output_dir : Path | str
         Path to the output directory.
-    orcai_parameter : (Path | str) | dict
-        Path to a JSON file containing orcai parameter or a dictionary with orcai parameter.
+    orcai_parameter : (Path | str) | dict | None
+        Path to a JSON file containing orcai parameter or a dictionary with orcai parameter. None for default parameter.
     compression_type: str | None
         Compression of data files. Accepts "GZIP" or "NONE".
     load_model : bool
@@ -93,6 +91,10 @@ def train(
     data_dir = Path(data_dir)
 
     msgr.debug("Model parameter")
+    if orcai_parameter is None:
+        orcai_parameter = str(
+            files("orcai.defaults").joinpath("default_orcai_parameter.json")
+        )
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
     model_name = orcai_parameter["name"]
@@ -245,4 +247,3 @@ def train(
     write_json(model_shape, model_dir.joinpath("model_shape.json"))
 
     msgr.success(f"Training model finished. Model saved to {model_name + '.keras'}")
-    return

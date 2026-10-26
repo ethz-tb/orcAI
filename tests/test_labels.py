@@ -16,7 +16,6 @@ import zarr
 from orcai.auxiliary import MASK_VALUE
 from orcai.labels import _convert_annotation, create_label_arrays
 
-
 # ---------------------------------------------------------------------------
 # Local helpers (not fixtures — used to create ad-hoc structures in tests
 # that need non-standard setups not covered by conftest fixtures)

@@ -23,7 +23,6 @@ from orcai.predict import (
     filter_predictions_file,
 )
 
-
 # ---------------------------------------------------------------------------
 # _check_duration
 # ---------------------------------------------------------------------------
@@ -131,7 +130,7 @@ class TestComputeBinaryPredictions:
         """Consecutive above-threshold steps are returned as a call."""
         preds = np.zeros((10, 2))
         preds[2:5, 0] = 0.8  # BR active at steps 2-4
-        starts, stops, labels, probs = compute_binary_predictions(
+        _starts, _stops, labels, _probs = compute_binary_predictions(
             preds, ["BR", "BUZZ"], threshold=0.5
         )
         assert "BR" in labels
@@ -140,7 +139,7 @@ class TestComputeBinaryPredictions:
     def test_below_threshold_ignored(self):
         """Steps below threshold produce no detections."""
         preds = np.full((10, 2), 0.3)
-        starts, stops, labels, probs = compute_binary_predictions(
+        _starts, _stops, labels, _probs = compute_binary_predictions(
             preds, ["BR", "BUZZ"], threshold=0.5
         )
         assert len(labels) == 0
@@ -150,7 +149,7 @@ class TestComputeBinaryPredictions:
         preds = np.zeros((10, 2))
         preds[1:3, 0] = 0.9  # BR
         preds[5:8, 1] = 0.9  # BUZZ
-        starts, stops, labels, probs = compute_binary_predictions(
+        _starts, _stops, labels, _probs = compute_binary_predictions(
             preds, ["BR", "BUZZ"], threshold=0.5
         )
         assert "BR" in labels

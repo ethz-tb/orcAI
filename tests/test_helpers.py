@@ -14,8 +14,8 @@ import pandas as pd
 
 from orcai.auxiliary import Messenger
 from orcai.helpers import (
-    init_project,
     create_recording_table,
+    init_project,
 )
 
 

@@ -36,7 +36,7 @@ class DataLoader:
         snippet_table: pd.DataFrame,
         n_filters: int,
         shuffle: bool = True,
-        rng: np.random.Generator = np.random.default_rng(),
+        rng: np.random.Generator | None = None,
     ):
         """
         Parameter:
@@ -50,7 +50,8 @@ class DataLoader:
         rng: np.random.Generator
             Random number generator for shuffling.
         """
-
+        if rng is None:
+            rng = np.random.default_rng()
         if shuffle:
             self.snippet_table = snippet_table.sample(
                 frac=1, axis="index", random_state=rng
@@ -71,11 +72,14 @@ class DataLoader:
         path: Path | str,
         n_filters: int,
         shuffle: bool = True,
-        rng: np.random.Generator = np.random.default_rng(),
+        rng: np.random.Generator | None = None,
     ):
         """
         Create a DataLoader from a snippet table saved as CSV file.
         """
+        if rng is None:
+            rng = np.random.default_rng()
+
         import pandas as pd
 
         snippet_table = pd.read_csv(path)
@@ -233,7 +237,7 @@ def save_dataset(
     ):
         serialized = _serialize_example(features, labels)
         writer.write(serialized)
-        example_idx += 1
+        example_idx += 1  # noqa: SIM113
         if example_idx % examples_per_shard == 0:
             writer.close()
             shard_idx += 1
@@ -242,7 +246,6 @@ def save_dataset(
                 options=tfwr_options,
             )
     writer.close()
-    return
 
 
 def _parse_example(
@@ -322,7 +325,6 @@ def write_vector_to_json(vector: list | np.ndarray, filename: Path | str) -> Non
     dictionary = {"min": vector[0], "max": vector[-1], "length": len(vector)}
     with open(filename, "w") as f:
         json.dump(dictionary, f, indent=4)
-    return
 
 
 def generate_times_from_spectrogram(filename: Path | str) -> np.ndarray:
@@ -380,7 +382,6 @@ def write_json(
     json_string = json.dumps(data, indent=4, cls=JsonEncoderExt)
     with open(filename, "w") as file:
         file.write(json_string)
-    return
 
 
 def save_as_zarr(
@@ -411,12 +412,11 @@ def save_as_zarr(
     )
 
     zarr_file[:] = obj
-    return
 
 
 def read_annotation_file(
     annotation_file_path: PathLike[str],
-    col_names: list[str] = ["start", "stop", "origlabel"],
+    col_names: list[str] | None = None,
 ) -> pd.DataFrame:
     """read annotation file and return with recording as additional column
     Parameter
@@ -429,6 +429,9 @@ def read_annotation_file(
     pd.DataFrame
         The DataFrame containing the annotation data with an additional column for the recording name.
     """
+    if col_names is None:
+        col_names = ["start", "stop", "origlabel"]
+
     annotation_file = pd.read_csv(
         annotation_file_path,
         sep="\t",
@@ -526,8 +529,8 @@ def save_predictions(
     predicted_labels: pd.DataFrame,
     output_path: PathLike[str],
     delta_t: float,
-    columns: list[str] = ["start", "stop", "label", "mean_p", "label_source"],
-    msgr: Messenger = Messenger(verbosity=0),
+    columns: list[str] | None = None,
+    msgr: Messenger | None = None,
 ) -> None:
     """
     Saves the predicted labels to a file.
@@ -545,12 +548,17 @@ def save_predictions(
     msgr : Messenger
         Messenger object for logging.
     """
+    if columns is None:
+        columns = ["start", "stop", "label", "mean_p", "label_source"]
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
+
     predicted_labels = _convert_steps_to_seconds(predicted_labels, delta_t)
+
     predicted_labels[columns].round(4).to_csv(
         output_path, sep="\t", index=False, header=False
     )
     msgr.info(f"Predictions saved to {output_path}")
-    return
 
 
 def save_prediction_probabilities(
@@ -558,7 +566,7 @@ def save_prediction_probabilities(
     orcai_parameter: dict,
     delta_t: np.float64,
     output_path: Path,
-    msgr: Messenger = Messenger(verbosity=0),
+    msgr: Messenger | None = None,
 ) -> None:
     """
     Saves the prediction probabilities to a file.
@@ -575,6 +583,8 @@ def save_prediction_probabilities(
     msgr : Messenger
         Messenger object for logging.
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
     predictions_path = output_path.with_name(f"{output_path.stem}_probabilities.csv.gz")
     time_steps_per_output_step = 2 ** len(orcai_parameter["model"]["filters"])
     pd.DataFrame(
@@ -583,4 +593,3 @@ def save_prediction_probabilities(
         index=delta_t * time_steps_per_output_step * range(len(aggregated_predictions)),
     ).to_csv(predictions_path, index_label="time", compression="gzip")
     msgr.info(f"Prediction probabilities saved to {predictions_path}")
-    return

@@ -315,7 +315,7 @@ ORCAI_ARCHITECTURES = list(ORCAI_ARCHITECTURES_FN.keys())
 def build_model(
     input_shape: tuple,
     orcai_parameter: dict,
-    msgr: Messenger = Messenger(),
+    msgr: Messenger | None = None,
 ) -> keras.Model:
     """Builds a keras.Model based on the specified OrcAI architecture
 
@@ -333,6 +333,10 @@ def build_model(
         model : keras.Model
             Model
     """
+
+    if msgr is None:
+        msgr = Messenger(verbosity=2)
+
     num_labels = len(orcai_parameter["calls"])
     if orcai_parameter["architecture"] in ORCAI_ARCHITECTURES:
         model = ORCAI_ARCHITECTURES_FN[orcai_parameter["architecture"]](

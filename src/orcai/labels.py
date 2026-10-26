@@ -1,6 +1,5 @@
 from importlib.resources import files
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -23,7 +22,7 @@ def _convert_annotation(
     labels_present: list,
     labels_masked: list,
     call_equivalences: Path | str | dict | None = None,
-    msgr: Messenger = Messenger(),
+    msgr: Messenger | None = None,
 ) -> tuple[pd.DataFrame, dict]:
     """Transform annotation into array with 0 for absence and 1 for presence and
     MASK_VALUE for masked (presence not possible) of each label at times corresponding to spectrogram
@@ -57,6 +56,9 @@ def _convert_annotation(
     FileNotFoundError
         If the spectrogram file is not found.
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
+
     msgr.part("Converting annotation to label array")
 
     # read annotation file
@@ -82,10 +84,10 @@ def _convert_annotation(
     # load t_vec of spectrogram
     try:
         t_vec = generate_times_from_spectrogram(spectrogram_dir.joinpath("times.json"))
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         msgr.error(f"File not found: {spectrogram_dir.joinpath('times.json')}")
         msgr.error("Did you create the spectrogram?")
-        raise e
+        raise
 
     # Initialize df with label_arr
     annotations_array = pd.DataFrame({})
@@ -125,10 +127,8 @@ def create_label_arrays(
     recording_table_path: Path | str,
     output_dir: Path | str,
     base_dir_annotation: Path | str | None = None,
-    orcai_parameter: Any = files("orcai.defaults").joinpath(
-        "default_orcai_parameter.json"
-    ),
-    call_equivalences: Path | str | dict | None = None,
+    orcai_parameter: (Path | str) | dict | None = None,
+    call_equivalences: (Path | str) | dict | None = None,
     overwrite: bool = False,
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -145,9 +145,9 @@ def create_label_arrays(
         Output directory for the labels. Labels are stored in subdirectories named '<recording>/labels'
     base_dir_annotation : Path | str | None
         Base directory for the annotation files. If None, the base_dir_annotation is taken from the recording_table.
-    orcai_parameter : (Path | str) | dict
-        Path to a JSON file containing orcai parameter or a dictionary of the same.
-    call_equivalences : Path | str | dict | None
+    orcai_parameter : (Path | str) | dict | None
+        Path to a JSON file containing orcai parameter or a dictionary of the same. None for default parameter.
+    call_equivalences : (Path | str) | dict | None
         Optional path to a call equivalences file or a dictionary. A dictionary associating original call labels with new call labels
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
@@ -174,6 +174,10 @@ def create_label_arrays(
     if any(not_annotated):
         msgr.info(f"Skipping {sum(not_annotated)} because of missing annotation files.")
         recording_table = recording_table[~not_annotated]
+    if orcai_parameter is None:
+        orcai_parameter = str(
+            files("orcai.defaults").joinpath("default_orcai_parameter.json")
+        )
 
     if isinstance(orcai_parameter, (Path | str)):
         orcai_parameter = read_json(orcai_parameter)
@@ -230,4 +234,3 @@ def create_label_arrays(
     if len(recordings_no_labels) > 0:
         msgr.warning(f"No valid labels present in {recordings_no_labels}")
     msgr.success("Finished making label arrays")
-    return

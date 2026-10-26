@@ -17,7 +17,6 @@ from orcai.spectrogram import (
     save_spectrogram,
 )
 
-
 # ---------------------------------------------------------------------------
 # calculate_spectrogram
 # ---------------------------------------------------------------------------
@@ -85,7 +84,7 @@ class TestPreprocessSpectrogram:
         self, synthetic_spectrogram_raw, spectrogram_frequencies, spectrogram_parameter
     ):
         """Output spectrogram is transposed (time x freq) relative to input (freq x time)."""
-        n_freq_in, n_time = synthetic_spectrogram_raw.shape
+        _n_freq_in, n_time = synthetic_spectrogram_raw.shape
         spec_out, _ = preprocess_spectrogram(
             synthetic_spectrogram_raw, spectrogram_frequencies, spectrogram_parameter
         )

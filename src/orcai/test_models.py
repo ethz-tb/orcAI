@@ -68,17 +68,17 @@ def _compute_misclassification_table(
     for row_index in range(label_matrix_1.shape[0]):
         col_mat1_equal_one = np.where(label_matrix_1[row_index, :] == 1)[0]
         cols_mat2_equal_one = np.where(label_matrix_2[row_index, :] == 1)[0]
-        if len(col_mat1_equal_one) == 1:
-            if (
-                label_matrix_2[row_index, col_mat1_equal_one] != -1
-            ):  # only proceed if column in second matrix is not masked
-                if len(cols_mat2_equal_one) > 0:
-                    for cp_i in cols_mat2_equal_one:
-                        misclassification_matrix[col_mat1_equal_one, cp_i] += 1 / len(
-                            cols_mat2_equal_one
-                        )
-                else:
-                    misclassification_matrix[col_mat1_equal_one, num_labels] += 1
+        if (
+            len(col_mat1_equal_one) == 1
+            and label_matrix_2[row_index, col_mat1_equal_one] != -1
+        ):  # only proceed if column in second matrix is not masked
+            if len(cols_mat2_equal_one) > 0:
+                for cp_i in cols_mat2_equal_one:
+                    misclassification_matrix[col_mat1_equal_one, cp_i] += 1 / len(
+                        cols_mat2_equal_one
+                    )
+            else:
+                misclassification_matrix[col_mat1_equal_one, num_labels] += 1
         if len(col_mat1_equal_one) == 0:
             if len(cols_mat2_equal_one) > 0:
                 for cp_i in cols_mat2_equal_one:
@@ -153,8 +153,8 @@ def compute_misclassification_tables(
         label_names,
     )
     return {
-        "_".join([suffix_1, suffix_2]): misclassification_table_1_2,
-        "_".join([suffix_2, suffix_1]): misclassification_table_2_1,
+        f"{suffix_1}_{suffix_2}": misclassification_table_1_2,
+        f"{suffix_2}_{suffix_1}": misclassification_table_2_1,
     }
 
 
@@ -313,7 +313,6 @@ def _save_test_results(
             ),
             index_label="Label",
         )
-    return
 
 
 def test_model(
@@ -417,5 +416,3 @@ def test_model(
         msgr.info(f"Saved test results to {output_dir}")
 
     msgr.success("Model testing completed.")
-
-    return

@@ -465,7 +465,7 @@ def resolve_recording_data_dir(
 def filter_filepaths(
     filepaths: list[Path],
     exclude_pattern: list[str],
-    msgr: Messenger = Messenger(verbosity=2),
+    msgr: Messenger | None = None,
 ) -> list[Path]:
     """Remove file paths that contain any of the specified patterns.
 
@@ -475,8 +475,8 @@ def filter_filepaths(
         A list of Path objects representing the file paths to be filtered.
     exclude_pattern: list[str]
         A list of strings, where each string is a pattern to be excluded from the file paths.
-    msgr: Messenger
-        An instance of the Messenger class used for logging messages with different verbosity levels. Defaults to Messenger(verbosity=2).
+    msgr: Messenger | None
+        An instance of the Messenger class used for logging messages with different verbosity levels. Defaults (None) to Messenger(verbosity=2).
 
     Returns
     -------
@@ -490,6 +490,9 @@ def filter_filepaths(
         filtered_filepaths = filter_filepaths(filepaths, exclude_pattern)
         # filtered_filepaths will be [Path("/path/to/file1.txt"), Path("/path/to/file3.txt")]
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=2)
+
     for e in exclude_pattern:
         filepaths = [f for f in filepaths if e not in str(f)]
         msgr.info(

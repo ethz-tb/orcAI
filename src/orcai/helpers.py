@@ -62,7 +62,7 @@ def init_project(
         if isinstance(parameter, (Path | str)):
             parameter = read_json(parameter)
 
-        for key in parameter.keys():
+        for key in parameter:
             if key not in orcai_parameter_new:
                 msgr.warning(f"{key} not found in default orcai parameter. Ignoring.")
             orcai_parameter_new[key].update(parameter[key])

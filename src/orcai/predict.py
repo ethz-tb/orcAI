@@ -76,9 +76,7 @@ def _check_duration(
 def filter_predictions(
     predicted_labels: pd.DataFrame,
     delta_t: float,
-    call_duration_limits: (Path | str) | dict = str(
-        files("orcai.defaults").joinpath("default_call_duration_limits.json")
-    ),
+    call_duration_limits: (Path | str) | dict | None = None,
     label_suffix: str | None = "*",
     verbosity: int = 2,
     msgr: Messenger | None = None,
@@ -123,6 +121,10 @@ def filter_predictions(
         msgr.debug("Call durations:")
         msgr.debug(
             predicted_labels[["label", "duration_s"]].groupby("label").describe()
+        )
+    if call_duration_limits is None:
+        call_duration_limits = str(
+            files("orcai.defaults").joinpath("default_call_duration_limits.json")
         )
     if isinstance(call_duration_limits, (Path | str)):
         call_duration_limits = read_json(call_duration_limits)
@@ -173,11 +175,9 @@ def filter_predictions_file(
     predicted_labels_path: Path | str,
     output_file: Path | str = "default",
     overwrite: bool = False,
-    call_duration_limits: (Path | str) | dict = str(
-        files("orcai.defaults").joinpath("default_call_duration_limits.json")
-    ),
+    call_duration_limits: (Path | str) | dict | None = None,
     label_suffix: str = "*",
-    columns: list[str] = ["start", "stop", "label", "mean_p", "label_source"],
+    columns: list[str] | None = None,
     verbosity: int = 2,
     msgr: Messenger | None = None,
 ) -> None:
@@ -192,12 +192,12 @@ def filter_predictions_file(
         Path to the output file or "default" to save in the same directory as the predicted labels file.
     overwrite : bool
         Overwrite the output file if it exists.
-    call_duration_limits : (Path | str) | dict
+    call_duration_limits : (Path | str) | dict | None
         Path to a JSON file containing a dictionary with call duration limits.
     label_suffix : str
         Suffix that was added to label names during prediction.
-    columns : list[str]
-        List of columns in the predicted labels file.
+    columns : list[str] | None
+        List of columns in the predicted labels file. None for default columns ["start", "stop", "label", "mean_p", "label_source"].
     verbosity : int
         Verbosity level. 0: Errors only, 1: Warnings, 2: Info, 3: Debug
     msgr : Messenger
@@ -217,6 +217,9 @@ def filter_predictions_file(
     """
     if msgr is None:
         msgr = Messenger(verbosity=verbosity)
+
+    if columns is None:
+        columns = ["start", "stop", "label", "mean_p", "label_source"]
 
     if output_file == "default":
         filename = Path(predicted_labels_path).stem + "_filtered.txt"
@@ -247,7 +250,6 @@ def filter_predictions_file(
         delta_t=1,
         msgr=msgr,
     )
-    return
 
 
 def compute_aggregated_predictions(
@@ -256,7 +258,7 @@ def compute_aggregated_predictions(
     model: keras.Model,
     orcai_parameter: dict,
     shape: dict,
-    msgr: Messenger = Messenger(verbosity=0),
+    msgr: Messenger | None = None,
     progressbar: tqdm | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -286,6 +288,8 @@ def compute_aggregated_predictions(
     overlap_count : np.ndarray
         Array with the number of overlapping predictions for each time step.
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
 
     msgr.info(f"Computing aggregated predictions for {recording_path.stem}")
     snippet_length = shape["input_shape"][0]  # Time steps in a single snippet, ~4s
@@ -480,7 +484,7 @@ def predict_wav(
     shape: dict,
     threshold: float = 0.5,
     label_suffix: str | None = "*",
-    msgr: Messenger = Messenger(verbosity=0),
+    msgr: Messenger | None = None,
     progressbar: tqdm | None = None,
 ) -> tuple[pd.DataFrame, np.ndarray, np.float64]:
     """
@@ -521,7 +525,8 @@ def predict_wav(
     ValueError
         If the frequency dimensions of the spectrogram do not match the input shape.
     """
-
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
     # Generating spectrogram
     if progressbar:
         progressbar.set_description(f"{recording_path.stem}: Generating spectrogram")
@@ -626,7 +631,7 @@ def _predict_and_save(
     save_probabilities: bool = False,
     call_duration_limits: (Path | str) | dict | None = None,
     label_suffix: str | None = "*",
-    msgr: Messenger = Messenger(verbosity=0),
+    msgr: Messenger | None = None,
     progressbar: tqdm | None = None,
 ) -> None:
     """
@@ -673,6 +678,9 @@ def _predict_and_save(
     FileExistsError
         If the output_path already exists.
     """
+    if msgr is None:
+        msgr = Messenger(verbosity=0)
+
     if output_path == "default":
         output_path = _get_output_path(
             recording_path=Path(recording_path),
@@ -681,6 +689,7 @@ def _predict_and_save(
         )
     else:
         output_path = Path(output_path)
+
     msgr.info(f"Output file: {output_path}")
     if output_path.exists():
         if overwrite:
@@ -730,7 +739,7 @@ def predict(
     recording_path: str | Path,
     channel: int = 1,
     threshold: float = 0.5,
-    model_dir: str | Path = str(files("orcai.models").joinpath("orcai-isl-v1")),
+    model_dir: str | Path | None = None,
     output_path: str | Path = "default",
     overwrite: bool = False,
     save_probabilities: bool = False,
@@ -752,8 +761,8 @@ def predict(
         this is the default channel used.
     threshold : float
         Threshold for binary classification. Default is 0.5.
-    model_dir : str | Path
-        Path to the directory containing the model.
+    model_dir : str | Path | None
+        Path to the directory containing the model. If None, the default model is used.
     output_path : str | Path
         Path to the output file or "default" to save in the same directory as the wav file.
     overwrite : bool
@@ -786,6 +795,9 @@ def predict(
             verbosity=verbosity,
             title="Predicting calls",
         )
+
+    if model_dir is None:
+        model_dir = str(files("orcai.models").joinpath("orcai-isl-v1"))
 
     model_dir = Path(model_dir)
     recording_path = Path(recording_path)
@@ -848,7 +860,7 @@ def predict(
                 msgr=Messenger(verbosity=0),
                 progressbar=progressbar,
             )
-        except Exception as e:
+        except (ValueError, FileExistsError) as e:
             msgr.error(
                 f"Error predicting {recording_table.loc[i, 'recording']}: {e.args[0]}"
             )

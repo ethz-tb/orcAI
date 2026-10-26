@@ -24,8 +24,8 @@ from orcai.io import (
     read_json,
     save_as_zarr,
     save_dataset,
-    save_predictions,
     save_prediction_probabilities,
+    save_predictions,
     write_json,
     write_vector_to_json,
 )
